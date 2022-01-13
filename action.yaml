@@ -1,0 +1,16 @@
+name: 'TurboRepo with github artifacts'
+description: 'Setup up a local cache proxy server for TurboRepo.'
+author: 'felixmosh'
+
+inputs:
+  repo-token:
+    description: 'An access token with repo permission'
+    required: true
+  server-token:
+    description: 'An access token of the local turbo-server'
+    required: true
+
+runs:
+  using: 'node12'
+  main: 'dist/starter/index.js'
+  post: 'dist/stopper/index.js'
