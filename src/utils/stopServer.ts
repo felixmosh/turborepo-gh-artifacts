@@ -1,4 +1,5 @@
-import core from '@actions/core';
+import { getState, info } from '@actions/core';
+import { States } from './constants';
 
 function pidIsRunning(pid) {
   try {
@@ -10,14 +11,14 @@ function pidIsRunning(pid) {
 }
 
 export function stopServer() {
-  const serverPID = core.getState('TURBO_LOCAL_SERVER_PID');
+  const serverPID = getState(States.TURBO_LOCAL_SERVER_PID);
 
-  core.info(`Found server pid: ${serverPID}`);
+  info(`Found server pid: ${serverPID}`);
 
   if (serverPID && pidIsRunning(serverPID)) {
-    core.info(`Killing server pid: ${serverPID}`);
+    info(`Killing server pid: ${serverPID}`);
     process.kill(+serverPID);
   } else {
-    core.info(`Server with pid: ${serverPID} is not running`);
+    info(`Server with pid: ${serverPID} is not running`);
   }
 }

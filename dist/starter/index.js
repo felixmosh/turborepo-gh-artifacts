@@ -4659,7 +4659,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __importDefault(__nccwpck_require__(2186));
+const core_1 = __nccwpck_require__(2186);
 const child_process_1 = __nccwpck_require__(2081);
 const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
 const path_1 = __importDefault(__nccwpck_require__(1017));
@@ -4673,8 +4673,8 @@ const subprocess = (0, child_process_1.spawn)('node', ['../turboServer/index.js'
     env: process.env,
 });
 subprocess.unref();
-core_1.default.info(`TURBO_LOCAL_SERVER_PID: ${subprocess.pid}`);
-core_1.default.saveState('TURBO_LOCAL_SERVER_PID', subprocess.pid);
+(0, core_1.info)(`${constants_1.States.TURBO_LOCAL_SERVER_PID}: ${subprocess.pid}`);
+(0, core_1.saveState)(constants_1.States.TURBO_LOCAL_SERVER_PID, subprocess.pid);
 
 
 /***/ }),
@@ -4688,9 +4688,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.cacheDir = void 0;
+exports.Inputs = exports.States = exports.cacheDir = void 0;
 const path_1 = __importDefault(__nccwpck_require__(1017));
 exports.cacheDir = path_1.default.join(process.env.RUNNER_TEMP || __dirname, 'turbo-cache');
+var States;
+(function (States) {
+    States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
+})(States = exports.States || (exports.States = {}));
+var Inputs;
+(function (Inputs) {
+    Inputs["SERVER_TOKEN"] = "server-token";
+    Inputs["REPO_TOKEN"] = "repo-token";
+})(Inputs = exports.Inputs || (exports.Inputs = {}));
 
 
 /***/ }),

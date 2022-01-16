@@ -1,11 +1,12 @@
-import core from "@actions/core";
-import { Axios } from "axios";
+import { getInput } from '@actions/core';
+import { Axios } from 'axios';
+import { Inputs } from './constants';
 
 class ArtifactApi {
   private axios: Axios;
 
   constructor() {
-    const repoToken = core.getInput("repo-token", {
+    const repoToken = getInput(Inputs.REPO_TOKEN, {
       required: true,
       trimWhitespace: true,
     });
@@ -13,7 +14,7 @@ class ArtifactApi {
     this.axios = new Axios({
       baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions`,
       headers: {
-        Accept: "application/vnd.github.v3+json",
+        Accept: 'application/vnd.github.v3+json',
         Authorization: `Bearer ${repoToken}`,
       },
     });
@@ -21,13 +22,13 @@ class ArtifactApi {
 
   listArtifacts() {
     return this.axios
-      .get("/artifacts", { params: { per_page: 100 } })
+      .get('/artifacts', { params: { per_page: 100 } })
       .then((response) => JSON.parse(response.data));
   }
 
   downloadArtifact(artifactId) {
     return this.axios.get(`/artifacts/${artifactId}/zip`, {
-      responseType: "stream",
+      responseType: 'stream',
     });
   }
 }

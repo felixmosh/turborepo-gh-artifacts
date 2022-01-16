@@ -4,3 +4,12 @@ export const cacheDir = path.join(
   process.env.RUNNER_TEMP || __dirname,
   'turbo-cache'
 );
+
+export enum States {
+  TURBO_LOCAL_SERVER_PID = 'TURBO_LOCAL_SERVER_PID'
+}
+
+export enum Inputs {
+  SERVER_TOKEN = 'server-token',
+  REPO_TOKEN = 'repo-token'
+}

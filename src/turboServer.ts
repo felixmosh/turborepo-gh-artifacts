@@ -1,22 +1,19 @@
-import core from '@actions/core';
+import { getInput } from '@actions/core';
 import express from 'express';
 import asyncHandler from 'express-async-handler';
 import fs from 'fs-extra';
 import path from 'path';
 import { artifactApi } from './utils/artifactApi';
+import { cacheDir, Inputs } from './utils/constants';
 import { downloadArtifact } from './utils/downloadArtifact';
 
 async function startServer() {
   const port = process.env.PORT || 9080;
-  const tempDir = path.join(
-    process.env.RUNNER_TEMP || __dirname,
-    'turbo-cache'
-  );
 
-  fs.ensureDirSync(tempDir);
+  fs.ensureDirSync(cacheDir);
 
   const app = express();
-  const serverToken = core.getInput('server-token', {
+  const serverToken = getInput(Inputs.SERVER_TOKEN, {
     required: true,
     trimWhitespace: true,
   });
@@ -45,13 +42,13 @@ async function startServer() {
 
       if (existingArtifact) {
         console.log(`Artifact ${artifactId} found.`);
-        await downloadArtifact(existingArtifact, tempDir);
+        await downloadArtifact(existingArtifact, cacheDir);
         console.log(
-          `Artifact ${artifactId} downloaded successfully to ${tempDir}/${artifactId}.gz.`
+          `Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`
         );
       }
 
-      const filepath = path.join(tempDir, `${artifactId}.gz`);
+      const filepath = path.join(cacheDir, `${artifactId}.gz`);
 
       if (!fs.pathExistsSync(filepath)) {
         console.log(`Artifact ${artifactId} not found.`);
@@ -74,7 +71,7 @@ async function startServer() {
     const artifactId = req.params.artifactId;
     const filename = `${artifactId}.gz`;
 
-    const writeStream = fs.createWriteStream(path.join(tempDir, filename));
+    const writeStream = fs.createWriteStream(path.join(cacheDir, filename));
 
     req.pipe(writeStream);
 
@@ -89,7 +86,7 @@ async function startServer() {
   });
 
   app.disable('etag').listen(port, () => {
-    console.log(`Cache dir: ${tempDir}`);
+    console.log(`Cache dir: ${cacheDir}`);
     console.log(`Local Turbo server is listening at http://127.0.0.1:${port}`);
   });
 }

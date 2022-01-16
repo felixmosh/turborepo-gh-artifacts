@@ -14852,7 +14852,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __importDefault(__nccwpck_require__(2186));
+const core_1 = __nccwpck_require__(2186);
 const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
 const constants_1 = __nccwpck_require__(8593);
 const printServerLogs_1 = __nccwpck_require__(2104);
@@ -14867,46 +14867,44 @@ function post() {
     });
 }
 post().catch((error) => {
-    core_1.default.setFailed(error);
+    (0, core_1.setFailed)(error);
 });
 
 
 /***/ }),
 
 /***/ 3124:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.artifactApi = void 0;
-const core_1 = __importDefault(__nccwpck_require__(2186));
+const core_1 = __nccwpck_require__(2186);
 const axios_1 = __nccwpck_require__(6545);
+const constants_1 = __nccwpck_require__(8593);
 class ArtifactApi {
     constructor() {
-        const repoToken = core_1.default.getInput("repo-token", {
+        const repoToken = (0, core_1.getInput)(constants_1.Inputs.REPO_TOKEN, {
             required: true,
             trimWhitespace: true,
         });
         this.axios = new axios_1.Axios({
             baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions`,
             headers: {
-                Accept: "application/vnd.github.v3+json",
+                Accept: 'application/vnd.github.v3+json',
                 Authorization: `Bearer ${repoToken}`,
             },
         });
     }
     listArtifacts() {
         return this.axios
-            .get("/artifacts", { params: { per_page: 100 } })
+            .get('/artifacts', { params: { per_page: 100 } })
             .then((response) => JSON.parse(response.data));
     }
     downloadArtifact(artifactId) {
         return this.axios.get(`/artifacts/${artifactId}/zip`, {
-            responseType: "stream",
+            responseType: 'stream',
         });
     }
 }
@@ -14924,9 +14922,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.cacheDir = void 0;
+exports.Inputs = exports.States = exports.cacheDir = void 0;
 const path_1 = __importDefault(__nccwpck_require__(1017));
 exports.cacheDir = path_1.default.join(process.env.RUNNER_TEMP || __dirname, 'turbo-cache');
+var States;
+(function (States) {
+    States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
+})(States = exports.States || (exports.States = {}));
+var Inputs;
+(function (Inputs) {
+    Inputs["SERVER_TOKEN"] = "server-token";
+    Inputs["REPO_TOKEN"] = "repo-token";
+})(Inputs = exports.Inputs || (exports.Inputs = {}));
 
 
 /***/ }),
@@ -14941,13 +14948,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.printServerLogs = void 0;
-const core_1 = __importDefault(__nccwpck_require__(2186));
+const core_1 = __nccwpck_require__(2186);
 const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 const constants_1 = __nccwpck_require__(8593);
 function printServerLogs() {
-    core_1.default.info('Server logs:');
-    core_1.default.info(fs_extra_1.default.readFileSync(path_1.default.join(constants_1.cacheDir, 'out.log'), {
+    (0, core_1.info)('Server logs:');
+    (0, core_1.info)(fs_extra_1.default.readFileSync(path_1.default.join(constants_1.cacheDir, 'out.log'), {
         encoding: 'utf8',
         flag: 'r',
     }));
@@ -14958,16 +14965,14 @@ exports.printServerLogs = printServerLogs;
 /***/ }),
 
 /***/ 764:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.stopServer = void 0;
-const core_1 = __importDefault(__nccwpck_require__(2186));
+const core_1 = __nccwpck_require__(2186);
+const constants_1 = __nccwpck_require__(8593);
 function pidIsRunning(pid) {
     try {
         process.kill(+pid, 0);
@@ -14978,14 +14983,14 @@ function pidIsRunning(pid) {
     }
 }
 function stopServer() {
-    const serverPID = core_1.default.getState('TURBO_LOCAL_SERVER_PID');
-    core_1.default.info(`Found server pid: ${serverPID}`);
+    const serverPID = (0, core_1.getState)(constants_1.States.TURBO_LOCAL_SERVER_PID);
+    (0, core_1.info)(`Found server pid: ${serverPID}`);
     if (serverPID && pidIsRunning(serverPID)) {
-        core_1.default.info(`Killing server pid: ${serverPID}`);
+        (0, core_1.info)(`Killing server pid: ${serverPID}`);
         process.kill(+serverPID);
     }
     else {
-        core_1.default.info(`Server with pid: ${serverPID} is not running`);
+        (0, core_1.info)(`Server with pid: ${serverPID} is not running`);
     }
 }
 exports.stopServer = stopServer;
@@ -15013,7 +15018,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.uploadArtifacts = void 0;
 const artifact_1 = __nccwpck_require__(2605);
-const core_1 = __importDefault(__nccwpck_require__(2186));
+const core_1 = __nccwpck_require__(2186);
 const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 const artifactApi_1 = __nccwpck_require__(3124);
@@ -15025,7 +15030,7 @@ function uploadArtifacts() {
         const client = (0, artifact_1.create)();
         const files = fs_extra_1.default.readdirSync(constants_1.cacheDir);
         const artifactFiles = files.filter((filename) => filename.endsWith('.gz'));
-        core_1.default.debug(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
+        (0, core_1.debug)(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
         const artifactsToUpload = artifactFiles
             .map((artifactFilename) => {
             const artifactId = path_1.default.basename(artifactFilename, path_1.default.extname(artifactFilename));
@@ -15033,16 +15038,16 @@ function uploadArtifacts() {
         })
             .filter(({ artifactId }) => !existingArtifacts.includes(artifactId));
         if (artifactsToUpload.length) {
-            core_1.default.info(`Gonna upload ${artifactsToUpload.length} artifacts:`);
-            core_1.default.info(JSON.stringify(artifactsToUpload.map(({ artifactId }) => artifactId), null, 2));
+            (0, core_1.info)(`Gonna upload ${artifactsToUpload.length} artifacts:`);
+            (0, core_1.info)(JSON.stringify(artifactsToUpload.map(({ artifactId }) => artifactId), null, 2));
         }
         else {
-            core_1.default.info(`There is nothing to upload.`);
+            (0, core_1.info)(`There is nothing to upload.`);
         }
         yield Promise.all(artifactsToUpload.map(({ artifactFilename, artifactId }) => __awaiter(this, void 0, void 0, function* () {
-            core_1.default.info(`Uploading ${artifactFilename}`);
+            (0, core_1.info)(`Uploading ${artifactFilename}`);
             yield client.uploadArtifact(artifactId, [path_1.default.join(constants_1.cacheDir, artifactFilename)], constants_1.cacheDir);
-            core_1.default.info(`Uploaded ${artifactFilename} successfully`);
+            (0, core_1.info)(`Uploaded ${artifactFilename} successfully`);
         })));
     });
 }

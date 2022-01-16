@@ -1,9 +1,8 @@
-import core from '@actions/core';
+import { info, saveState } from '@actions/core';
 import { spawn } from 'child_process';
 import fs from 'fs-extra';
 import path from 'path';
-import { cacheDir } from './utils/constants';
-
+import { cacheDir, States } from './utils/constants';
 
 fs.ensureDirSync(cacheDir);
 
@@ -18,5 +17,5 @@ const subprocess = spawn('node', ['../turboServer/index.js'], {
 
 subprocess.unref();
 
-core.info(`TURBO_LOCAL_SERVER_PID: ${subprocess.pid}`);
-core.saveState('TURBO_LOCAL_SERVER_PID', subprocess.pid);
+info(`${States.TURBO_LOCAL_SERVER_PID}: ${subprocess.pid}`);
+saveState(States.TURBO_LOCAL_SERVER_PID, subprocess.pid);

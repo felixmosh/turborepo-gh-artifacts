@@ -1,5 +1,5 @@
 import { create } from '@actions/artifact';
-import core from '@actions/core';
+import { debug, info } from '@actions/core';
 import fs from 'fs-extra';
 import path from 'path';
 import { artifactApi } from './artifactApi';
@@ -15,7 +15,7 @@ export async function uploadArtifacts() {
 
   const artifactFiles = files.filter((filename) => filename.endsWith('.gz'));
 
-  core.debug(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
+  debug(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
 
   const artifactsToUpload = artifactFiles
     .map((artifactFilename) => {
@@ -29,8 +29,8 @@ export async function uploadArtifacts() {
     .filter(({ artifactId }) => !existingArtifacts.includes(artifactId));
 
   if (artifactsToUpload.length) {
-    core.info(`Gonna upload ${artifactsToUpload.length} artifacts:`);
-    core.info(
+    info(`Gonna upload ${artifactsToUpload.length} artifacts:`);
+    info(
       JSON.stringify(
         artifactsToUpload.map(({ artifactId }) => artifactId),
         null,
@@ -38,12 +38,12 @@ export async function uploadArtifacts() {
       )
     );
   } else {
-    core.info(`There is nothing to upload.`);
+    info(`There is nothing to upload.`);
   }
 
   await Promise.all(
     artifactsToUpload.map(async ({ artifactFilename, artifactId }) => {
-      core.info(`Uploading ${artifactFilename}`);
+      info(`Uploading ${artifactFilename}`);
 
       await client.uploadArtifact(
         artifactId,
@@ -51,7 +51,7 @@ export async function uploadArtifacts() {
         cacheDir
       );
 
-      core.info(`Uploaded ${artifactFilename} successfully`);
+      info(`Uploaded ${artifactFilename} successfully`);
     })
   );
 }

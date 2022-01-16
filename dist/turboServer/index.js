@@ -28435,20 +28435,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __importDefault(__nccwpck_require__(2186));
+const core_1 = __nccwpck_require__(2186);
 const express_1 = __importDefault(__nccwpck_require__(1204));
 const express_async_handler_1 = __importDefault(__nccwpck_require__(5550));
 const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 const artifactApi_1 = __nccwpck_require__(8343);
+const constants_1 = __nccwpck_require__(8593);
 const downloadArtifact_1 = __nccwpck_require__(3493);
 function startServer() {
     return __awaiter(this, void 0, void 0, function* () {
         const port = process.env.PORT || 9080;
-        const tempDir = path_1.default.join(process.env.RUNNER_TEMP || __dirname, 'turbo-cache');
-        fs_extra_1.default.ensureDirSync(tempDir);
+        fs_extra_1.default.ensureDirSync(constants_1.cacheDir);
         const app = (0, express_1.default)();
-        const serverToken = core_1.default.getInput('server-token', {
+        const serverToken = (0, core_1.getInput)(constants_1.Inputs.SERVER_TOKEN, {
             required: true,
             trimWhitespace: true,
         });
@@ -28467,10 +28467,10 @@ function startServer() {
             const existingArtifact = list.artifacts.find((artifact) => artifact.name === artifactId);
             if (existingArtifact) {
                 console.log(`Artifact ${artifactId} found.`);
-                yield (0, downloadArtifact_1.downloadArtifact)(existingArtifact, tempDir);
-                console.log(`Artifact ${artifactId} downloaded successfully to ${tempDir}/${artifactId}.gz.`);
+                yield (0, downloadArtifact_1.downloadArtifact)(existingArtifact, constants_1.cacheDir);
+                console.log(`Artifact ${artifactId} downloaded successfully to ${constants_1.cacheDir}/${artifactId}.gz.`);
             }
-            const filepath = path_1.default.join(tempDir, `${artifactId}.gz`);
+            const filepath = path_1.default.join(constants_1.cacheDir, `${artifactId}.gz`);
             if (!fs_extra_1.default.pathExistsSync(filepath)) {
                 console.log(`Artifact ${artifactId} not found.`);
                 return res.status(404).send('Not found');
@@ -28487,7 +28487,7 @@ function startServer() {
         app.put('/v8/artifacts/:artifactId', (req, res) => {
             const artifactId = req.params.artifactId;
             const filename = `${artifactId}.gz`;
-            const writeStream = fs_extra_1.default.createWriteStream(path_1.default.join(tempDir, filename));
+            const writeStream = fs_extra_1.default.createWriteStream(path_1.default.join(constants_1.cacheDir, filename));
             req.pipe(writeStream);
             writeStream.on('error', (err) => {
                 console.error(err);
@@ -28498,7 +28498,7 @@ function startServer() {
             });
         });
         app.disable('etag').listen(port, () => {
-            console.log(`Cache dir: ${tempDir}`);
+            console.log(`Cache dir: ${constants_1.cacheDir}`);
             console.log(`Local Turbo server is listening at http://127.0.0.1:${port}`);
         });
     });
@@ -28512,6 +28512,46 @@ startServer().catch((error) => {
 /***/ }),
 
 /***/ 8343:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.artifactApi = void 0;
+const core_1 = __nccwpck_require__(2186);
+const axios_1 = __nccwpck_require__(6545);
+const constants_1 = __nccwpck_require__(8593);
+class ArtifactApi {
+    constructor() {
+        const repoToken = (0, core_1.getInput)(constants_1.Inputs.REPO_TOKEN, {
+            required: true,
+            trimWhitespace: true,
+        });
+        this.axios = new axios_1.Axios({
+            baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions`,
+            headers: {
+                Accept: 'application/vnd.github.v3+json',
+                Authorization: `Bearer ${repoToken}`,
+            },
+        });
+    }
+    listArtifacts() {
+        return this.axios
+            .get('/artifacts', { params: { per_page: 100 } })
+            .then((response) => JSON.parse(response.data));
+    }
+    downloadArtifact(artifactId) {
+        return this.axios.get(`/artifacts/${artifactId}/zip`, {
+            responseType: 'stream',
+        });
+    }
+}
+exports.artifactApi = new ArtifactApi();
+
+
+/***/ }),
+
+/***/ 8593:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -28520,35 +28560,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.artifactApi = void 0;
-const core_1 = __importDefault(__nccwpck_require__(2186));
-const axios_1 = __nccwpck_require__(6545);
-class ArtifactApi {
-    constructor() {
-        const repoToken = core_1.default.getInput("repo-token", {
-            required: true,
-            trimWhitespace: true,
-        });
-        this.axios = new axios_1.Axios({
-            baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions`,
-            headers: {
-                Accept: "application/vnd.github.v3+json",
-                Authorization: `Bearer ${repoToken}`,
-            },
-        });
-    }
-    listArtifacts() {
-        return this.axios
-            .get("/artifacts", { params: { per_page: 100 } })
-            .then((response) => JSON.parse(response.data));
-    }
-    downloadArtifact(artifactId) {
-        return this.axios.get(`/artifacts/${artifactId}/zip`, {
-            responseType: "stream",
-        });
-    }
-}
-exports.artifactApi = new ArtifactApi();
+exports.Inputs = exports.States = exports.cacheDir = void 0;
+const path_1 = __importDefault(__nccwpck_require__(1017));
+exports.cacheDir = path_1.default.join(process.env.RUNNER_TEMP || __dirname, 'turbo-cache');
+var States;
+(function (States) {
+    States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
+})(States = exports.States || (exports.States = {}));
+var Inputs;
+(function (Inputs) {
+    Inputs["SERVER_TOKEN"] = "server-token";
+    Inputs["REPO_TOKEN"] = "repo-token";
+})(Inputs = exports.Inputs || (exports.Inputs = {}));
 
 
 /***/ }),

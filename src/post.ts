@@ -1,4 +1,4 @@
-import core from '@actions/core';
+import {setFailed} from '@actions/core';
 import fs from 'fs-extra';
 import { cacheDir } from './utils/constants';
 import { printServerLogs } from './utils/printServerLogs';
@@ -16,5 +16,5 @@ async function post() {
 }
 
 post().catch((error) => {
-  core.setFailed(error);
+  setFailed(error);
 });
