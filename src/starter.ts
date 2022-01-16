@@ -9,7 +9,7 @@ fs.ensureDirSync(cacheDir);
 const out = fs.openSync(path.join(cacheDir, 'out.log'), 'a');
 const err = fs.openSync(path.join(cacheDir, 'out.log'), 'a');
 
-const subprocess = spawn('node', ['../turboServer/index.js'], {
+const subprocess = spawn('node', [path.resolve(__dirname, '../turboServer/index.js')], {
   detached: true,
   stdio: ['ignore', out, err],
   env: process.env,

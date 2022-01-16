@@ -4667,7 +4667,7 @@ const constants_1 = __nccwpck_require__(8593);
 fs_extra_1.default.ensureDirSync(constants_1.cacheDir);
 const out = fs_extra_1.default.openSync(path_1.default.join(constants_1.cacheDir, 'out.log'), 'a');
 const err = fs_extra_1.default.openSync(path_1.default.join(constants_1.cacheDir, 'out.log'), 'a');
-const subprocess = (0, child_process_1.spawn)('node', ['../turboServer/index.js'], {
+const subprocess = (0, child_process_1.spawn)('node', [path_1.default.resolve(__dirname, '../turboServer/index.js')], {
     detached: true,
     stdio: ['ignore', out, err],
     env: process.env,
