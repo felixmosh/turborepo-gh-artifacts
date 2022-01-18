@@ -1,6 +1,9 @@
 name: 'TurboRepo with github artifacts'
 description: 'Setup up a local cache proxy server for TurboRepo.'
 author: 'felixmosh'
+branding:
+  icon: 'chevrons-up'
+  color: 'yellow'
 
 inputs:
   repo-token:
