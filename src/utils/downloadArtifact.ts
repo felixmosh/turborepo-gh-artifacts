@@ -2,9 +2,10 @@ import fs from 'fs-extra';
 import StreamZip from 'node-stream-zip';
 import path from 'path';
 import { artifactApi } from './artifactApi';
+import os from 'os';
 
 const tempArchiveFolder = path.join(
-  process.env.RUNNER_TEMP || __dirname,
+  process.env.RUNNER_TEMP || os.tmpdir(),
   'turbo-archives'
 );
 

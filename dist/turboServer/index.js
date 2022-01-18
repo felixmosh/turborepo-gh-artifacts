@@ -28462,9 +28462,10 @@ function startServer() {
             next();
         });
         app.get('/v8/artifacts/:artifactId', (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const { artifactId } = req.params;
             const list = yield artifactApi_1.artifactApi.listArtifacts();
-            const existingArtifact = list.artifacts.find((artifact) => artifact.name === artifactId);
+            const existingArtifact = (_a = list.artifacts) === null || _a === void 0 ? void 0 : _a.find((artifact) => artifact.name === artifactId);
             if (existingArtifact) {
                 console.log(`Artifact ${artifactId} found.`);
                 yield (0, downloadArtifact_1.downloadArtifact)(existingArtifact, constants_1.cacheDir);
@@ -28561,8 +28562,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Inputs = exports.States = exports.cacheDir = void 0;
+const os_1 = __importDefault(__nccwpck_require__(2037));
 const path_1 = __importDefault(__nccwpck_require__(1017));
-exports.cacheDir = path_1.default.join(process.env.RUNNER_TEMP || __dirname, 'turbo-cache');
+exports.cacheDir = path_1.default.join(process.env.RUNNER_TEMP || os_1.default.tmpdir(), 'turbo-cache');
 var States;
 (function (States) {
     States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
@@ -28599,7 +28601,8 @@ const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
 const node_stream_zip_1 = __importDefault(__nccwpck_require__(8119));
 const path_1 = __importDefault(__nccwpck_require__(1017));
 const artifactApi_1 = __nccwpck_require__(8343);
-const tempArchiveFolder = path_1.default.join(process.env.RUNNER_TEMP || __dirname, 'turbo-archives');
+const os_1 = __importDefault(__nccwpck_require__(2037));
+const tempArchiveFolder = path_1.default.join(process.env.RUNNER_TEMP || os_1.default.tmpdir(), 'turbo-archives');
 function downloadArtifact(artifact, destFolder) {
     return __awaiter(this, void 0, void 0, function* () {
         const { data } = yield artifactApi_1.artifactApi.downloadArtifact(artifact.id);

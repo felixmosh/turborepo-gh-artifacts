@@ -4689,8 +4689,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Inputs = exports.States = exports.cacheDir = void 0;
+const os_1 = __importDefault(__nccwpck_require__(2037));
 const path_1 = __importDefault(__nccwpck_require__(1017));
-exports.cacheDir = path_1.default.join(process.env.RUNNER_TEMP || __dirname, 'turbo-cache');
+exports.cacheDir = path_1.default.join(process.env.RUNNER_TEMP || os_1.default.tmpdir(), 'turbo-cache');
 var States;
 (function (States) {
     States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
