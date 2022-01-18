@@ -36,7 +36,7 @@ async function startServer() {
       const { artifactId } = req.params;
       const list = await artifactApi.listArtifacts();
 
-      const existingArtifact = list.artifacts.find(
+      const existingArtifact = list.artifacts?.find(
         (artifact) => artifact.name === artifactId
       );
 
