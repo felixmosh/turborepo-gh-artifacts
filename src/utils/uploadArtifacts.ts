@@ -7,7 +7,9 @@ import { cacheDir } from './constants';
 
 export async function uploadArtifacts() {
   const list = await artifactApi.listArtifacts();
-  const existingArtifacts = list.artifacts?.map((artifact) => artifact.name) || []
+  const existingArtifacts = (list.artifacts || []).map(
+    (artifact) => artifact.name
+  );
 
   const client = create();
 
