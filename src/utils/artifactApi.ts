@@ -2,6 +2,22 @@ import { getInput } from '@actions/core';
 import { Axios } from 'axios';
 import { Inputs } from './constants';
 
+interface IArtifactListResponse {
+  total_count: number;
+  artifacts?: Array<{
+    id: number;
+    node_id: string;
+    name: string;
+    size_in_bytes: number;
+    url: string;
+    archive_download_url: string;
+    expired: boolean;
+    created_at: string;
+    updated_at: string;
+    expires_at: string;
+  }>;
+}
+
 class ArtifactApi {
   private axios: Axios;
 
@@ -20,7 +36,7 @@ class ArtifactApi {
     });
   }
 
-  listArtifacts() {
+  listArtifacts(): Promise<IArtifactListResponse> {
     return this.axios
       .get('/artifacts', { params: { per_page: 100 } })
       .then((response) => JSON.parse(response.data));
