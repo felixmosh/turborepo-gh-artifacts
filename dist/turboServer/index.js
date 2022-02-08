@@ -21338,12 +21338,10 @@ function plural(ms, n, name) {
 
 
 
-/**
- * Cached loaded submodules.
- * @private
- */
-
-var modules = Object.create(null);
+var preferredCharsets = __nccwpck_require__(9296)
+var preferredEncodings = __nccwpck_require__(5297)
+var preferredLanguages = __nccwpck_require__(9722)
+var preferredMediaTypes = __nccwpck_require__(2563)
 
 /**
  * Module exports.
@@ -21373,7 +21371,6 @@ Negotiator.prototype.charset = function charset(available) {
 };
 
 Negotiator.prototype.charsets = function charsets(available) {
-  var preferredCharsets = loadModule('charset').preferredCharsets;
   return preferredCharsets(this.request.headers['accept-charset'], available);
 };
 
@@ -21383,7 +21380,6 @@ Negotiator.prototype.encoding = function encoding(available) {
 };
 
 Negotiator.prototype.encodings = function encodings(available) {
-  var preferredEncodings = loadModule('encoding').preferredEncodings;
   return preferredEncodings(this.request.headers['accept-encoding'], available);
 };
 
@@ -21393,7 +21389,6 @@ Negotiator.prototype.language = function language(available) {
 };
 
 Negotiator.prototype.languages = function languages(available) {
-  var preferredLanguages = loadModule('language').preferredLanguages;
   return preferredLanguages(this.request.headers['accept-language'], available);
 };
 
@@ -21403,7 +21398,6 @@ Negotiator.prototype.mediaType = function mediaType(available) {
 };
 
 Negotiator.prototype.mediaTypes = function mediaTypes(available) {
-  var preferredMediaTypes = loadModule('mediaType').preferredMediaTypes;
   return preferredMediaTypes(this.request.headers.accept, available);
 };
 
@@ -21416,42 +21410,6 @@ Negotiator.prototype.preferredLanguage = Negotiator.prototype.language;
 Negotiator.prototype.preferredLanguages = Negotiator.prototype.languages;
 Negotiator.prototype.preferredMediaType = Negotiator.prototype.mediaType;
 Negotiator.prototype.preferredMediaTypes = Negotiator.prototype.mediaTypes;
-
-/**
- * Load the given module.
- * @private
- */
-
-function loadModule(moduleName) {
-  var module = modules[moduleName];
-
-  if (module !== undefined) {
-    return module;
-  }
-
-  // This uses a switch for static require analysis
-  switch (moduleName) {
-    case 'charset':
-      module = __nccwpck_require__(9296);
-      break;
-    case 'encoding':
-      module = __nccwpck_require__(5297);
-      break;
-    case 'language':
-      module = __nccwpck_require__(9722);
-      break;
-    case 'mediaType':
-      module = __nccwpck_require__(2563);
-      break;
-    default:
-      throw new Error('Cannot find module \'' + moduleName + '\'');
-  }
-
-  // Store to prevent invoking require()
-  modules[moduleName] = module;
-
-  return module;
-}
 
 
 /***/ }),
@@ -21885,9 +21843,9 @@ function parseLanguage(str, i) {
   var match = simpleLanguageRegExp.exec(str);
   if (!match) return null;
 
-  var prefix = match[1],
-    suffix = match[2],
-    full = prefix;
+  var prefix = match[1]
+  var suffix = match[2]
+  var full = prefix
 
   if (suffix) full += "-" + suffix;
 

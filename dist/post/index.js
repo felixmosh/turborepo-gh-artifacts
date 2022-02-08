@@ -12110,15 +12110,15 @@ module.exports = { stringify, stripBom }
 module.exports = minimatch
 minimatch.Minimatch = Minimatch
 
-var path = { sep: '/' }
-try {
-  path = __nccwpck_require__(1017)
-} catch (er) {}
+const path = (() => { try { return __nccwpck_require__(1017) } catch (e) {}})() || {
+  sep: '/'
+}
+minimatch.sep = path.sep
 
-var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {}
-var expand = __nccwpck_require__(3717)
+const GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {}
+const expand = __nccwpck_require__(3717)
 
-var plTypes = {
+const plTypes = {
   '!': { open: '(?:(?!(?:', close: '))[^/]*?)'},
   '?': { open: '(?:', close: ')?' },
   '+': { open: '(?:', close: ')+' },
@@ -12128,22 +12128,22 @@ var plTypes = {
 
 // any single thing other than /
 // don't need to escape / when using new RegExp()
-var qmark = '[^/]'
+const qmark = '[^/]'
 
 // * => any number of characters
-var star = qmark + '*?'
+const star = qmark + '*?'
 
 // ** when dots are allowed.  Anything goes, except .. and .
 // not (^ or / followed by one or two dots followed by $ or /),
 // followed by anything, any number of times.
-var twoStarDot = '(?:(?!(?:\\\/|^)(?:\\.{1,2})($|\\\/)).)*?'
+const twoStarDot = '(?:(?!(?:\\\/|^)(?:\\.{1,2})($|\\\/)).)*?'
 
 // not a ^ or / followed by a dot,
 // followed by anything, any number of times.
-var twoStarNoDot = '(?:(?!(?:\\\/|^)\\.).)*?'
+const twoStarNoDot = '(?:(?!(?:\\\/|^)\\.).)*?'
 
 // characters that need to be escaped in RegExp.
-var reSpecials = charSet('().*{}+?[]^$\\!')
+const reSpecials = charSet('().*{}+?[]^$\\!')
 
 // "abc" -> { a:true, b:true, c:true }
 function charSet (s) {
@@ -12154,7 +12154,7 @@ function charSet (s) {
 }
 
 // normalizes slashes.
-var slashSplit = /\/+/
+const slashSplit = /\/+/
 
 minimatch.filter = filter
 function filter (pattern, options) {
@@ -12167,41 +12167,63 @@ function filter (pattern, options) {
 function ext (a, b) {
   a = a || {}
   b = b || {}
-  var t = {}
-  Object.keys(b).forEach(function (k) {
-    t[k] = b[k]
-  })
+  const t = {}
   Object.keys(a).forEach(function (k) {
     t[k] = a[k]
+  })
+  Object.keys(b).forEach(function (k) {
+    t[k] = b[k]
   })
   return t
 }
 
 minimatch.defaults = function (def) {
-  if (!def || !Object.keys(def).length) return minimatch
+  if (!def || typeof def !== 'object' || !Object.keys(def).length) {
+    return minimatch
+  }
 
-  var orig = minimatch
+  const orig = minimatch
 
-  var m = function minimatch (p, pattern, options) {
-    return orig.minimatch(p, pattern, ext(def, options))
+  const m = function minimatch (p, pattern, options) {
+    return orig(p, pattern, ext(def, options))
   }
 
   m.Minimatch = function Minimatch (pattern, options) {
     return new orig.Minimatch(pattern, ext(def, options))
+  }
+  m.Minimatch.defaults = options => {
+    return orig.defaults(ext(def, options)).Minimatch
+  }
+
+  m.filter = function filter (pattern, options) {
+    return orig.filter(pattern, ext(def, options))
+  }
+
+  m.defaults = function defaults (options) {
+    return orig.defaults(ext(def, options))
+  }
+
+  m.makeRe = function makeRe (pattern, options) {
+    return orig.makeRe(pattern, ext(def, options))
+  }
+
+  m.braceExpand = function braceExpand (pattern, options) {
+    return orig.braceExpand(pattern, ext(def, options))
+  }
+
+  m.match = function (list, pattern, options) {
+    return orig.match(list, pattern, ext(def, options))
   }
 
   return m
 }
 
 Minimatch.defaults = function (def) {
-  if (!def || !Object.keys(def).length) return Minimatch
   return minimatch.defaults(def).Minimatch
 }
 
 function minimatch (p, pattern, options) {
-  if (typeof pattern !== 'string') {
-    throw new TypeError('glob pattern string required')
-  }
+  assertValidPattern(pattern)
 
   if (!options) options = {}
 
@@ -12221,9 +12243,7 @@ function Minimatch (pattern, options) {
     return new Minimatch(pattern, options)
   }
 
-  if (typeof pattern !== 'string') {
-    throw new TypeError('glob pattern string required')
-  }
+  assertValidPattern(pattern)
 
   if (!options) options = {}
   pattern = pattern.trim()
@@ -12351,17 +12371,25 @@ function braceExpand (pattern, options) {
   pattern = typeof pattern === 'undefined'
     ? this.pattern : pattern
 
-  if (typeof pattern === 'undefined') {
-    throw new TypeError('undefined pattern')
-  }
+  assertValidPattern(pattern)
 
-  if (options.nobrace ||
-    !pattern.match(/\{.*\}/)) {
+  if (options.nobrace || !/\{(?:(?!\{).)*\}/.test(pattern)) {
     // shortcut. no need to expand.
     return [pattern]
   }
 
   return expand(pattern)
+}
+
+const MAX_PATTERN_LENGTH = 1024 * 64
+const assertValidPattern = pattern => {
+  if (typeof pattern !== 'string') {
+    throw new TypeError('invalid pattern')
+  }
+
+  if (pattern.length > MAX_PATTERN_LENGTH) {
+    throw new TypeError('pattern is too long')
+  }
 }
 
 // parse a component of the expanded set.
@@ -12376,11 +12404,9 @@ function braceExpand (pattern, options) {
 // of * is equivalent to a single *.  Globstar behavior is enabled by
 // default, and can be disabled by setting options.noglobstar.
 Minimatch.prototype.parse = parse
-var SUBPARSE = {}
+const SUBPARSE = {}
 function parse (pattern, isSub) {
-  if (pattern.length > 1024 * 64) {
-    throw new TypeError('pattern is too long')
-  }
+  assertValidPattern(pattern)
 
   var options = this.options
 
@@ -12389,7 +12415,7 @@ function parse (pattern, isSub) {
   if (pattern === '') return ''
 
   var re = ''
-  var hasMagic = !!options.nocase
+  var hasMagic = false
   var escaping = false
   // ? => one single character
   var patternListStack = []
@@ -12441,10 +12467,11 @@ function parse (pattern, isSub) {
     }
 
     switch (c) {
-      case '/':
+      case '/': /* istanbul ignore next */ {
         // completely not allowed, even escaped.
         // Should already be path-split by now.
         return false
+      }
 
       case '\\':
         clearStateChar()
@@ -12729,7 +12756,7 @@ function parse (pattern, isSub) {
   var flags = options.nocase ? 'i' : ''
   try {
     var regExp = new RegExp('^' + re + '$', flags)
-  } catch (er) {
+  } catch (er) /* istanbul ignore next - should be impossible */ {
     // If it was an invalid regular expression, then it can't match
     // anything.  This trick looks for a character after the end of
     // the string, which is of course impossible, except in multi-line
@@ -12787,7 +12814,7 @@ function makeRe () {
 
   try {
     this.regexp = new RegExp(re, flags)
-  } catch (ex) {
+  } catch (ex) /* istanbul ignore next - should be impossible */ {
     this.regexp = false
   }
   return this.regexp
@@ -12795,7 +12822,7 @@ function makeRe () {
 
 minimatch.match = function (list, pattern, options) {
   options = options || {}
-  var mm = new Minimatch(pattern, options)
+  const mm = new Minimatch(pattern, options)
   list = list.filter(function (f) {
     return mm.match(f)
   })
@@ -12888,6 +12915,7 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
 
     // should be impossible.
     // some invalid regexp stuff in the set.
+    /* istanbul ignore if */
     if (p === false) return false
 
     if (p === GLOBSTAR) {
@@ -12961,6 +12989,7 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
       // no match was found.
       // However, in partial mode, we can't say this is necessarily over.
       // If there's more *pattern* left, then
+      /* istanbul ignore if */
       if (partial) {
         // ran out of file
         this.debug('\n>>> no match, partial?', file, fr, pattern, pr)
@@ -13009,16 +13038,16 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
     // this is ok if we're doing the match as part of
     // a glob fs traversal.
     return partial
-  } else if (pi === pl) {
+  } else /* istanbul ignore else */ if (pi === pl) {
     // ran out of pattern, still have file left.
     // this is only acceptable if we're on the very last
     // empty segment of a file with a trailing slash.
     // a/* should match a/b/
-    var emptyFileEnd = (fi === fl - 1) && (file[fi] === '')
-    return emptyFileEnd
+    return (fi === fl - 1) && (file[fi] === '')
   }
 
   // should be unreachable.
+  /* istanbul ignore next */
   throw new Error('wtf?')
 }
 
@@ -15025,9 +15054,10 @@ const path_1 = __importDefault(__nccwpck_require__(1017));
 const artifactApi_1 = __nccwpck_require__(3124);
 const constants_1 = __nccwpck_require__(8593);
 function uploadArtifacts() {
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         const list = yield artifactApi_1.artifactApi.listArtifacts();
-        const existingArtifacts = list.artifacts.map((artifact) => artifact.name);
+        const existingArtifacts = ((_a = list.artifacts) === null || _a === void 0 ? void 0 : _a.map((artifact) => artifact.name)) || [];
         const client = (0, artifact_1.create)();
         const files = fs_extra_1.default.readdirSync(constants_1.cacheDir);
         const artifactFiles = files.filter((filename) => filename.endsWith('.gz'));
