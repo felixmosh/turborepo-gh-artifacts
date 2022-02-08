@@ -4650,74 +4650,11 @@ exports.fromPromise = function (fn) {
 
 /***/ }),
 
-/***/ 3225:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __nccwpck_require__(2186);
-const child_process_1 = __nccwpck_require__(2081);
-const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
-const path_1 = __importDefault(__nccwpck_require__(1017));
-const constants_1 = __nccwpck_require__(8593);
-fs_extra_1.default.ensureDirSync(constants_1.cacheDir);
-const out = fs_extra_1.default.openSync(path_1.default.join(constants_1.cacheDir, 'out.log'), 'a');
-const err = fs_extra_1.default.openSync(path_1.default.join(constants_1.cacheDir, 'out.log'), 'a');
-const subprocess = (0, child_process_1.spawn)('node', [path_1.default.resolve(__dirname, '../turboServer/index.js')], {
-    detached: true,
-    stdio: ['ignore', out, err],
-    env: process.env,
-});
-subprocess.unref();
-(0, core_1.info)(`${constants_1.States.TURBO_LOCAL_SERVER_PID}: ${subprocess.pid}`);
-(0, core_1.saveState)(constants_1.States.TURBO_LOCAL_SERVER_PID, subprocess.pid);
-
-
-/***/ }),
-
-/***/ 8593:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Inputs = exports.States = exports.cacheDir = void 0;
-const os_1 = __importDefault(__nccwpck_require__(2037));
-const path_1 = __importDefault(__nccwpck_require__(1017));
-exports.cacheDir = path_1.default.join(process.env.RUNNER_TEMP || os_1.default.tmpdir(), 'turbo-cache');
-var States;
-(function (States) {
-    States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
-})(States = exports.States || (exports.States = {}));
-var Inputs;
-(function (Inputs) {
-    Inputs["SERVER_TOKEN"] = "server-token";
-    Inputs["REPO_TOKEN"] = "repo-token";
-})(Inputs = exports.Inputs || (exports.Inputs = {}));
-
-
-/***/ }),
-
 /***/ 9491:
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("assert");
-
-/***/ }),
-
-/***/ 2081:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("child_process");
 
 /***/ }),
 
@@ -4842,17 +4779,105 @@ module.exports = require("util");
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__nccwpck_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__nccwpck_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nccwpck_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(3225);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+// ESM COMPAT FLAG
+__nccwpck_require__.r(__webpack_exports__);
+
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+;// CONCATENATED MODULE: external "child_process"
+const external_child_process_namespaceObject = require("child_process");
+// EXTERNAL MODULE: ./node_modules/fs-extra/lib/index.js
+var lib = __nccwpck_require__(5630);
+var lib_default = /*#__PURE__*/__nccwpck_require__.n(lib);
+// EXTERNAL MODULE: external "path"
+var external_path_ = __nccwpck_require__(1017);
+var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
+// EXTERNAL MODULE: external "os"
+var external_os_ = __nccwpck_require__(2037);
+var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
+;// CONCATENATED MODULE: ./src/utils/constants.ts
+
+
+const cacheDir = external_path_default().join(process.env.RUNNER_TEMP || external_os_default().tmpdir(), 'turbo-cache');
+var States;
+(function (States) {
+    States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
+})(States || (States = {}));
+var Inputs;
+(function (Inputs) {
+    Inputs["SERVER_TOKEN"] = "server-token";
+    Inputs["REPO_TOKEN"] = "repo-token";
+})(Inputs || (Inputs = {}));
+
+;// CONCATENATED MODULE: ./src/starter.ts
+
+
+
+
+
+lib_default().ensureDirSync(cacheDir);
+const out = lib_default().openSync(external_path_default().join(cacheDir, 'out.log'), 'a');
+const err = lib_default().openSync(external_path_default().join(cacheDir, 'out.log'), 'a');
+const subprocess = (0,external_child_process_namespaceObject.spawn)('node', [external_path_default().resolve(__dirname, '../turboServer/index.js')], {
+    detached: true,
+    stdio: ['ignore', out, err],
+    env: process.env,
+});
+subprocess.unref();
+(0,core.info)(`${States.TURBO_LOCAL_SERVER_PID}: ${subprocess.pid}`);
+(0,core.saveState)(States.TURBO_LOCAL_SERVER_PID, subprocess.pid);
+
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;

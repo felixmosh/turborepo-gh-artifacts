@@ -5,8 +5,9 @@
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
+var __webpack_unused_export__;
 
-Object.defineProperty(exports, "__esModule", ({ value: true }));
+__webpack_unused_export__ = ({ value: true });
 const artifact_client_1 = __nccwpck_require__(8802);
 /**
  * Constructs an ArtifactClient
@@ -14,7 +15,7 @@ const artifact_client_1 = __nccwpck_require__(8802);
 function create() {
     return artifact_client_1.DefaultArtifactClient.create();
 }
-exports.create = create;
+exports.U = create;
 //# sourceMappingURL=artifact-client.js.map
 
 /***/ }),
@@ -3095,8 +3096,10 @@ module.exports = function httpAdapter(config) {
       done();
       resolvePromise(value);
     };
+    var rejected = false;
     var reject = function reject(value) {
       done();
+      rejected = true;
       rejectPromise(value);
     };
     var data = config.data;
@@ -3132,6 +3135,10 @@ module.exports = function httpAdapter(config) {
           'Data after transformation must be a string, an ArrayBuffer, a Buffer, or a Stream',
           config
         ));
+      }
+
+      if (config.maxBodyLength > -1 && data.length > config.maxBodyLength) {
+        return reject(createError('Request body larger than maxBodyLength limit', config));
       }
 
       // Add Content-Length header if data exists
@@ -3304,10 +3311,20 @@ module.exports = function httpAdapter(config) {
 
           // make sure the content length is not over the maxContentLength if specified
           if (config.maxContentLength > -1 && totalResponseBytes > config.maxContentLength) {
+            // stream.destoy() emit aborted event before calling reject() on Node.js v16
+            rejected = true;
             stream.destroy();
             reject(createError('maxContentLength size of ' + config.maxContentLength + ' exceeded',
               config, null, lastRequest));
           }
+        });
+
+        stream.on('aborted', function handlerStreamAborted() {
+          if (rejected) {
+            return;
+          }
+          stream.destroy();
+          reject(createError('error request aborted', config, 'ERR_REQUEST_ABORTED', lastRequest));
         });
 
         stream.on('error', function handleStreamError(err) {
@@ -3316,15 +3333,18 @@ module.exports = function httpAdapter(config) {
         });
 
         stream.on('end', function handleStreamEnd() {
-          var responseData = Buffer.concat(responseBuffer);
-          if (config.responseType !== 'arraybuffer') {
-            responseData = responseData.toString(config.responseEncoding);
-            if (!config.responseEncoding || config.responseEncoding === 'utf8') {
-              responseData = utils.stripBOM(responseData);
+          try {
+            var responseData = responseBuffer.length === 1 ? responseBuffer[0] : Buffer.concat(responseBuffer);
+            if (config.responseType !== 'arraybuffer') {
+              responseData = responseData.toString(config.responseEncoding);
+              if (!config.responseEncoding || config.responseEncoding === 'utf8') {
+                responseData = utils.stripBOM(responseData);
+              }
             }
+            response.data = responseData;
+          } catch (err) {
+            reject(enhanceError(err, config, err.code, response.request, response));
           }
-
-          response.data = responseData;
           settle(resolve, reject, response);
         });
       }
@@ -3334,6 +3354,12 @@ module.exports = function httpAdapter(config) {
     req.on('error', function handleRequestError(err) {
       if (req.aborted && err.code !== 'ERR_FR_TOO_MANY_REDIRECTS') return;
       reject(enhanceError(err, config, null, req));
+    });
+
+    // set tcp keep alive to prevent drop connection by peer
+    req.on('socket', function handleRequestSocket(socket) {
+      // default interval of sending ack packet is 1 minute
+      socket.setKeepAlive(true, 1000 * 60);
     });
 
     // Handle request timeout
@@ -3884,14 +3910,18 @@ function Axios(instanceConfig) {
  *
  * @param {Object} config The config specific for this request (merged with this.defaults)
  */
-Axios.prototype.request = function request(config) {
+Axios.prototype.request = function request(configOrUrl, config) {
   /*eslint no-param-reassign:0*/
   // Allow for axios('example/url'[, config]) a la fetch API
-  if (typeof config === 'string') {
-    config = arguments[1] || {};
-    config.url = arguments[0];
-  } else {
+  if (typeof configOrUrl === 'string') {
     config = config || {};
+    config.url = configOrUrl;
+  } else {
+    config = configOrUrl || {};
+  }
+
+  if (!config.url) {
+    throw new Error('Provided config url is not valid');
   }
 
   config = mergeConfig(this.defaults, config);
@@ -3976,6 +4006,9 @@ Axios.prototype.request = function request(config) {
 };
 
 Axios.prototype.getUri = function getUri(config) {
+  if (!config.url) {
+    throw new Error('Provided config url is not valid');
+  }
   config = mergeConfig(this.defaults, config);
   return buildURL(config.url, config.params, config.paramsSerializer).replace(/^\?/, '');
 };
@@ -4586,7 +4619,7 @@ module.exports = defaults;
 /***/ ((module) => {
 
 module.exports = {
-  "version": "0.24.0"
+  "version": "0.25.0"
 };
 
 /***/ }),
@@ -4787,17 +4820,19 @@ module.exports = function isAbsoluteURL(url) {
   // A URL is considered absolute if it begins with "<scheme>://" or "//" (protocol-relative URL).
   // RFC 3986 defines scheme name as a sequence of characters beginning with a letter and followed
   // by any combination of letters, digits, plus, period, or hyphen.
-  return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
+  return /^([a-z][a-z\d+\-.]*:)?\/\//i.test(url);
 };
 
 
 /***/ }),
 
 /***/ 650:
-/***/ ((module) => {
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
 
+
+var utils = __nccwpck_require__(328);
 
 /**
  * Determines whether the payload is an error thrown by Axios
@@ -4806,7 +4841,7 @@ module.exports = function isAbsoluteURL(url) {
  * @returns {boolean} True if the payload is an error thrown by Axios, otherwise false
  */
 module.exports = function isAxiosError(payload) {
-  return (typeof payload === 'object') && (payload.isAxiosError === true);
+  return utils.isObject(payload) && (payload.isAxiosError === true);
 };
 
 
@@ -5113,7 +5148,7 @@ var toString = Object.prototype.toString;
  * @returns {boolean} True if value is an Array, otherwise false
  */
 function isArray(val) {
-  return toString.call(val) === '[object Array]';
+  return Array.isArray(val);
 }
 
 /**
@@ -5154,7 +5189,7 @@ function isArrayBuffer(val) {
  * @returns {boolean} True if value is an FormData, otherwise false
  */
 function isFormData(val) {
-  return (typeof FormData !== 'undefined') && (val instanceof FormData);
+  return toString.call(val) === '[object FormData]';
 }
 
 /**
@@ -5168,7 +5203,7 @@ function isArrayBufferView(val) {
   if ((typeof ArrayBuffer !== 'undefined') && (ArrayBuffer.isView)) {
     result = ArrayBuffer.isView(val);
   } else {
-    result = (val) && (val.buffer) && (val.buffer instanceof ArrayBuffer);
+    result = (val) && (val.buffer) && (isArrayBuffer(val.buffer));
   }
   return result;
 }
@@ -5275,7 +5310,7 @@ function isStream(val) {
  * @returns {boolean} True if value is a URLSearchParams object, otherwise false
  */
 function isURLSearchParams(val) {
-  return typeof URLSearchParams !== 'undefined' && val instanceof URLSearchParams;
+  return toString.call(val) === '[object URLSearchParams]';
 }
 
 /**
@@ -12110,15 +12145,15 @@ module.exports = { stringify, stripBom }
 module.exports = minimatch
 minimatch.Minimatch = Minimatch
 
-const path = (() => { try { return __nccwpck_require__(1017) } catch (e) {}})() || {
-  sep: '/'
-}
-minimatch.sep = path.sep
+var path = { sep: '/' }
+try {
+  path = __nccwpck_require__(1017)
+} catch (er) {}
 
-const GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {}
-const expand = __nccwpck_require__(3717)
+var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {}
+var expand = __nccwpck_require__(3717)
 
-const plTypes = {
+var plTypes = {
   '!': { open: '(?:(?!(?:', close: '))[^/]*?)'},
   '?': { open: '(?:', close: ')?' },
   '+': { open: '(?:', close: ')+' },
@@ -12128,22 +12163,22 @@ const plTypes = {
 
 // any single thing other than /
 // don't need to escape / when using new RegExp()
-const qmark = '[^/]'
+var qmark = '[^/]'
 
 // * => any number of characters
-const star = qmark + '*?'
+var star = qmark + '*?'
 
 // ** when dots are allowed.  Anything goes, except .. and .
 // not (^ or / followed by one or two dots followed by $ or /),
 // followed by anything, any number of times.
-const twoStarDot = '(?:(?!(?:\\\/|^)(?:\\.{1,2})($|\\\/)).)*?'
+var twoStarDot = '(?:(?!(?:\\\/|^)(?:\\.{1,2})($|\\\/)).)*?'
 
 // not a ^ or / followed by a dot,
 // followed by anything, any number of times.
-const twoStarNoDot = '(?:(?!(?:\\\/|^)\\.).)*?'
+var twoStarNoDot = '(?:(?!(?:\\\/|^)\\.).)*?'
 
 // characters that need to be escaped in RegExp.
-const reSpecials = charSet('().*{}+?[]^$\\!')
+var reSpecials = charSet('().*{}+?[]^$\\!')
 
 // "abc" -> { a:true, b:true, c:true }
 function charSet (s) {
@@ -12154,7 +12189,7 @@ function charSet (s) {
 }
 
 // normalizes slashes.
-const slashSplit = /\/+/
+var slashSplit = /\/+/
 
 minimatch.filter = filter
 function filter (pattern, options) {
@@ -12167,63 +12202,41 @@ function filter (pattern, options) {
 function ext (a, b) {
   a = a || {}
   b = b || {}
-  const t = {}
-  Object.keys(a).forEach(function (k) {
-    t[k] = a[k]
-  })
+  var t = {}
   Object.keys(b).forEach(function (k) {
     t[k] = b[k]
+  })
+  Object.keys(a).forEach(function (k) {
+    t[k] = a[k]
   })
   return t
 }
 
 minimatch.defaults = function (def) {
-  if (!def || typeof def !== 'object' || !Object.keys(def).length) {
-    return minimatch
-  }
+  if (!def || !Object.keys(def).length) return minimatch
 
-  const orig = minimatch
+  var orig = minimatch
 
-  const m = function minimatch (p, pattern, options) {
-    return orig(p, pattern, ext(def, options))
+  var m = function minimatch (p, pattern, options) {
+    return orig.minimatch(p, pattern, ext(def, options))
   }
 
   m.Minimatch = function Minimatch (pattern, options) {
     return new orig.Minimatch(pattern, ext(def, options))
-  }
-  m.Minimatch.defaults = options => {
-    return orig.defaults(ext(def, options)).Minimatch
-  }
-
-  m.filter = function filter (pattern, options) {
-    return orig.filter(pattern, ext(def, options))
-  }
-
-  m.defaults = function defaults (options) {
-    return orig.defaults(ext(def, options))
-  }
-
-  m.makeRe = function makeRe (pattern, options) {
-    return orig.makeRe(pattern, ext(def, options))
-  }
-
-  m.braceExpand = function braceExpand (pattern, options) {
-    return orig.braceExpand(pattern, ext(def, options))
-  }
-
-  m.match = function (list, pattern, options) {
-    return orig.match(list, pattern, ext(def, options))
   }
 
   return m
 }
 
 Minimatch.defaults = function (def) {
+  if (!def || !Object.keys(def).length) return Minimatch
   return minimatch.defaults(def).Minimatch
 }
 
 function minimatch (p, pattern, options) {
-  assertValidPattern(pattern)
+  if (typeof pattern !== 'string') {
+    throw new TypeError('glob pattern string required')
+  }
 
   if (!options) options = {}
 
@@ -12243,7 +12256,9 @@ function Minimatch (pattern, options) {
     return new Minimatch(pattern, options)
   }
 
-  assertValidPattern(pattern)
+  if (typeof pattern !== 'string') {
+    throw new TypeError('glob pattern string required')
+  }
 
   if (!options) options = {}
   pattern = pattern.trim()
@@ -12371,25 +12386,17 @@ function braceExpand (pattern, options) {
   pattern = typeof pattern === 'undefined'
     ? this.pattern : pattern
 
-  assertValidPattern(pattern)
+  if (typeof pattern === 'undefined') {
+    throw new TypeError('undefined pattern')
+  }
 
-  if (options.nobrace || !/\{(?:(?!\{).)*\}/.test(pattern)) {
+  if (options.nobrace ||
+    !pattern.match(/\{.*\}/)) {
     // shortcut. no need to expand.
     return [pattern]
   }
 
   return expand(pattern)
-}
-
-const MAX_PATTERN_LENGTH = 1024 * 64
-const assertValidPattern = pattern => {
-  if (typeof pattern !== 'string') {
-    throw new TypeError('invalid pattern')
-  }
-
-  if (pattern.length > MAX_PATTERN_LENGTH) {
-    throw new TypeError('pattern is too long')
-  }
 }
 
 // parse a component of the expanded set.
@@ -12404,9 +12411,11 @@ const assertValidPattern = pattern => {
 // of * is equivalent to a single *.  Globstar behavior is enabled by
 // default, and can be disabled by setting options.noglobstar.
 Minimatch.prototype.parse = parse
-const SUBPARSE = {}
+var SUBPARSE = {}
 function parse (pattern, isSub) {
-  assertValidPattern(pattern)
+  if (pattern.length > 1024 * 64) {
+    throw new TypeError('pattern is too long')
+  }
 
   var options = this.options
 
@@ -12415,7 +12424,7 @@ function parse (pattern, isSub) {
   if (pattern === '') return ''
 
   var re = ''
-  var hasMagic = false
+  var hasMagic = !!options.nocase
   var escaping = false
   // ? => one single character
   var patternListStack = []
@@ -12467,11 +12476,10 @@ function parse (pattern, isSub) {
     }
 
     switch (c) {
-      case '/': /* istanbul ignore next */ {
+      case '/':
         // completely not allowed, even escaped.
         // Should already be path-split by now.
         return false
-      }
 
       case '\\':
         clearStateChar()
@@ -12756,7 +12764,7 @@ function parse (pattern, isSub) {
   var flags = options.nocase ? 'i' : ''
   try {
     var regExp = new RegExp('^' + re + '$', flags)
-  } catch (er) /* istanbul ignore next - should be impossible */ {
+  } catch (er) {
     // If it was an invalid regular expression, then it can't match
     // anything.  This trick looks for a character after the end of
     // the string, which is of course impossible, except in multi-line
@@ -12814,7 +12822,7 @@ function makeRe () {
 
   try {
     this.regexp = new RegExp(re, flags)
-  } catch (ex) /* istanbul ignore next - should be impossible */ {
+  } catch (ex) {
     this.regexp = false
   }
   return this.regexp
@@ -12822,7 +12830,7 @@ function makeRe () {
 
 minimatch.match = function (list, pattern, options) {
   options = options || {}
-  const mm = new Minimatch(pattern, options)
+  var mm = new Minimatch(pattern, options)
   list = list.filter(function (f) {
     return mm.match(f)
   })
@@ -12915,7 +12923,6 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
 
     // should be impossible.
     // some invalid regexp stuff in the set.
-    /* istanbul ignore if */
     if (p === false) return false
 
     if (p === GLOBSTAR) {
@@ -12989,7 +12996,6 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
       // no match was found.
       // However, in partial mode, we can't say this is necessarily over.
       // If there's more *pattern* left, then
-      /* istanbul ignore if */
       if (partial) {
         // ran out of file
         this.debug('\n>>> no match, partial?', file, fr, pattern, pr)
@@ -13038,16 +13044,16 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
     // this is ok if we're doing the match as part of
     // a glob fs traversal.
     return partial
-  } else /* istanbul ignore else */ if (pi === pl) {
+  } else if (pi === pl) {
     // ran out of pattern, still have file left.
     // this is only acceptable if we're on the very last
     // empty segment of a file with a trailing slash.
     // a/* should match a/b/
-    return (fi === fl - 1) && (file[fi] === '')
+    var emptyFileEnd = (fi === fl - 1) && (file[fi] === '')
+    return emptyFileEnd
   }
 
   // should be unreachable.
-  /* istanbul ignore next */
   throw new Error('wtf?')
 }
 
@@ -14863,230 +14869,6 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 7051:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __nccwpck_require__(2186);
-const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
-const constants_1 = __nccwpck_require__(8593);
-const printServerLogs_1 = __nccwpck_require__(2104);
-const stopServer_1 = __nccwpck_require__(764);
-const uploadArtifacts_1 = __nccwpck_require__(1959);
-function post() {
-    return __awaiter(this, void 0, void 0, function* () {
-        fs_extra_1.default.ensureDirSync(constants_1.cacheDir);
-        (0, stopServer_1.stopServer)();
-        yield (0, uploadArtifacts_1.uploadArtifacts)();
-        (0, printServerLogs_1.printServerLogs)();
-    });
-}
-post().catch((error) => {
-    (0, core_1.setFailed)(error);
-});
-
-
-/***/ }),
-
-/***/ 3124:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.artifactApi = void 0;
-const core_1 = __nccwpck_require__(2186);
-const axios_1 = __nccwpck_require__(6545);
-const constants_1 = __nccwpck_require__(8593);
-class ArtifactApi {
-    constructor() {
-        const repoToken = (0, core_1.getInput)(constants_1.Inputs.REPO_TOKEN, {
-            required: true,
-            trimWhitespace: true,
-        });
-        this.axios = new axios_1.Axios({
-            baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions`,
-            headers: {
-                Accept: 'application/vnd.github.v3+json',
-                Authorization: `Bearer ${repoToken}`,
-            },
-        });
-    }
-    listArtifacts() {
-        return this.axios
-            .get('/artifacts', { params: { per_page: 100 } })
-            .then((response) => JSON.parse(response.data));
-    }
-    downloadArtifact(artifactId) {
-        return this.axios.get(`/artifacts/${artifactId}/zip`, {
-            responseType: 'stream',
-        });
-    }
-}
-exports.artifactApi = new ArtifactApi();
-
-
-/***/ }),
-
-/***/ 8593:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Inputs = exports.States = exports.cacheDir = void 0;
-const os_1 = __importDefault(__nccwpck_require__(2037));
-const path_1 = __importDefault(__nccwpck_require__(1017));
-exports.cacheDir = path_1.default.join(process.env.RUNNER_TEMP || os_1.default.tmpdir(), 'turbo-cache');
-var States;
-(function (States) {
-    States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
-})(States = exports.States || (exports.States = {}));
-var Inputs;
-(function (Inputs) {
-    Inputs["SERVER_TOKEN"] = "server-token";
-    Inputs["REPO_TOKEN"] = "repo-token";
-})(Inputs = exports.Inputs || (exports.Inputs = {}));
-
-
-/***/ }),
-
-/***/ 2104:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.printServerLogs = void 0;
-const core_1 = __nccwpck_require__(2186);
-const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
-const path_1 = __importDefault(__nccwpck_require__(1017));
-const constants_1 = __nccwpck_require__(8593);
-function printServerLogs() {
-    (0, core_1.info)('Server logs:');
-    (0, core_1.info)(fs_extra_1.default.readFileSync(path_1.default.join(constants_1.cacheDir, 'out.log'), {
-        encoding: 'utf8',
-        flag: 'r',
-    }));
-}
-exports.printServerLogs = printServerLogs;
-
-
-/***/ }),
-
-/***/ 764:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.stopServer = void 0;
-const core_1 = __nccwpck_require__(2186);
-const constants_1 = __nccwpck_require__(8593);
-function pidIsRunning(pid) {
-    try {
-        process.kill(+pid, 0);
-        return true;
-    }
-    catch (e) {
-        return false;
-    }
-}
-function stopServer() {
-    const serverPID = (0, core_1.getState)(constants_1.States.TURBO_LOCAL_SERVER_PID);
-    (0, core_1.info)(`Found server pid: ${serverPID}`);
-    if (serverPID && pidIsRunning(serverPID)) {
-        (0, core_1.info)(`Killing server pid: ${serverPID}`);
-        process.kill(+serverPID);
-    }
-    else {
-        (0, core_1.info)(`Server with pid: ${serverPID} is not running`);
-    }
-}
-exports.stopServer = stopServer;
-
-
-/***/ }),
-
-/***/ 1959:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.uploadArtifacts = void 0;
-const artifact_1 = __nccwpck_require__(2605);
-const core_1 = __nccwpck_require__(2186);
-const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
-const path_1 = __importDefault(__nccwpck_require__(1017));
-const artifactApi_1 = __nccwpck_require__(3124);
-const constants_1 = __nccwpck_require__(8593);
-function uploadArtifacts() {
-    var _a;
-    return __awaiter(this, void 0, void 0, function* () {
-        const list = yield artifactApi_1.artifactApi.listArtifacts();
-        const existingArtifacts = ((_a = list.artifacts) === null || _a === void 0 ? void 0 : _a.map((artifact) => artifact.name)) || [];
-        const client = (0, artifact_1.create)();
-        const files = fs_extra_1.default.readdirSync(constants_1.cacheDir);
-        const artifactFiles = files.filter((filename) => filename.endsWith('.gz'));
-        (0, core_1.debug)(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
-        const artifactsToUpload = artifactFiles
-            .map((artifactFilename) => {
-            const artifactId = path_1.default.basename(artifactFilename, path_1.default.extname(artifactFilename));
-            return { artifactFilename, artifactId };
-        })
-            .filter(({ artifactId }) => !existingArtifacts.includes(artifactId));
-        if (artifactsToUpload.length) {
-            (0, core_1.info)(`Gonna upload ${artifactsToUpload.length} artifacts:`);
-            (0, core_1.info)(JSON.stringify(artifactsToUpload.map(({ artifactId }) => artifactId), null, 2));
-        }
-        else {
-            (0, core_1.info)(`There is nothing to upload.`);
-        }
-        yield Promise.all(artifactsToUpload.map(({ artifactFilename, artifactId }) => __awaiter(this, void 0, void 0, function* () {
-            (0, core_1.info)(`Uploading ${artifactFilename}`);
-            yield client.uploadArtifact(artifactId, [path_1.default.join(constants_1.cacheDir, artifactFilename)], constants_1.cacheDir);
-            (0, core_1.info)(`Uploaded ${artifactFilename} successfully`);
-        })));
-    });
-}
-exports.uploadArtifacts = uploadArtifacts;
-
-
-/***/ }),
-
 /***/ 9491:
 /***/ ((module) => {
 
@@ -15256,17 +15038,209 @@ module.exports = require("zlib");
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__nccwpck_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__nccwpck_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nccwpck_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(7051);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+// ESM COMPAT FLAG
+__nccwpck_require__.r(__webpack_exports__);
+
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/fs-extra/lib/index.js
+var lib = __nccwpck_require__(5630);
+var lib_default = /*#__PURE__*/__nccwpck_require__.n(lib);
+// EXTERNAL MODULE: external "os"
+var external_os_ = __nccwpck_require__(2037);
+var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
+// EXTERNAL MODULE: external "path"
+var external_path_ = __nccwpck_require__(1017);
+var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
+;// CONCATENATED MODULE: ./src/utils/constants.ts
+
+
+const cacheDir = external_path_default().join(process.env.RUNNER_TEMP || external_os_default().tmpdir(), 'turbo-cache');
+var States;
+(function (States) {
+    States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
+})(States || (States = {}));
+var Inputs;
+(function (Inputs) {
+    Inputs["SERVER_TOKEN"] = "server-token";
+    Inputs["REPO_TOKEN"] = "repo-token";
+})(Inputs || (Inputs = {}));
+
+;// CONCATENATED MODULE: ./src/utils/printServerLogs.ts
+
+
+
+
+function printServerLogs() {
+    (0,core.info)('Server logs:');
+    (0,core.info)(lib_default().readFileSync(external_path_default().join(cacheDir, 'out.log'), {
+        encoding: 'utf8',
+        flag: 'r',
+    }));
+}
+
+;// CONCATENATED MODULE: ./src/utils/stopServer.ts
+
+
+function pidIsRunning(pid) {
+    try {
+        process.kill(+pid, 0);
+        return true;
+    }
+    catch (e) {
+        return false;
+    }
+}
+function stopServer() {
+    const serverPID = (0,core.getState)(States.TURBO_LOCAL_SERVER_PID);
+    (0,core.info)(`Found server pid: ${serverPID}`);
+    if (serverPID && pidIsRunning(serverPID)) {
+        (0,core.info)(`Killing server pid: ${serverPID}`);
+        process.kill(+serverPID);
+    }
+    else {
+        (0,core.info)(`Server with pid: ${serverPID} is not running`);
+    }
+}
+
+// EXTERNAL MODULE: ./node_modules/@actions/artifact/lib/artifact-client.js
+var artifact_client = __nccwpck_require__(2605);
+// EXTERNAL MODULE: ./node_modules/axios/index.js
+var axios = __nccwpck_require__(6545);
+;// CONCATENATED MODULE: ./src/utils/artifactApi.ts
+
+
+
+class ArtifactApi {
+    axios;
+    constructor() {
+        const repoToken = (0,core.getInput)(Inputs.REPO_TOKEN, {
+            required: true,
+            trimWhitespace: true,
+        });
+        this.axios = new axios.Axios({
+            baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions`,
+            headers: {
+                Accept: 'application/vnd.github.v3+json',
+                Authorization: `Bearer ${repoToken}`,
+            },
+        });
+    }
+    listArtifacts() {
+        return this.axios
+            .get('/artifacts', { params: { per_page: 100 } })
+            .then((response) => JSON.parse(response.data));
+    }
+    downloadArtifact(artifactId) {
+        return this.axios.get(`/artifacts/${artifactId}/zip`, {
+            responseType: 'stream',
+        });
+    }
+}
+const artifactApi = new ArtifactApi();
+
+;// CONCATENATED MODULE: ./src/utils/uploadArtifacts.ts
+
+
+
+
+
+
+async function uploadArtifacts() {
+    const list = await artifactApi.listArtifacts();
+    const existingArtifacts = list.artifacts?.map((artifact) => artifact.name) || [];
+    const client = (0,artifact_client/* create */.U)();
+    const files = lib_default().readdirSync(cacheDir);
+    const artifactFiles = files.filter((filename) => filename.endsWith('.gz'));
+    (0,core.debug)(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
+    const artifactsToUpload = artifactFiles
+        .map((artifactFilename) => {
+        const artifactId = external_path_default().basename(artifactFilename, external_path_default().extname(artifactFilename));
+        return { artifactFilename, artifactId };
+    })
+        .filter(({ artifactId }) => !existingArtifacts.includes(artifactId));
+    if (artifactsToUpload.length) {
+        (0,core.info)(`Gonna upload ${artifactsToUpload.length} artifacts:`);
+        (0,core.info)(JSON.stringify(artifactsToUpload.map(({ artifactId }) => artifactId), null, 2));
+    }
+    else {
+        (0,core.info)(`There is nothing to upload.`);
+    }
+    await Promise.all(artifactsToUpload.map(async ({ artifactFilename, artifactId }) => {
+        (0,core.info)(`Uploading ${artifactFilename}`);
+        await client.uploadArtifact(artifactId, [external_path_default().join(cacheDir, artifactFilename)], cacheDir);
+        (0,core.info)(`Uploaded ${artifactFilename} successfully`);
+    }));
+}
+
+;// CONCATENATED MODULE: ./src/post.ts
+
+
+
+
+
+
+async function post() {
+    lib_default().ensureDirSync(cacheDir);
+    stopServer();
+    await uploadArtifacts();
+    printServerLogs();
+}
+post().catch((error) => {
+    (0,core.setFailed)(error);
+});
+
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;
