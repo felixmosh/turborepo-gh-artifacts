@@ -1666,8 +1666,10 @@ module.exports = function httpAdapter(config) {
       done();
       resolvePromise(value);
     };
+    var rejected = false;
     var reject = function reject(value) {
       done();
+      rejected = true;
       rejectPromise(value);
     };
     var data = config.data;
@@ -1703,6 +1705,10 @@ module.exports = function httpAdapter(config) {
           'Data after transformation must be a string, an ArrayBuffer, a Buffer, or a Stream',
           config
         ));
+      }
+
+      if (config.maxBodyLength > -1 && data.length > config.maxBodyLength) {
+        return reject(createError('Request body larger than maxBodyLength limit', config));
       }
 
       // Add Content-Length header if data exists
@@ -1875,10 +1881,20 @@ module.exports = function httpAdapter(config) {
 
           // make sure the content length is not over the maxContentLength if specified
           if (config.maxContentLength > -1 && totalResponseBytes > config.maxContentLength) {
+            // stream.destoy() emit aborted event before calling reject() on Node.js v16
+            rejected = true;
             stream.destroy();
             reject(createError('maxContentLength size of ' + config.maxContentLength + ' exceeded',
               config, null, lastRequest));
           }
+        });
+
+        stream.on('aborted', function handlerStreamAborted() {
+          if (rejected) {
+            return;
+          }
+          stream.destroy();
+          reject(createError('error request aborted', config, 'ERR_REQUEST_ABORTED', lastRequest));
         });
 
         stream.on('error', function handleStreamError(err) {
@@ -1887,15 +1903,18 @@ module.exports = function httpAdapter(config) {
         });
 
         stream.on('end', function handleStreamEnd() {
-          var responseData = Buffer.concat(responseBuffer);
-          if (config.responseType !== 'arraybuffer') {
-            responseData = responseData.toString(config.responseEncoding);
-            if (!config.responseEncoding || config.responseEncoding === 'utf8') {
-              responseData = utils.stripBOM(responseData);
+          try {
+            var responseData = responseBuffer.length === 1 ? responseBuffer[0] : Buffer.concat(responseBuffer);
+            if (config.responseType !== 'arraybuffer') {
+              responseData = responseData.toString(config.responseEncoding);
+              if (!config.responseEncoding || config.responseEncoding === 'utf8') {
+                responseData = utils.stripBOM(responseData);
+              }
             }
+            response.data = responseData;
+          } catch (err) {
+            reject(enhanceError(err, config, err.code, response.request, response));
           }
-
-          response.data = responseData;
           settle(resolve, reject, response);
         });
       }
@@ -1905,6 +1924,12 @@ module.exports = function httpAdapter(config) {
     req.on('error', function handleRequestError(err) {
       if (req.aborted && err.code !== 'ERR_FR_TOO_MANY_REDIRECTS') return;
       reject(enhanceError(err, config, null, req));
+    });
+
+    // set tcp keep alive to prevent drop connection by peer
+    req.on('socket', function handleRequestSocket(socket) {
+      // default interval of sending ack packet is 1 minute
+      socket.setKeepAlive(true, 1000 * 60);
     });
 
     // Handle request timeout
@@ -2455,14 +2480,18 @@ function Axios(instanceConfig) {
  *
  * @param {Object} config The config specific for this request (merged with this.defaults)
  */
-Axios.prototype.request = function request(config) {
+Axios.prototype.request = function request(configOrUrl, config) {
   /*eslint no-param-reassign:0*/
   // Allow for axios('example/url'[, config]) a la fetch API
-  if (typeof config === 'string') {
-    config = arguments[1] || {};
-    config.url = arguments[0];
-  } else {
+  if (typeof configOrUrl === 'string') {
     config = config || {};
+    config.url = configOrUrl;
+  } else {
+    config = configOrUrl || {};
+  }
+
+  if (!config.url) {
+    throw new Error('Provided config url is not valid');
   }
 
   config = mergeConfig(this.defaults, config);
@@ -2547,6 +2576,9 @@ Axios.prototype.request = function request(config) {
 };
 
 Axios.prototype.getUri = function getUri(config) {
+  if (!config.url) {
+    throw new Error('Provided config url is not valid');
+  }
   config = mergeConfig(this.defaults, config);
   return buildURL(config.url, config.params, config.paramsSerializer).replace(/^\?/, '');
 };
@@ -3157,7 +3189,7 @@ module.exports = defaults;
 /***/ ((module) => {
 
 module.exports = {
-  "version": "0.24.0"
+  "version": "0.25.0"
 };
 
 /***/ }),
@@ -3358,17 +3390,19 @@ module.exports = function isAbsoluteURL(url) {
   // A URL is considered absolute if it begins with "<scheme>://" or "//" (protocol-relative URL).
   // RFC 3986 defines scheme name as a sequence of characters beginning with a letter and followed
   // by any combination of letters, digits, plus, period, or hyphen.
-  return /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url);
+  return /^([a-z][a-z\d+\-.]*:)?\/\//i.test(url);
 };
 
 
 /***/ }),
 
 /***/ 650:
-/***/ ((module) => {
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
 
+
+var utils = __nccwpck_require__(328);
 
 /**
  * Determines whether the payload is an error thrown by Axios
@@ -3377,7 +3411,7 @@ module.exports = function isAbsoluteURL(url) {
  * @returns {boolean} True if the payload is an error thrown by Axios, otherwise false
  */
 module.exports = function isAxiosError(payload) {
-  return (typeof payload === 'object') && (payload.isAxiosError === true);
+  return utils.isObject(payload) && (payload.isAxiosError === true);
 };
 
 
@@ -3684,7 +3718,7 @@ var toString = Object.prototype.toString;
  * @returns {boolean} True if value is an Array, otherwise false
  */
 function isArray(val) {
-  return toString.call(val) === '[object Array]';
+  return Array.isArray(val);
 }
 
 /**
@@ -3725,7 +3759,7 @@ function isArrayBuffer(val) {
  * @returns {boolean} True if value is an FormData, otherwise false
  */
 function isFormData(val) {
-  return (typeof FormData !== 'undefined') && (val instanceof FormData);
+  return toString.call(val) === '[object FormData]';
 }
 
 /**
@@ -3739,7 +3773,7 @@ function isArrayBufferView(val) {
   if ((typeof ArrayBuffer !== 'undefined') && (ArrayBuffer.isView)) {
     result = ArrayBuffer.isView(val);
   } else {
-    result = (val) && (val.buffer) && (val.buffer instanceof ArrayBuffer);
+    result = (val) && (val.buffer) && (isArrayBuffer(val.buffer));
   }
   return result;
 }
@@ -3846,7 +3880,7 @@ function isStream(val) {
  * @returns {boolean} True if value is a URLSearchParams object, otherwise false
  */
 function isURLSearchParams(val) {
-  return typeof URLSearchParams !== 'undefined' && val instanceof URLSearchParams;
+  return toString.call(val) === '[object URLSearchParams]';
 }
 
 /**
@@ -21338,10 +21372,12 @@ function plural(ms, n, name) {
 
 
 
-var preferredCharsets = __nccwpck_require__(9296)
-var preferredEncodings = __nccwpck_require__(5297)
-var preferredLanguages = __nccwpck_require__(9722)
-var preferredMediaTypes = __nccwpck_require__(2563)
+/**
+ * Cached loaded submodules.
+ * @private
+ */
+
+var modules = Object.create(null);
 
 /**
  * Module exports.
@@ -21371,6 +21407,7 @@ Negotiator.prototype.charset = function charset(available) {
 };
 
 Negotiator.prototype.charsets = function charsets(available) {
+  var preferredCharsets = loadModule('charset').preferredCharsets;
   return preferredCharsets(this.request.headers['accept-charset'], available);
 };
 
@@ -21380,6 +21417,7 @@ Negotiator.prototype.encoding = function encoding(available) {
 };
 
 Negotiator.prototype.encodings = function encodings(available) {
+  var preferredEncodings = loadModule('encoding').preferredEncodings;
   return preferredEncodings(this.request.headers['accept-encoding'], available);
 };
 
@@ -21389,6 +21427,7 @@ Negotiator.prototype.language = function language(available) {
 };
 
 Negotiator.prototype.languages = function languages(available) {
+  var preferredLanguages = loadModule('language').preferredLanguages;
   return preferredLanguages(this.request.headers['accept-language'], available);
 };
 
@@ -21398,6 +21437,7 @@ Negotiator.prototype.mediaType = function mediaType(available) {
 };
 
 Negotiator.prototype.mediaTypes = function mediaTypes(available) {
+  var preferredMediaTypes = loadModule('mediaType').preferredMediaTypes;
   return preferredMediaTypes(this.request.headers.accept, available);
 };
 
@@ -21410,6 +21450,42 @@ Negotiator.prototype.preferredLanguage = Negotiator.prototype.language;
 Negotiator.prototype.preferredLanguages = Negotiator.prototype.languages;
 Negotiator.prototype.preferredMediaType = Negotiator.prototype.mediaType;
 Negotiator.prototype.preferredMediaTypes = Negotiator.prototype.mediaTypes;
+
+/**
+ * Load the given module.
+ * @private
+ */
+
+function loadModule(moduleName) {
+  var module = modules[moduleName];
+
+  if (module !== undefined) {
+    return module;
+  }
+
+  // This uses a switch for static require analysis
+  switch (moduleName) {
+    case 'charset':
+      module = __nccwpck_require__(9296);
+      break;
+    case 'encoding':
+      module = __nccwpck_require__(5297);
+      break;
+    case 'language':
+      module = __nccwpck_require__(9722);
+      break;
+    case 'mediaType':
+      module = __nccwpck_require__(2563);
+      break;
+    default:
+      throw new Error('Cannot find module \'' + moduleName + '\'');
+  }
+
+  // Store to prevent invoking require()
+  modules[moduleName] = module;
+
+  return module;
+}
 
 
 /***/ }),
@@ -21843,9 +21919,9 @@ function parseLanguage(str, i) {
   var match = simpleLanguageRegExp.exec(str);
   if (!match) return null;
 
-  var prefix = match[1]
-  var suffix = match[2]
-  var full = prefix
+  var prefix = match[1],
+    suffix = match[2],
+    full = prefix;
 
   if (suffix) full += "-" + suffix;
 
@@ -28375,218 +28451,6 @@ function vary (res, field) {
 
 /***/ }),
 
-/***/ 3205:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __nccwpck_require__(2186);
-const express_1 = __importDefault(__nccwpck_require__(1204));
-const express_async_handler_1 = __importDefault(__nccwpck_require__(5550));
-const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
-const path_1 = __importDefault(__nccwpck_require__(1017));
-const artifactApi_1 = __nccwpck_require__(8343);
-const constants_1 = __nccwpck_require__(8593);
-const downloadArtifact_1 = __nccwpck_require__(3493);
-function startServer() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const port = process.env.PORT || 9080;
-        fs_extra_1.default.ensureDirSync(constants_1.cacheDir);
-        const app = (0, express_1.default)();
-        const serverToken = (0, core_1.getInput)(constants_1.Inputs.SERVER_TOKEN, {
-            required: true,
-            trimWhitespace: true,
-        });
-        app.all('*', (req, res, next) => {
-            console.info(`Got a ${req.method} request`, req.path);
-            const { authorization = '' } = req.headers;
-            const [type = '', token = ''] = authorization.split(' ');
-            if (type !== 'Bearer' || token !== serverToken) {
-                return res.status(401).send('unauthorized');
-            }
-            next();
-        });
-        app.get('/v8/artifacts/:artifactId', (0, express_async_handler_1.default)((req, res) => __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            const { artifactId } = req.params;
-            const list = yield artifactApi_1.artifactApi.listArtifacts();
-            const existingArtifact = (_a = list.artifacts) === null || _a === void 0 ? void 0 : _a.find((artifact) => artifact.name === artifactId);
-            if (existingArtifact) {
-                console.log(`Artifact ${artifactId} found.`);
-                yield (0, downloadArtifact_1.downloadArtifact)(existingArtifact, constants_1.cacheDir);
-                console.log(`Artifact ${artifactId} downloaded successfully to ${constants_1.cacheDir}/${artifactId}.gz.`);
-            }
-            const filepath = path_1.default.join(constants_1.cacheDir, `${artifactId}.gz`);
-            if (!fs_extra_1.default.pathExistsSync(filepath)) {
-                console.log(`Artifact ${artifactId} not found.`);
-                return res.status(404).send('Not found');
-            }
-            const readStream = fs_extra_1.default.createReadStream(filepath);
-            readStream.on('open', () => {
-                readStream.pipe(res);
-            });
-            readStream.on('error', (err) => {
-                console.error(err);
-                res.end(err);
-            });
-        })));
-        app.put('/v8/artifacts/:artifactId', (req, res) => {
-            const artifactId = req.params.artifactId;
-            const filename = `${artifactId}.gz`;
-            const writeStream = fs_extra_1.default.createWriteStream(path_1.default.join(constants_1.cacheDir, filename));
-            req.pipe(writeStream);
-            writeStream.on('error', (err) => {
-                console.error(err);
-                res.status(500).send('ERROR');
-            });
-            req.on('end', () => {
-                res.send('OK');
-            });
-        });
-        app.disable('etag').listen(port, () => {
-            console.log(`Cache dir: ${constants_1.cacheDir}`);
-            console.log(`Local Turbo server is listening at http://127.0.0.1:${port}`);
-        });
-    });
-}
-startServer().catch((error) => {
-    console.error(error);
-    process.exit(1);
-});
-
-
-/***/ }),
-
-/***/ 8343:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.artifactApi = void 0;
-const core_1 = __nccwpck_require__(2186);
-const axios_1 = __nccwpck_require__(6545);
-const constants_1 = __nccwpck_require__(8593);
-class ArtifactApi {
-    constructor() {
-        const repoToken = (0, core_1.getInput)(constants_1.Inputs.REPO_TOKEN, {
-            required: true,
-            trimWhitespace: true,
-        });
-        this.axios = new axios_1.Axios({
-            baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions`,
-            headers: {
-                Accept: 'application/vnd.github.v3+json',
-                Authorization: `Bearer ${repoToken}`,
-            },
-        });
-    }
-    listArtifacts() {
-        return this.axios
-            .get('/artifacts', { params: { per_page: 100 } })
-            .then((response) => JSON.parse(response.data));
-    }
-    downloadArtifact(artifactId) {
-        return this.axios.get(`/artifacts/${artifactId}/zip`, {
-            responseType: 'stream',
-        });
-    }
-}
-exports.artifactApi = new ArtifactApi();
-
-
-/***/ }),
-
-/***/ 8593:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Inputs = exports.States = exports.cacheDir = void 0;
-const os_1 = __importDefault(__nccwpck_require__(2037));
-const path_1 = __importDefault(__nccwpck_require__(1017));
-exports.cacheDir = path_1.default.join(process.env.RUNNER_TEMP || os_1.default.tmpdir(), 'turbo-cache');
-var States;
-(function (States) {
-    States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
-})(States = exports.States || (exports.States = {}));
-var Inputs;
-(function (Inputs) {
-    Inputs["SERVER_TOKEN"] = "server-token";
-    Inputs["REPO_TOKEN"] = "repo-token";
-})(Inputs = exports.Inputs || (exports.Inputs = {}));
-
-
-/***/ }),
-
-/***/ 3493:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.downloadArtifact = void 0;
-const fs_extra_1 = __importDefault(__nccwpck_require__(5630));
-const node_stream_zip_1 = __importDefault(__nccwpck_require__(8119));
-const path_1 = __importDefault(__nccwpck_require__(1017));
-const artifactApi_1 = __nccwpck_require__(8343);
-const os_1 = __importDefault(__nccwpck_require__(2037));
-const tempArchiveFolder = path_1.default.join(process.env.RUNNER_TEMP || os_1.default.tmpdir(), 'turbo-archives');
-function downloadArtifact(artifact, destFolder) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { data } = yield artifactApi_1.artifactApi.downloadArtifact(artifact.id);
-        const archiveFilepath = path_1.default.join(tempArchiveFolder, `${artifact.name}.zip`);
-        fs_extra_1.default.ensureDirSync(tempArchiveFolder);
-        const writeStream = fs_extra_1.default.createWriteStream(archiveFilepath);
-        yield new Promise((resolve) => {
-            data.pipe(writeStream);
-            writeStream.on('finish', () => {
-                resolve();
-            });
-            writeStream.on('error', (error) => {
-                console.error(error);
-                resolve();
-            });
-        });
-        const zip = new node_stream_zip_1.default.async({ file: archiveFilepath });
-        yield zip.extract(null, destFolder);
-        yield zip.close();
-    });
-}
-exports.downloadArtifact = downloadArtifact;
-
-
-/***/ }),
-
 /***/ 9491:
 /***/ ((module) => {
 
@@ -28863,6 +28727,46 @@ module.exports = JSON.parse('{"100":"Continue","101":"Switching Protocols","102"
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__nccwpck_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__nccwpck_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__nccwpck_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/node module decorator */
 /******/ 	(() => {
 /******/ 		__nccwpck_require__.nmd = (module) => {
@@ -28877,12 +28781,182 @@ module.exports = JSON.parse('{"100":"Continue","101":"Switching Protocols","102"
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(3205);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+// ESM COMPAT FLAG
+__nccwpck_require__.r(__webpack_exports__);
+
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+// EXTERNAL MODULE: ./node_modules/express/index.js
+var express = __nccwpck_require__(1204);
+var express_default = /*#__PURE__*/__nccwpck_require__.n(express);
+// EXTERNAL MODULE: ./node_modules/express-async-handler/index.js
+var express_async_handler = __nccwpck_require__(5550);
+var express_async_handler_default = /*#__PURE__*/__nccwpck_require__.n(express_async_handler);
+// EXTERNAL MODULE: ./node_modules/fs-extra/lib/index.js
+var lib = __nccwpck_require__(5630);
+var lib_default = /*#__PURE__*/__nccwpck_require__.n(lib);
+// EXTERNAL MODULE: external "path"
+var external_path_ = __nccwpck_require__(1017);
+var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
+// EXTERNAL MODULE: ./node_modules/axios/index.js
+var axios = __nccwpck_require__(6545);
+// EXTERNAL MODULE: external "os"
+var external_os_ = __nccwpck_require__(2037);
+var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
+;// CONCATENATED MODULE: ./src/utils/constants.ts
+
+
+const cacheDir = external_path_default().join(process.env.RUNNER_TEMP || external_os_default().tmpdir(), 'turbo-cache');
+var States;
+(function (States) {
+    States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
+})(States || (States = {}));
+var Inputs;
+(function (Inputs) {
+    Inputs["SERVER_TOKEN"] = "server-token";
+    Inputs["REPO_TOKEN"] = "repo-token";
+})(Inputs || (Inputs = {}));
+
+;// CONCATENATED MODULE: ./src/utils/artifactApi.ts
+
+
+
+class ArtifactApi {
+    axios;
+    constructor() {
+        const repoToken = (0,core.getInput)(Inputs.REPO_TOKEN, {
+            required: true,
+            trimWhitespace: true,
+        });
+        this.axios = new axios.Axios({
+            baseURL: `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}/actions`,
+            headers: {
+                Accept: 'application/vnd.github.v3+json',
+                Authorization: `Bearer ${repoToken}`,
+            },
+        });
+    }
+    listArtifacts() {
+        return this.axios
+            .get('/artifacts', { params: { per_page: 100 } })
+            .then((response) => JSON.parse(response.data));
+    }
+    downloadArtifact(artifactId) {
+        return this.axios.get(`/artifacts/${artifactId}/zip`, {
+            responseType: 'stream',
+        });
+    }
+}
+const artifactApi = new ArtifactApi();
+
+// EXTERNAL MODULE: ./node_modules/node-stream-zip/node_stream_zip.js
+var node_stream_zip = __nccwpck_require__(8119);
+var node_stream_zip_default = /*#__PURE__*/__nccwpck_require__.n(node_stream_zip);
+;// CONCATENATED MODULE: ./src/utils/downloadArtifact.ts
+
+
+
+
+
+const tempArchiveFolder = external_path_default().join(process.env.RUNNER_TEMP || external_os_default().tmpdir(), 'turbo-archives');
+async function downloadArtifact(artifact, destFolder) {
+    const { data } = await artifactApi.downloadArtifact(artifact.id);
+    const archiveFilepath = external_path_default().join(tempArchiveFolder, `${artifact.name}.zip`);
+    lib_default().ensureDirSync(tempArchiveFolder);
+    const writeStream = lib_default().createWriteStream(archiveFilepath);
+    await new Promise((resolve) => {
+        data.pipe(writeStream);
+        writeStream.on('finish', () => {
+            resolve();
+        });
+        writeStream.on('error', (error) => {
+            console.error(error);
+            resolve();
+        });
+    });
+    const zip = new (node_stream_zip_default()).async({ file: archiveFilepath });
+    await zip.extract(null, destFolder);
+    await zip.close();
+}
+
+;// CONCATENATED MODULE: ./src/turboServer.ts
+
+
+
+
+
+
+
+
+async function startServer() {
+    const port = process.env.PORT || 9080;
+    lib_default().ensureDirSync(cacheDir);
+    const app = express_default()();
+    const serverToken = (0,core.getInput)(Inputs.SERVER_TOKEN, {
+        required: true,
+        trimWhitespace: true,
+    });
+    app.all('*', (req, res, next) => {
+        console.info(`Got a ${req.method} request`, req.path);
+        const { authorization = '' } = req.headers;
+        const [type = '', token = ''] = authorization.split(' ');
+        if (type !== 'Bearer' || token !== serverToken) {
+            return res.status(401).send('unauthorized');
+        }
+        next();
+    });
+    app.get('/v8/artifacts/:artifactId', express_async_handler_default()(async (req, res) => {
+        const { artifactId } = req.params;
+        const list = await artifactApi.listArtifacts();
+        const existingArtifact = list.artifacts?.find((artifact) => artifact.name === artifactId);
+        if (existingArtifact) {
+            console.log(`Artifact ${artifactId} found.`);
+            await downloadArtifact(existingArtifact, cacheDir);
+            console.log(`Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`);
+        }
+        const filepath = external_path_default().join(cacheDir, `${artifactId}.gz`);
+        if (!lib_default().pathExistsSync(filepath)) {
+            console.log(`Artifact ${artifactId} not found.`);
+            return res.status(404).send('Not found');
+        }
+        const readStream = lib_default().createReadStream(filepath);
+        readStream.on('open', () => {
+            readStream.pipe(res);
+        });
+        readStream.on('error', (err) => {
+            console.error(err);
+            res.end(err);
+        });
+    }));
+    app.put('/v8/artifacts/:artifactId', (req, res) => {
+        const artifactId = req.params.artifactId;
+        const filename = `${artifactId}.gz`;
+        const writeStream = lib_default().createWriteStream(external_path_default().join(cacheDir, filename));
+        req.pipe(writeStream);
+        writeStream.on('error', (err) => {
+            console.error(err);
+            res.status(500).send('ERROR');
+        });
+        req.on('end', () => {
+            res.send('OK');
+        });
+    });
+    app.disable('etag').listen(port, () => {
+        console.log(`Cache dir: ${cacheDir}`);
+        console.log(`Local Turbo server is listening at http://127.0.0.1:${port}`);
+    });
+}
+startServer().catch((error) => {
+    console.error(error);
+    process.exit(1);
+});
+
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;
