@@ -6,7 +6,8 @@
   "author": "felixmosh",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build src/turboServer.ts -o dist/turboServer && ncc build src/starter.ts -o dist/starter && ncc build src/post.ts -o dist/post && git add -f dist/"
+    "build": "ncc build src/turboServer.ts -o dist/turboServer && ncc build src/starter.ts -o dist/starter && ncc build src/post.ts -o dist/post && git add -f dist/",
+    "release": "release-it --only-version"
   },
   "devDependencies": {
     "@actions/artifact": "^0.6.1",
@@ -25,5 +26,25 @@
   },
   "engines": {
     "node": ">=12.0.0"
+  },
+  "release-it": {
+    "git": {
+      "changelog": "npx auto-changelog --stdout --commit-limit false -u --template https://raw.githubusercontent.com/release-it/release-it/master/templates/changelog-compact.hbs"
+    },
+    "hooks": {
+      "after:bump": [
+        "npx auto-changelog -p",
+        "yarn build"
+      ]
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": false
+    }
+  },
+  "dependencies": {
+    "release-it": "^14.12.4"
   }
 }
