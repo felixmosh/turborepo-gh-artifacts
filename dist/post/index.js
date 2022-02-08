@@ -15197,7 +15197,7 @@ const artifactApi = new ArtifactApi();
 
 async function uploadArtifacts() {
     const list = await artifactApi.listArtifacts();
-    const existingArtifacts = list.artifacts?.map((artifact) => artifact.name) || [];
+    const existingArtifacts = (list.artifacts || []).map((artifact) => artifact.name);
     const client = (0,artifact_client/* create */.U)();
     const files = lib_default().readdirSync(cacheDir);
     const artifactFiles = files.filter((filename) => filename.endsWith('.gz'));
