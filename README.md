@@ -28,6 +28,8 @@ The action has 2 **required** inputs:
 1. `repo-token` - A Github token with `repo` permission, usually the default `secrets.GITHUB_TOKEN` is enough.
 2. `server-token` - An auth token to ensure that your code interacting with the local server.
 
+Pay ❤️, `GITHUB_TOKEN` must have [`actions: read`](https://docs.github.com/en/rest/reference/actions#get-an-artifact) permissions in order to be able to read repo's existing artifacts.
+
 ## Working Example
 
 [Working example](https://github.com/felixmosh/turborepo-gh-artifacts-example) of the entire setup, based on `npx create-turbo@latest`. 
