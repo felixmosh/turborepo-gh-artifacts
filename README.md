@@ -1,6 +1,6 @@
 # TurboRepo Github Artifacts action
 
-This action allows you use Github artifacts as [TurboRepo](https://github.com/vercel/turborepo) remote cache server.
+This action allows you to use Github artifacts as [TurboRepo](https://github.com/vercel/turborepo) remote cache server.
 
 ## How it works?
 
