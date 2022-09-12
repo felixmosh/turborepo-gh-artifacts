@@ -56,6 +56,10 @@ export async function downloadSameWorkflowArtifacts() {
         artifactFileName,
         path.join(cacheDir, `${artifact.artifactName}.gz`)
       );
+      // Remember that this artifact was downloaded from the current workflow
+      await fs.createFile(
+        path.join(cacheDir, `${artifact.artifactName}.local`)
+      );
       await fs.remove(artifact.downloadPath);
     } catch (e: any) {
       console.error(

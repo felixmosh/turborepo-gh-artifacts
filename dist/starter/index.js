@@ -21504,6 +21504,8 @@ async function downloadSameWorkflowArtifacts() {
         const artifactFileName = external_path_default().join(artifact.downloadPath, `${artifact.artifactName}.gz`);
         try {
             await lib_default().move(artifactFileName, external_path_default().join(cacheDir, `${artifact.artifactName}.gz`));
+            // Remember that this artifact was downloaded from the current workflow
+            await lib_default().createFile(external_path_default().join(cacheDir, `${artifact.artifactName}.local`));
             await lib_default().remove(artifact.downloadPath);
         }
         catch (e) {

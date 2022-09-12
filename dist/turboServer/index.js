@@ -44826,6 +44826,8 @@ async function downloadSameWorkflowArtifacts() {
         const artifactFileName = path.join(artifact.downloadPath, `${artifact.artifactName}.gz`);
         try {
             await fs.move(artifactFileName, path.join(cacheDir, `${artifact.artifactName}.gz`));
+            // Remember that this artifact was downloaded from the current workflow
+            await fs.createFile(path.join(cacheDir, `${artifact.artifactName}.local`));
             await fs.remove(artifact.downloadPath);
         }
         catch (e) {
@@ -44851,6 +44853,7 @@ async function startServer() {
         required: true,
         trimWhitespace: true,
     });
+    let artifactList;
     app.all('*', (req, res, next) => {
         console.info(`Got a ${req.method} request`, req.path);
         const { authorization = '' } = req.headers;
@@ -44864,9 +44867,14 @@ async function startServer() {
         const { artifactId } = req.params;
         const filepath = external_path_default().join(constants_cacheDir, `${artifactId}.gz`);
         if (!lib_default().pathExistsSync(filepath)) {
-            // Requested artifact does not belong to the current workflow
-            const list = await artifactApi.listArtifacts();
-            const existingArtifact = list.artifacts?.find((artifact) => artifact.name === artifactId);
+            // Requested artifact does not belong to the current workflow, so it wasn't downloaded before
+            // Check if it exists for another one
+            if (!artifactList) {
+                // Cache the response for the runtime of the server
+                // The server is typically short-lived, so it is very unlikely that we're going to miss an artifact this way
+                artifactList = await artifactApi.listArtifacts();
+            }
+            const existingArtifact = artifactList.artifacts?.find((artifact) => artifact.name === artifactId);
             if (existingArtifact) {
                 console.log(`Artifact ${artifactId} found.`);
                 await downloadArtifact(existingArtifact, constants_cacheDir);

@@ -3,7 +3,7 @@ import express from 'express';
 import asyncHandler from 'express-async-handler';
 import fs from 'fs-extra';
 import path from 'path';
-import { artifactApi } from './utils/artifactApi';
+import { artifactApi, IArtifactListResponse } from './utils/artifactApi';
 import { cacheDir, Inputs } from './utils/constants';
 import { downloadArtifact } from './utils/downloadArtifact';
 
@@ -17,6 +17,8 @@ async function startServer() {
     required: true,
     trimWhitespace: true,
   });
+
+  let artifactList: IArtifactListResponse | undefined
 
   app.all('*', (req, res, next) => {
     console.info(`Got a ${req.method} request`, req.path);
@@ -38,10 +40,15 @@ async function startServer() {
       const filepath = path.join(cacheDir, `${artifactId}.gz`);
 
       if (!fs.pathExistsSync(filepath)) {
-        // Requested artifact does not belong to the current workflow
-        const list = await artifactApi.listArtifacts();
+        // Requested artifact does not belong to the current workflow, so it wasn't downloaded before
+        // Check if it exists for another one
+        if (!artifactList) {
+          // Cache the response for the runtime of the server
+          // The server is typically short-lived, so it is very unlikely that we're going to miss an artifact this way
+          artifactList = await artifactApi.listArtifacts();
+        }
 
-        const existingArtifact = list.artifacts?.find(
+        const existingArtifact = artifactList.artifacts?.find(
           (artifact) => artifact.name === artifactId
         );
 
