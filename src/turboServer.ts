@@ -1,4 +1,4 @@
-import { getInput } from '@actions/core';
+import { getInput, setFailed } from '@actions/core';
 import express from 'express';
 import asyncHandler from 'express-async-handler';
 import fs from 'fs-extra';
@@ -92,6 +92,5 @@ async function startServer() {
 }
 
 startServer().catch((error) => {
-  console.error(error);
-  process.exit(1);
+  setFailed(error)
 });
