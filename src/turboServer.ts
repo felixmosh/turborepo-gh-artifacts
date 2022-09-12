@@ -38,7 +38,8 @@ async function startServer() {
       // Attempt 1: Look for artifacts from the current workflow. Those are not returned by listArtifacts()
       try {
         await downloadSameWorkflowArtifact(artifactId, cacheDir);
-      } catch (e) {
+        console.log(`Artifact ${artifactId} found in current workflow.`);
+    } catch (e) {
         // Attempt 2: Search matching artifacts from other workflows
         const list = await artifactApi.listArtifacts();
 
@@ -49,9 +50,6 @@ async function startServer() {
         if (existingArtifact) {
           console.log(`Artifact ${artifactId} found.`);
           await downloadArtifact(existingArtifact, cacheDir);
-          console.log(
-            `Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`
-          );
         }
       }
 
@@ -60,6 +58,10 @@ async function startServer() {
       if (!fs.pathExistsSync(filepath)) {
         console.log(`Artifact ${artifactId} not found.`);
         return res.status(404).send('Not found');
+      } else {
+        console.log(
+          `Artifact ${artifactId} downloaded successfully to ${filepath}.`
+        );
       }
 
       const readStream = fs.createReadStream(filepath);
