@@ -3,7 +3,7 @@ import express from 'express';
 import asyncHandler from 'express-async-handler';
 import fs from 'fs-extra';
 import path from 'path';
-import { artifactApi } from './utils/artifactApi';
+import { artifactApi, IArtifactListResponse } from './utils/artifactApi';
 import { cacheDir, Inputs } from './utils/constants';
 import { downloadArtifact } from './utils/downloadArtifact';
 
@@ -17,6 +17,9 @@ async function startServer() {
     required: true,
     trimWhitespace: true,
   });
+
+  // Used to cache the listArtifacts() call between GET requests
+  let artifactList: IArtifactListResponse | undefined;
 
   app.all('*', (req, res, next) => {
     console.info(`Got a ${req.method} request`, req.path);
@@ -34,9 +37,14 @@ async function startServer() {
     '/v8/artifacts/:artifactId',
     asyncHandler(async (req: any, res: any) => {
       const { artifactId } = req.params;
-      const list = await artifactApi.listArtifacts();
 
-      const existingArtifact = list.artifacts?.find(
+      if (!artifactList) {
+        // Cache the response for the runtime of the server.
+        // This avoids doing repeated requests with the same result.
+        artifactList = await artifactApi.listArtifacts();
+      }
+
+      const existingArtifact = artifactList.artifacts?.find(
         (artifact) => artifact.name === artifactId
       );
 
@@ -97,5 +105,5 @@ async function startServer() {
 }
 
 startServer().catch((error) => {
-  setFailed(error)
+  setFailed(error);
 });
