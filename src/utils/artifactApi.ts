@@ -2,7 +2,7 @@ import { getInput } from '@actions/core';
 import { Axios } from 'axios';
 import { Inputs } from './constants';
 
-interface IArtifactListResponse {
+export interface IArtifactListResponse {
   total_count: number;
   artifacts?: Array<{
     id: number;

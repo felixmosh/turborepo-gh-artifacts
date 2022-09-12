@@ -33331,6 +33331,8 @@ async function startServer() {
         required: true,
         trimWhitespace: true,
     });
+    // Used to cache the listArtifacts() call between GET requests
+    let artifactList;
     app.all('*', (req, res, next) => {
         console.info(`Got a ${req.method} request`, req.path);
         const { authorization = '' } = req.headers;
@@ -33342,8 +33344,12 @@ async function startServer() {
     });
     app.get('/v8/artifacts/:artifactId', express_async_handler_default()(async (req, res) => {
         const { artifactId } = req.params;
-        const list = await artifactApi.listArtifacts();
-        const existingArtifact = list.artifacts?.find((artifact) => artifact.name === artifactId);
+        if (!artifactList) {
+            // Cache the response for the runtime of the server.
+            // This avoids doing repeated requests with the same result.
+            artifactList = await artifactApi.listArtifacts();
+        }
+        const existingArtifact = artifactList.artifacts?.find((artifact) => artifact.name === artifactId);
         if (existingArtifact) {
             console.log(`Artifact ${artifactId} found.`);
             await downloadArtifact(existingArtifact, cacheDir);
