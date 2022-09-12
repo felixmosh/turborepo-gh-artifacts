@@ -5,7 +5,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { artifactApi } from './utils/artifactApi';
 import { cacheDir, Inputs } from './utils/constants';
-import { downloadArtifact } from './utils/downloadArtifact';
+import { downloadArtifact, downloadSameWorkflowArtifact } from './utils/downloadArtifact';
 
 async function startServer() {
   const port = process.env.PORT || 9080;
@@ -34,18 +34,25 @@ async function startServer() {
     '/v8/artifacts/:artifactId',
     asyncHandler(async (req: any, res: any) => {
       const { artifactId } = req.params;
-      const list = await artifactApi.listArtifacts();
 
-      const existingArtifact = list.artifacts?.find(
-        (artifact) => artifact.name === artifactId
-      );
+      // Attempt 1: Look for artifacts from the current workflow. Those are not returned by listArtifacts()
+      try {
+        await downloadSameWorkflowArtifact(artifactId, cacheDir);
+      } catch (e) {
+        // Attempt 2: Search matching artifacts from other workflows
+        const list = await artifactApi.listArtifacts();
 
-      if (existingArtifact) {
-        console.log(`Artifact ${artifactId} found.`);
-        await downloadArtifact(existingArtifact, cacheDir);
-        console.log(
-          `Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`
+        const existingArtifact = list.artifacts?.find(
+          (artifact) => artifact.name === artifactId
         );
+
+        if (existingArtifact) {
+          console.log(`Artifact ${artifactId} found.`);
+          await downloadArtifact(existingArtifact, cacheDir);
+          console.log(
+            `Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`
+          );
+        }
       }
 
       const filepath = path.join(cacheDir, `${artifactId}.gz`);

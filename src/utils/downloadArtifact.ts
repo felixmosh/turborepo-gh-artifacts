@@ -3,6 +3,7 @@ import StreamZip from 'node-stream-zip';
 import path from 'path';
 import { artifactApi } from './artifactApi';
 import os from 'os';
+import { create } from '@actions/artifact';
 
 const tempArchiveFolder = path.join(
   process.env.RUNNER_TEMP || os.tmpdir(),
@@ -32,4 +33,11 @@ export async function downloadArtifact(artifact, destFolder) {
   const zip = new StreamZip.async({ file: archiveFilepath });
   await zip.extract(null, destFolder);
   await zip.close();
+}
+
+export async function downloadSameWorkflowArtifact(artifactId: string, destFolder: string) {
+  const client = create();
+  await client.downloadArtifact(artifactId, destFolder, {
+    createArtifactFolder: false
+  });
 }
