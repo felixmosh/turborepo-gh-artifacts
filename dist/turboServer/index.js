@@ -44879,13 +44879,14 @@ async function startServer() {
                 console.log(`Artifact ${artifactId} found.`);
                 await downloadArtifact(existingArtifact, constants_cacheDir);
             }
+            console.log(`Artifact ${artifactId} downloaded successfully to ${filepath}.`);
+        }
+        else {
+            console.log(`Artifact ${artifactId} already exists.`);
         }
         if (!lib_default().pathExistsSync(filepath)) {
             console.log(`Artifact ${artifactId} not found.`);
             return res.status(404).send('Not found');
-        }
-        else {
-            console.log(`Artifact ${artifactId} downloaded successfully to ${filepath}.`);
         }
         const readStream = lib_default().createReadStream(filepath);
         readStream.on('open', () => {

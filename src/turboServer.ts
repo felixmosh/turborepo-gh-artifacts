@@ -18,7 +18,7 @@ async function startServer() {
     trimWhitespace: true,
   });
 
-  let artifactList: IArtifactListResponse | undefined
+  let artifactList: IArtifactListResponse | undefined;
 
   app.all('*', (req, res, next) => {
     console.info(`Got a ${req.method} request`, req.path);
@@ -56,15 +56,16 @@ async function startServer() {
           console.log(`Artifact ${artifactId} found.`);
           await downloadArtifact(existingArtifact, cacheDir);
         }
+        console.log(
+          `Artifact ${artifactId} downloaded successfully to ${filepath}.`
+        );
+      } else {
+        console.log(`Artifact ${artifactId} already exists.`);
       }
 
       if (!fs.pathExistsSync(filepath)) {
         console.log(`Artifact ${artifactId} not found.`);
         return res.status(404).send('Not found');
-      } else {
-        console.log(
-          `Artifact ${artifactId} downloaded successfully to ${filepath}.`
-        );
       }
 
       const readStream = fs.createReadStream(filepath);
