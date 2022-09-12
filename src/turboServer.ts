@@ -37,30 +37,39 @@ async function startServer() {
     '/v8/artifacts/:artifactId',
     asyncHandler(async (req: any, res: any) => {
       const { artifactId } = req.params;
-
-      if (!artifactList) {
-        // Cache the response for the runtime of the server.
-        // This avoids doing repeated requests with the same result.
-        artifactList = await artifactApi.listArtifacts();
-      }
-
-      const existingArtifact = artifactList.artifacts?.find(
-        (artifact) => artifact.name === artifactId
-      );
-
-      if (existingArtifact) {
-        console.log(`Artifact ${artifactId} found.`);
-        await downloadArtifact(existingArtifact, cacheDir);
-        console.log(
-          `Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`
-        );
-      }
+      const list = await artifactApi.listArtifacts();
 
       const filepath = path.join(cacheDir, `${artifactId}.gz`);
 
       if (!fs.pathExistsSync(filepath)) {
-        console.log(`Artifact ${artifactId} not found.`);
-        return res.status(404).send('Not found');
+        console.log(
+          `Artifact ${artifactId} not found locally, downloading it.`
+        );
+
+        if (!artifactList) {
+          // Cache the response for the runtime of the server.
+          // This avoids doing repeated requests with the same result.
+          artifactList = await artifactApi.listArtifacts();
+        }
+
+        const existingArtifact = artifactList.artifacts?.find(
+          (artifact) => artifact.name === artifactId
+        );
+
+        if (existingArtifact) {
+          console.log(`Artifact ${artifactId} found.`);
+          await downloadArtifact(existingArtifact, cacheDir);
+          console.log(
+            `Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`
+          );
+        }
+
+        if (!fs.pathExistsSync(filepath)) {
+          console.log(`Artifact ${artifactId} could not be downloaded.`);
+          return res.status(404).send('Not found');
+        }
+      } else {
+        console.log(`Artifact ${artifactId} found locally.`);
       }
 
       const readStream = fs.createReadStream(filepath);
@@ -105,5 +114,5 @@ async function startServer() {
 }
 
 startServer().catch((error) => {
-  setFailed(error);
+  setFailed(error)
 });

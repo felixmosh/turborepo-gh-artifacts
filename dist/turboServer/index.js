@@ -33344,21 +33344,28 @@ async function startServer() {
     });
     app.get('/v8/artifacts/:artifactId', express_async_handler_default()(async (req, res) => {
         const { artifactId } = req.params;
-        if (!artifactList) {
-            // Cache the response for the runtime of the server.
-            // This avoids doing repeated requests with the same result.
-            artifactList = await artifactApi.listArtifacts();
-        }
-        const existingArtifact = artifactList.artifacts?.find((artifact) => artifact.name === artifactId);
-        if (existingArtifact) {
-            console.log(`Artifact ${artifactId} found.`);
-            await downloadArtifact(existingArtifact, cacheDir);
-            console.log(`Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`);
-        }
+        const list = await artifactApi.listArtifacts();
         const filepath = external_path_default().join(cacheDir, `${artifactId}.gz`);
         if (!lib_default().pathExistsSync(filepath)) {
-            console.log(`Artifact ${artifactId} not found.`);
-            return res.status(404).send('Not found');
+            console.log(`Artifact ${artifactId} not found locally, downloading it.`);
+            if (!artifactList) {
+                // Cache the response for the runtime of the server.
+                // This avoids doing repeated requests with the same result.
+                artifactList = await artifactApi.listArtifacts();
+            }
+            const existingArtifact = artifactList.artifacts?.find((artifact) => artifact.name === artifactId);
+            if (existingArtifact) {
+                console.log(`Artifact ${artifactId} found.`);
+                await downloadArtifact(existingArtifact, cacheDir);
+                console.log(`Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`);
+            }
+            if (!lib_default().pathExistsSync(filepath)) {
+                console.log(`Artifact ${artifactId} could not be downloaded.`);
+                return res.status(404).send('Not found');
+            }
+        }
+        else {
+            console.log(`Artifact ${artifactId} found locally.`);
         }
         const readStream = lib_default().createReadStream(filepath);
         readStream.on('open', () => {
