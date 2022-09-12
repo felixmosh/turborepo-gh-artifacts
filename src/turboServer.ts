@@ -5,7 +5,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { artifactApi } from './utils/artifactApi';
 import { cacheDir, Inputs } from './utils/constants';
-import { downloadArtifact, downloadSameWorkflowArtifact } from './utils/downloadArtifact';
+import { downloadArtifact } from './utils/downloadArtifact';
 
 async function startServer() {
   const port = process.env.PORT || 9080;
@@ -35,12 +35,10 @@ async function startServer() {
     asyncHandler(async (req: any, res: any) => {
       const { artifactId } = req.params;
 
-      // Attempt 1: Look for artifacts from the current workflow. Those are not returned by listArtifacts()
-      try {
-        await downloadSameWorkflowArtifact(artifactId, cacheDir);
-        console.log(`Artifact ${artifactId} found in current workflow.`);
-    } catch (e) {
-        // Attempt 2: Search matching artifacts from other workflows
+      const filepath = path.join(cacheDir, `${artifactId}.gz`);
+
+      if (!fs.pathExistsSync(filepath)) {
+        // Requested artifact does not belong to the current workflow
         const list = await artifactApi.listArtifacts();
 
         const existingArtifact = list.artifacts?.find(
@@ -52,8 +50,6 @@ async function startServer() {
           await downloadArtifact(existingArtifact, cacheDir);
         }
       }
-
-      const filepath = path.join(cacheDir, `${artifactId}.gz`);
 
       if (!fs.pathExistsSync(filepath)) {
         console.log(`Artifact ${artifactId} not found.`);
@@ -96,7 +92,7 @@ async function startServer() {
 
   app.post('/v8/artifacts/events', (req, res) => {
     // Ignore
-    res.status(200).send()
+    res.status(200).send();
   });
 
   app.disable('etag').listen(port, () => {

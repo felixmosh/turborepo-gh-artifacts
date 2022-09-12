@@ -8,7 +8,7 @@
 var __webpack_unused_export__;
 
 __webpack_unused_export__ = ({ value: true });
-exports.U = void 0;
+__webpack_unused_export__ = void 0;
 const artifact_client_1 = __nccwpck_require__(8802);
 /**
  * Constructs an ArtifactClient
@@ -16,7 +16,7 @@ const artifact_client_1 = __nccwpck_require__(8802);
 function create() {
     return artifact_client_1.DefaultArtifactClient.create();
 }
-exports.U = create;
+__webpack_unused_export__ = create;
 //# sourceMappingURL=artifact-client.js.map
 
 /***/ }),
@@ -44737,7 +44737,7 @@ var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
 ;// CONCATENATED MODULE: ./src/utils/constants.ts
 
 
-const cacheDir = external_path_default().join(process.env.RUNNER_TEMP || external_os_default().tmpdir(), 'turbo-cache');
+const constants_cacheDir = external_path_default().join(process.env.RUNNER_TEMP || external_os_default().tmpdir(), 'turbo-cache');
 var States;
 (function (States) {
     States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
@@ -44792,6 +44792,7 @@ var artifact_client = __nccwpck_require__(2605);
 
 
 
+
 const tempArchiveFolder = external_path_default().join(process.env.RUNNER_TEMP || external_os_default().tmpdir(), 'turbo-archives');
 async function downloadArtifact(artifact, destFolder) {
     const { data } = await artifactApi.downloadArtifact(artifact.id);
@@ -44812,11 +44813,25 @@ async function downloadArtifact(artifact, destFolder) {
     await zip.extract(null, destFolder);
     await zip.close();
 }
-async function downloadSameWorkflowArtifact(artifactId, destFolder) {
-    const client = (0,artifact_client/* create */.U)();
-    await client.downloadArtifact(artifactId, destFolder, {
-        createArtifactFolder: false
+async function downloadSameWorkflowArtifacts() {
+    const client = create();
+    // Try to download all artifacts from the current workflow, but do not fail the build if this fails
+    const artifacts = await client.downloadAllArtifacts(cacheDir).catch((e) => {
+        console.error(`Failed to download workflow artifacts: ${e.message}`);
+        return [];
     });
+    // downloadAllArtifacts creates folder with the artifact name and puts the artifact in there
+    // We need to move the artifact to the destFolder, so the server can find them
+    for (const artifact of artifacts) {
+        const artifactFileName = path.join(artifact.downloadPath, `${artifact.artifactName}.gz`);
+        try {
+            await fs.move(artifactFileName, path.join(cacheDir, `${artifact.artifactName}.gz`));
+            await fs.remove(artifact.downloadPath);
+        }
+        catch (e) {
+            console.error(`Failed to download artifact ${artifact.artifactName}: ${e.message}`);
+        }
+    }
 }
 
 ;// CONCATENATED MODULE: ./src/turboServer.ts
@@ -44830,7 +44845,7 @@ async function downloadSameWorkflowArtifact(artifactId, destFolder) {
 
 async function startServer() {
     const port = process.env.PORT || 9080;
-    lib_default().ensureDirSync(cacheDir);
+    lib_default().ensureDirSync(constants_cacheDir);
     const app = express_default()();
     const serverToken = (0,core.getInput)(Inputs.SERVER_TOKEN, {
         required: true,
@@ -44847,24 +44862,22 @@ async function startServer() {
     });
     app.get('/v8/artifacts/:artifactId', express_async_handler_default()(async (req, res) => {
         const { artifactId } = req.params;
-        // Attempt 1: Look for artifacts from the current workflow. Those are not returned by listArtifacts()
-        try {
-            await downloadSameWorkflowArtifact(artifactId, cacheDir);
-        }
-        catch (e) {
-            // Attempt 2: Search matching artifacts from other workflows
+        const filepath = external_path_default().join(constants_cacheDir, `${artifactId}.gz`);
+        if (!lib_default().pathExistsSync(filepath)) {
+            // Requested artifact does not belong to the current workflow
             const list = await artifactApi.listArtifacts();
             const existingArtifact = list.artifacts?.find((artifact) => artifact.name === artifactId);
             if (existingArtifact) {
                 console.log(`Artifact ${artifactId} found.`);
-                await downloadArtifact(existingArtifact, cacheDir);
-                console.log(`Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`);
+                await downloadArtifact(existingArtifact, constants_cacheDir);
             }
         }
-        const filepath = external_path_default().join(cacheDir, `${artifactId}.gz`);
         if (!lib_default().pathExistsSync(filepath)) {
             console.log(`Artifact ${artifactId} not found.`);
             return res.status(404).send('Not found');
+        }
+        else {
+            console.log(`Artifact ${artifactId} downloaded successfully to ${filepath}.`);
         }
         const readStream = lib_default().createReadStream(filepath);
         readStream.on('open', () => {
@@ -44878,7 +44891,7 @@ async function startServer() {
     app.put('/v8/artifacts/:artifactId', (req, res) => {
         const artifactId = req.params.artifactId;
         const filename = `${artifactId}.gz`;
-        const writeStream = lib_default().createWriteStream(external_path_default().join(cacheDir, filename));
+        const writeStream = lib_default().createWriteStream(external_path_default().join(constants_cacheDir, filename));
         req.pipe(writeStream);
         writeStream.on('error', (err) => {
             console.error(err);
@@ -44888,8 +44901,12 @@ async function startServer() {
             res.send('OK');
         });
     });
+    app.post('/v8/artifacts/events', (req, res) => {
+        // Ignore
+        res.status(200).send();
+    });
     app.disable('etag').listen(port, () => {
-        console.log(`Cache dir: ${cacheDir}`);
+        console.log(`Cache dir: ${constants_cacheDir}`);
         console.log(`Local Turbo server is listening at http://127.0.0.1:${port}`);
     });
 }

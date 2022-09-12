@@ -4,6 +4,7 @@ import path from 'path';
 import { artifactApi } from './artifactApi';
 import os from 'os';
 import { create } from '@actions/artifact';
+import { cacheDir } from './constants';
 
 const tempArchiveFolder = path.join(
   process.env.RUNNER_TEMP || os.tmpdir(),
@@ -35,9 +36,31 @@ export async function downloadArtifact(artifact, destFolder) {
   await zip.close();
 }
 
-export async function downloadSameWorkflowArtifact(artifactId: string, destFolder: string) {
+export async function downloadSameWorkflowArtifacts() {
   const client = create();
-  await client.downloadArtifact(artifactId, destFolder, {
-    createArtifactFolder: false
+  // Try to download all artifacts from the current workflow, but do not fail the build if this fails
+  const artifacts = await client.downloadAllArtifacts(cacheDir).catch((e) => {
+    console.error(`Failed to download workflow artifacts: ${e.message}`);
+    return [];
   });
+
+  // downloadAllArtifacts creates folder with the artifact name and puts the artifact in there
+  // We need to move the artifact to the destFolder, so the server can find them
+  for (const artifact of artifacts) {
+    const artifactFileName = path.join(
+      artifact.downloadPath,
+      `${artifact.artifactName}.gz`
+    );
+    try {
+      await fs.move(
+        artifactFileName,
+        path.join(cacheDir, `${artifact.artifactName}.gz`)
+      );
+      await fs.remove(artifact.downloadPath);
+    } catch (e: any) {
+      console.error(
+        `Failed to download artifact ${artifact.artifactName}: ${e.message}`
+      );
+    }
+  }
 }
