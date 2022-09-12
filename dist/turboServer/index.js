@@ -33376,6 +33376,10 @@ async function startServer() {
             res.send('OK');
         });
     });
+    app.post('/v8/artifacts/events', (req, res) => {
+        // Analytics endpoint, just ignore it
+        res.status(200).send();
+    });
     app.disable('etag').listen(port, () => {
         console.log(`Cache dir: ${cacheDir}`);
         console.log(`Local Turbo server is listening at http://127.0.0.1:${port}`);
