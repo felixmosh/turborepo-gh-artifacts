@@ -33344,7 +33344,6 @@ async function startServer() {
     });
     app.get('/v8/artifacts/:artifactId', express_async_handler_default()(async (req, res) => {
         const { artifactId } = req.params;
-        const list = await artifactApi.listArtifacts();
         const filepath = external_path_default().join(cacheDir, `${artifactId}.gz`);
         if (!lib_default().pathExistsSync(filepath)) {
             console.log(`Artifact ${artifactId} not found locally, downloading it.`);

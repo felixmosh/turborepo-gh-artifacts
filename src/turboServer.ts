@@ -37,7 +37,6 @@ async function startServer() {
     '/v8/artifacts/:artifactId',
     asyncHandler(async (req: any, res: any) => {
       const { artifactId } = req.params;
-      const list = await artifactApi.listArtifacts();
 
       const filepath = path.join(cacheDir, `${artifactId}.gz`);
 
