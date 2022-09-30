@@ -33354,9 +33354,14 @@ async function startServer() {
             }
             const existingArtifact = artifactList.artifacts?.find((artifact) => artifact.name === artifactId);
             if (existingArtifact) {
-                console.log(`Artifact ${artifactId} found.`);
-                await downloadArtifact(existingArtifact, cacheDir);
-                console.log(`Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`);
+                if (existingArtifact.expired) {
+                    console.log(`Artifact ${artifactId} expired at ${existingArtifact.expires_at}, not downloading.`);
+                }
+                else {
+                    console.log(`Artifact ${artifactId} found.`);
+                    await downloadArtifact(existingArtifact, cacheDir);
+                    console.log(`Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`);
+                }
             }
             if (!lib_default().pathExistsSync(filepath)) {
                 console.log(`Artifact ${artifactId} could not be downloaded.`);
