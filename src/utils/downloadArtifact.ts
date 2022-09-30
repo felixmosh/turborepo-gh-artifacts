@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import StreamZip from 'node-stream-zip';
 import path from 'path';
-import { artifactApi } from './artifactApi';
+import { artifactApi, IArtifactResponse } from './artifactApi';
 import os from 'os';
 
 const tempArchiveFolder = path.join(
@@ -9,7 +9,7 @@ const tempArchiveFolder = path.join(
   'turbo-archives'
 );
 
-export async function downloadArtifact(artifact, destFolder) {
+export async function downloadArtifact(artifact: IArtifactResponse, destFolder: string) {
   const { data } = await artifactApi.downloadArtifact(artifact.id);
   const archiveFilepath = path.join(tempArchiveFolder, `${artifact.name}.zip`);
 

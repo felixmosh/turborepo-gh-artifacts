@@ -4,11 +4,11 @@ import asyncHandler from 'express-async-handler';
 import fs from 'fs-extra';
 import path from 'path';
 import { artifactApi, IArtifactListResponse } from './utils/artifactApi';
-import { cacheDir, Inputs } from './utils/constants';
+import { cacheDir, DEFAULT_PORT, Inputs } from './utils/constants';
 import { downloadArtifact } from './utils/downloadArtifact';
 
 async function startServer() {
-  const port = process.env.PORT || 9080;
+  const port = process.env.PORT || DEFAULT_PORT;
 
   fs.ensureDirSync(cacheDir);
 
@@ -41,9 +41,7 @@ async function startServer() {
       const filepath = path.join(cacheDir, `${artifactId}.gz`);
 
       if (!fs.pathExistsSync(filepath)) {
-        console.log(
-          `Artifact ${artifactId} not found locally, downloading it.`
-        );
+        console.log(`Artifact ${artifactId} not found locally, attempting to download it.`);
 
         if (!artifactList) {
           // Cache the response for the runtime of the server.
@@ -61,7 +59,6 @@ async function startServer() {
           } else {
             console.log(`Artifact ${artifactId} found.`);
             await downloadArtifact(existingArtifact, cacheDir);
-            console.log(`Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`);
           }
         }
 

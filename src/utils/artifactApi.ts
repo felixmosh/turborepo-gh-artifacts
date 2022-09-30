@@ -4,18 +4,20 @@ import { Inputs } from './constants';
 
 export interface IArtifactListResponse {
   total_count: number;
-  artifacts?: Array<{
-    id: number;
-    node_id: string;
-    name: string;
-    size_in_bytes: number;
-    url: string;
-    archive_download_url: string;
-    expired: boolean;
-    created_at: string;
-    updated_at: string;
-    expires_at: string;
-  }>;
+  artifacts?: Array<IArtifactResponse>;
+}
+
+export interface IArtifactResponse {
+  id: number;
+  node_id: string;
+  name: string;
+  size_in_bytes: number;
+  url: string;
+  archive_download_url: string;
+  expired: boolean;
+  created_at: string;
+  updated_at: string;
+  expires_at: string;
 }
 
 class ArtifactApi {

@@ -33241,6 +33241,7 @@ var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
 ;// CONCATENATED MODULE: ./src/utils/constants.ts
 
 
+const DEFAULT_PORT = 9080;
 const cacheDir = external_path_default().join(process.env.RUNNER_TEMP || external_os_default().tmpdir(), 'turbo-cache');
 var States;
 (function (States) {
@@ -33324,7 +33325,7 @@ async function downloadArtifact(artifact, destFolder) {
 
 
 async function startServer() {
-    const port = process.env.PORT || 9080;
+    const port = process.env.PORT || DEFAULT_PORT;
     lib_default().ensureDirSync(cacheDir);
     const app = express_default()();
     const serverToken = (0,core.getInput)(Inputs.SERVER_TOKEN, {
@@ -33346,7 +33347,7 @@ async function startServer() {
         const { artifactId } = req.params;
         const filepath = external_path_default().join(cacheDir, `${artifactId}.gz`);
         if (!lib_default().pathExistsSync(filepath)) {
-            console.log(`Artifact ${artifactId} not found locally, downloading it.`);
+            console.log(`Artifact ${artifactId} not found locally, attempting to download it.`);
             if (!artifactList) {
                 // Cache the response for the runtime of the server.
                 // This avoids doing repeated requests with the same result.
@@ -33360,7 +33361,6 @@ async function startServer() {
                 else {
                     console.log(`Artifact ${artifactId} found.`);
                     await downloadArtifact(existingArtifact, cacheDir);
-                    console.log(`Artifact ${artifactId} downloaded successfully to ${cacheDir}/${artifactId}.gz.`);
                 }
             }
             if (!lib_default().pathExistsSync(filepath)) {
