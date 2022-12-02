@@ -13,7 +13,7 @@ async function startServer() {
   fs.ensureDirSync(cacheDir);
 
   const app = express();
-  const serverToken = getInput(Inputs.SERVER_TOKEN, {
+  const serverToken = process.env.TURBO_TOKEN || getInput(Inputs.SERVER_TOKEN, {
     required: true,
     trimWhitespace: true,
   });
@@ -41,7 +41,9 @@ async function startServer() {
       const filepath = path.join(cacheDir, `${artifactId}.gz`);
 
       if (!fs.pathExistsSync(filepath)) {
-        console.log(`Artifact ${artifactId} not found locally, attempting to download it.`);
+        console.log(
+          `Artifact ${artifactId} not found locally, attempting to download it.`
+        );
 
         if (!artifactList) {
           // Cache the response for the runtime of the server.
@@ -55,7 +57,9 @@ async function startServer() {
 
         if (existingArtifact) {
           if (existingArtifact.expired) {
-            console.log(`Artifact ${artifactId} expired at ${existingArtifact.expires_at}, not downloading.`)
+            console.log(
+              `Artifact ${artifactId} expired at ${existingArtifact.expires_at}, not downloading.`
+            );
           } else {
             console.log(`Artifact ${artifactId} found.`);
             await downloadArtifact(existingArtifact, cacheDir);
@@ -112,5 +116,5 @@ async function startServer() {
 }
 
 startServer().catch((error) => {
-  setFailed(error)
+  setFailed(error);
 });

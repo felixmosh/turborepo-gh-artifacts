@@ -11,7 +11,7 @@ inputs:
     required: true
   server-token:
     description: 'An access token of the local turbo-server'
-    required: true
+    required: false
 
 runs:
   using: 'node16'
