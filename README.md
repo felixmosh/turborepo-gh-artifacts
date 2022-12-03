@@ -9,25 +9,31 @@ It's starts a local TurboRepo server (on port `9080`) and uses Github artifacts 
 ## Setup
 
 1. Add in your `workflow.yml` the following section **before** TurboRepo runs:
-```yaml
-- name: TurboRepo local server
-  uses: felixmosh/turborepo-gh-artifacts@v1
-  with:
-    repo-token: ${{ secrets.GITHUB_TOKEN }}
-```
+
+   ```yaml
+   - name: TurboRepo local server
+     uses: felixmosh/turborepo-gh-artifacts@v1
+     with:
+       repo-token: ${{ secrets.GITHUB_TOKEN }}
+   ```
+
 2. Make turbo repo work with the local server
-```yaml
-- name: Build
-  run: yarn build
-  env:
-    TURBO_API: 'http://127.0.0.1:9080'
-    TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-    TURBO_TEAM: 'foo'
-    TURBO_REMOTE_ONLY: true
-```
+
+   Enable `turbo` remote caching though environment variables.
+
+   ```yaml
+   - name: Build
+     run: yarn build
+     env:
+       TURBO_API: 'http://127.0.0.1:9080'
+       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+       TURBO_TEAM: 'foo'
+   ```
+
 That's it 😋.
 
 ### Action inputs
+
 The action has 1 **required** inputs:
 - `repo-token` - A Github token with `repo` permission, usually the default `secrets.GITHUB_TOKEN` is enough.
 
