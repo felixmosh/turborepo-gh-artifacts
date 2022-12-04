@@ -4,35 +4,44 @@ This action allows you to use Github artifacts as [TurboRepo](https://github.com
 
 ## How it works?
 
-It's starts a local TurboRepo server (on port `9080`) and uses Github artifacts as a caching storage. 
+It's starts a local TurboRepo server (on port `9080`) and uses Github artifacts as a caching storage.
 
 ## Setup
 
 1. Add in your `workflow.yml` the following section **before** TurboRepo runs:
-```yaml
-- name: TurboRepo local server
-  uses: felixmosh/turborepo-gh-artifacts@v1
-  with:
-    repo-token: ${{ secrets.GITHUB_TOKEN }}
-    server-token: ${{ secrets.TURBO_SERVER_TOKEN }}
-```
+
+   ```yaml
+   - name: TurboRepo local server
+     uses: felixmosh/turborepo-gh-artifacts@v1
+     with:
+       repo-token: ${{ secrets.GITHUB_TOKEN }}
+   ```
+
 2. Make turbo repo work with the local server
-```yaml
-- name: Build
-  run: yarn build --api="http://127.0.0.1:9080" --token="${{ secrets.TURBO_SERVER_TOKEN }}" --team="foo"
-```
+
+   Enable `turbo` remote caching though environment variables.
+
+   ```yaml
+   - name: Build
+     run: yarn build
+     env:
+       TURBO_API: 'http://127.0.0.1:9080'
+       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+       TURBO_TEAM: 'foo'
+   ```
+
 That's it 😋.
 
 ### Action inputs
-The action has 2 **required** inputs:
-1. `repo-token` - A Github token with `repo` permission, usually the default `secrets.GITHUB_TOKEN` is enough.
-2. `server-token` - An auth token to ensure that your code interacting with the local server.
+
+The action has 1 **required** inputs:
+- `repo-token` - A Github token with `repo` permission, usually the default `secrets.GITHUB_TOKEN` is enough.
 
 Pay ❤️, `GITHUB_TOKEN` must have [`actions: read`](https://docs.github.com/en/rest/reference/actions#get-an-artifact) permissions in order to be able to read repo's existing artifacts.
 
 ## Working Example
 
-[Working example](https://github.com/felixmosh/turborepo-gh-artifacts-example) of the entire setup, based on `npx create-turbo@latest`. 
+[Working example](https://github.com/felixmosh/turborepo-gh-artifacts-example) of the entire setup, based on `npx create-turbo@latest`.
 
 ## Useful Links
 
