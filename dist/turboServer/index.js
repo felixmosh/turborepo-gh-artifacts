@@ -36802,7 +36802,7 @@ async function startServer() {
     const port = process.env.PORT || DEFAULT_PORT;
     lib_default().ensureDirSync(cacheDir);
     const app = express_default()();
-    const serverToken = (0,core.getInput)(Inputs.SERVER_TOKEN, {
+    const serverToken = process.env.TURBO_TOKEN || (0,core.getInput)(Inputs.SERVER_TOKEN, {
         required: true,
         trimWhitespace: true,
     });
