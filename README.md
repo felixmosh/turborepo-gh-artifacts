@@ -12,7 +12,7 @@ It's starts a local TurboRepo server (on port `9080`) and uses Github artifacts 
 
    ```yaml
    - name: TurboRepo local server
-     uses: felixmosh/turborepo-gh-artifacts@v1
+     uses: felixmosh/turborepo-gh-artifacts@v2
      with:
        repo-token: ${{ secrets.GITHUB_TOKEN }}
    ```
