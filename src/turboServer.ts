@@ -1,4 +1,5 @@
 import { getInput, setFailed } from '@actions/core';
+import * as console from 'console';
 import express from 'express';
 import asyncHandler from 'express-async-handler';
 import fs from 'fs-extra';
@@ -13,10 +14,12 @@ async function startServer() {
   fs.ensureDirSync(cacheDir);
 
   const app = express();
-  const serverToken = process.env.TURBO_TOKEN || getInput(Inputs.SERVER_TOKEN, {
-    required: true,
-    trimWhitespace: true,
-  });
+  const serverToken =
+    process.env.TURBO_TOKEN ||
+    getInput(Inputs.SERVER_TOKEN, {
+      required: true,
+      trimWhitespace: true,
+    });
 
   // Used to cache the listArtifacts() call between GET requests
   let artifactList: IArtifactListResponse | undefined;
@@ -48,10 +51,18 @@ async function startServer() {
         if (!artifactList) {
           // Cache the response for the runtime of the server.
           // This avoids doing repeated requests with the same result.
-          artifactList = await artifactApi.listArtifacts();
+          const listArtifactsResponse = await artifactApi.listArtifacts();
+          if (Array.isArray(listArtifactsResponse.artifacts)) {
+            artifactList = listArtifactsResponse;
+          } else {
+            console.log(
+              'Got an error from GitHub: ',
+              JSON.stringify(listArtifactsResponse, null, 2)
+            );
+          }
         }
 
-        const existingArtifact = artifactList.artifacts?.find(
+        const existingArtifact = artifactList?.artifacts?.find(
           (artifact) => artifact.name === artifactId
         );
 

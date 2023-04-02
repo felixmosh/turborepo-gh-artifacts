@@ -36695,6 +36695,8 @@ __nccwpck_require__.r(__webpack_exports__);
 
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(2186);
+;// CONCATENATED MODULE: external "console"
+const external_console_namespaceObject = require("console");
 // EXTERNAL MODULE: ./node_modules/express/index.js
 var express = __nccwpck_require__(1204);
 var express_default = /*#__PURE__*/__nccwpck_require__.n(express);
@@ -36798,18 +36800,20 @@ async function downloadArtifact(artifact, destFolder) {
 
 
 
+
 async function startServer() {
     const port = process.env.PORT || DEFAULT_PORT;
     lib_default().ensureDirSync(cacheDir);
     const app = express_default()();
-    const serverToken = process.env.TURBO_TOKEN || (0,core.getInput)(Inputs.SERVER_TOKEN, {
-        required: true,
-        trimWhitespace: true,
-    });
+    const serverToken = process.env.TURBO_TOKEN ||
+        (0,core.getInput)(Inputs.SERVER_TOKEN, {
+            required: true,
+            trimWhitespace: true,
+        });
     // Used to cache the listArtifacts() call between GET requests
     let artifactList;
     app.all('*', (req, res, next) => {
-        console.info(`Got a ${req.method} request`, req.path);
+        external_console_namespaceObject.info(`Got a ${req.method} request`, req.path);
         const { authorization = '' } = req.headers;
         const [type = '', token = ''] = authorization.split(' ');
         if (type !== 'Bearer' || token !== serverToken) {
@@ -36821,36 +36825,42 @@ async function startServer() {
         const { artifactId } = req.params;
         const filepath = external_path_default().join(cacheDir, `${artifactId}.gz`);
         if (!lib_default().pathExistsSync(filepath)) {
-            console.log(`Artifact ${artifactId} not found locally, attempting to download it.`);
+            external_console_namespaceObject.log(`Artifact ${artifactId} not found locally, attempting to download it.`);
             if (!artifactList) {
                 // Cache the response for the runtime of the server.
                 // This avoids doing repeated requests with the same result.
-                artifactList = await artifactApi.listArtifacts();
-            }
-            const existingArtifact = artifactList.artifacts?.find((artifact) => artifact.name === artifactId);
-            if (existingArtifact) {
-                if (existingArtifact.expired) {
-                    console.log(`Artifact ${artifactId} expired at ${existingArtifact.expires_at}, not downloading.`);
+                const listArtifactsResponse = await artifactApi.listArtifacts();
+                if (Array.isArray(listArtifactsResponse.artifacts)) {
+                    artifactList = listArtifactsResponse;
                 }
                 else {
-                    console.log(`Artifact ${artifactId} found.`);
+                    external_console_namespaceObject.log('Got an error from GitHub: ', JSON.stringify(listArtifactsResponse, null, 2));
+                }
+            }
+            const existingArtifact = artifactList?.artifacts?.find((artifact) => artifact.name === artifactId);
+            if (existingArtifact) {
+                if (existingArtifact.expired) {
+                    external_console_namespaceObject.log(`Artifact ${artifactId} expired at ${existingArtifact.expires_at}, not downloading.`);
+                }
+                else {
+                    external_console_namespaceObject.log(`Artifact ${artifactId} found.`);
                     await downloadArtifact(existingArtifact, cacheDir);
                 }
             }
             if (!lib_default().pathExistsSync(filepath)) {
-                console.log(`Artifact ${artifactId} could not be downloaded.`);
+                external_console_namespaceObject.log(`Artifact ${artifactId} could not be downloaded.`);
                 return res.status(404).send('Not found');
             }
         }
         else {
-            console.log(`Artifact ${artifactId} found locally.`);
+            external_console_namespaceObject.log(`Artifact ${artifactId} found locally.`);
         }
         const readStream = lib_default().createReadStream(filepath);
         readStream.on('open', () => {
             readStream.pipe(res);
         });
         readStream.on('error', (err) => {
-            console.error(err);
+            external_console_namespaceObject.error(err);
             res.end(err);
         });
     }));
@@ -36860,7 +36870,7 @@ async function startServer() {
         const writeStream = lib_default().createWriteStream(external_path_default().join(cacheDir, filename));
         req.pipe(writeStream);
         writeStream.on('error', (err) => {
-            console.error(err);
+            external_console_namespaceObject.error(err);
             res.status(500).send('ERROR');
         });
         req.on('end', () => {
@@ -36872,8 +36882,8 @@ async function startServer() {
         res.status(200).send();
     });
     app.disable('etag').listen(port, () => {
-        console.log(`Cache dir: ${cacheDir}`);
-        console.log(`Local Turbo server is listening at http://127.0.0.1:${port}`);
+        external_console_namespaceObject.log(`Cache dir: ${cacheDir}`);
+        external_console_namespaceObject.log(`Local Turbo server is listening at http://127.0.0.1:${port}`);
     });
 }
 startServer().catch((error) => {
