@@ -1,4 +1,4 @@
-import { create } from '@actions/artifact';
+import { DefaultArtifactClient } from '@actions/artifact';
 import { debug, info } from '@actions/core';
 import fs from 'fs-extra';
 import path from 'path';
@@ -11,7 +11,7 @@ export async function uploadArtifacts() {
     (artifact) => artifact.name
   );
 
-  const client = create();
+  const client = new DefaultArtifactClient();
 
   const files = fs.readdirSync(cacheDir);
 
