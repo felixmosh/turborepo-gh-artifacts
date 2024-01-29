@@ -8,7 +8,7 @@
   "scripts": {
     "build": "ncc build src/turboServer.ts -o dist/turboServer && ncc build src/starter.ts -o dist/starter && ncc build src/post.ts -o dist/post && git add -f dist/",
     "release": "release-it --only-version",
-    "update:major-tag": "git tag -d v3 && git push --delete origin v3 && git tag v3 && git push origin --tags"
+    "update:major-tag": "TAG=$(git describe --tags `git rev-list --tags --max-count=1` | cut -b 1-2) && git tag -d $TAG && git push --delete origin $TAG && git tag $TAG && git push origin --tags"
   },
   "devDependencies": {
     "@actions/artifact": "^2.1.0",
