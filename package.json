@@ -1,6 +1,6 @@
 {
   "name": "turborepo-gh-artifacts",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A TurboRepo local cache server which uploads artifact cache to GH artifacts.",
   "license": "MIT",
   "author": "felixmosh",
