@@ -47,13 +47,22 @@ export async function uploadArtifacts() {
     artifactsToUpload.map(async ({ artifactFilename, artifactId }) => {
       info(`Uploading ${artifactFilename}`);
 
-      await client.uploadArtifact(
-        artifactId,
-        [path.join(cacheDir, artifactFilename)],
-        cacheDir
-      );
+      try {
+        await client.uploadArtifact(
+          artifactId,
+          [path.join(cacheDir, artifactFilename)],
+          cacheDir
+        );
 
-      info(`Uploaded ${artifactFilename} successfully`);
+        info(`Uploaded ${artifactFilename} successfully`);
+      } catch (err) {
+        if (err instanceof Error && err.message.includes('(409) Conflict:')) {
+          // an artifact with the same hash must have been already uploaded by another job running in parallel
+          info(`Artifact ${artifactFilename} already exists, skipping...`);
+          return;
+        }
+        throw err;
+      }
     })
   );
 }
