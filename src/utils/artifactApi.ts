@@ -38,9 +38,9 @@ class ArtifactApi {
     });
   }
 
-  listArtifacts(): Promise<IArtifactListResponse> {
+  listArtifacts(filter: Partial<{ name: string }> = {}): Promise<IArtifactListResponse> {
     return this.axios
-      .get('/artifacts', { params: { per_page: 100 } })
+      .get('/artifacts', { params: { per_page: 100, ...filter } })
       .then((response) => JSON.parse(response.data));
   }
 

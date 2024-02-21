@@ -2,46 +2,43 @@ import { DefaultArtifactClient } from '@actions/artifact';
 import { debug, info } from '@actions/core';
 import fs from 'fs-extra';
 import path from 'path';
-import { artifactApi } from './artifactApi';
-import { cacheDir } from './constants';
+import { cacheDir, newArtifactsDirName } from './constants';
 
 export async function uploadArtifacts() {
-  const list = await artifactApi.listArtifacts();
-  const existingArtifacts = (list.artifacts || []).map(
-    (artifact) => artifact.name
-  );
-
   const client = new DefaultArtifactClient();
+  const newArtifactsDir = path.join(cacheDir, newArtifactsDirName);
 
-  const files = fs.readdirSync(cacheDir);
+  fs.ensureDirSync(newArtifactsDir);
+
+  const files = fs.readdirSync(newArtifactsDir);
 
   const artifactFiles = files.filter((filename) => filename.endsWith('.gz'));
 
   debug(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
 
-  const artifactsToUpload = artifactFiles
-    .map((artifactFilename) => {
-      const artifactId = path.basename(
-        artifactFilename,
-        path.extname(artifactFilename)
-      );
-
-      return { artifactFilename, artifactId };
-    })
-    .filter(({ artifactId }) => !existingArtifacts.includes(artifactId));
-
-  if (artifactsToUpload.length) {
-    info(`Gonna upload ${artifactsToUpload.length} artifacts:`);
-    info(
-      JSON.stringify(
-        artifactsToUpload.map(({ artifactId }) => artifactId),
-        null,
-        2
-      )
+  const artifactsToUpload = artifactFiles.map((artifactFilename) => {
+    const artifactId = path.basename(
+      artifactFilename,
+      path.extname(artifactFilename),
     );
-  } else {
+
+    return { artifactFilename, artifactId };
+  });
+
+  if (artifactsToUpload.length === 0) {
     info(`There is nothing to upload.`);
+
+    return;
   }
+
+  info(`Gonna upload ${artifactsToUpload.length} artifacts:`);
+  info(
+    JSON.stringify(
+      artifactsToUpload.map(({ artifactId }) => artifactId),
+      null,
+      2,
+    ),
+  );
 
   await Promise.all(
     artifactsToUpload.map(async ({ artifactFilename, artifactId }) => {
@@ -50,11 +47,13 @@ export async function uploadArtifacts() {
       try {
         await client.uploadArtifact(
           artifactId,
-          [path.join(cacheDir, artifactFilename)],
-          cacheDir
+          [path.join(newArtifactsDir, artifactFilename)],
+          newArtifactsDir,
         );
 
         info(`Uploaded ${artifactFilename} successfully`);
+
+        await fs.move(path.join(newArtifactsDir, artifactFilename), path.join(newArtifactsDir, '..', artifactFilename))
       } catch (err) {
         if (err instanceof Error && err.message.includes('(409) Conflict:')) {
           // an artifact with the same hash must have been already uploaded by another job running in parallel
@@ -63,6 +62,6 @@ export async function uploadArtifacts() {
         }
         throw err;
       }
-    })
+    }),
   );
 }

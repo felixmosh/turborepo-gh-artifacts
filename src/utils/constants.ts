@@ -8,6 +8,8 @@ export const cacheDir = path.join(
   'turbo-cache'
 );
 
+export const newArtifactsDirName = 'new-artifacts'
+
 export enum States {
   TURBO_LOCAL_SERVER_PID = 'TURBO_LOCAL_SERVER_PID',
 }

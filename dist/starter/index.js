@@ -5589,6 +5589,7 @@ var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
 
 const DEFAULT_PORT = 9080;
 const cacheDir = external_path_default().join(process.env.RUNNER_TEMP || external_os_default().tmpdir(), 'turbo-cache');
+const newArtifactsDirName = 'new-artifacts';
 var States;
 (function (States) {
     States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";

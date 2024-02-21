@@ -4,8 +4,13 @@ import express from 'express';
 import asyncHandler from 'express-async-handler';
 import fs from 'fs-extra';
 import path from 'path';
-import { artifactApi, IArtifactListResponse } from './utils/artifactApi';
-import { cacheDir, DEFAULT_PORT, Inputs } from './utils/constants';
+import { artifactApi, IArtifactResponse } from './utils/artifactApi';
+import {
+  cacheDir,
+  DEFAULT_PORT,
+  Inputs,
+  newArtifactsDirName,
+} from './utils/constants';
 import { downloadArtifact } from './utils/downloadArtifact';
 
 async function startServer() {
@@ -21,8 +26,7 @@ async function startServer() {
       trimWhitespace: true,
     });
 
-  // Used to cache the listArtifacts() call between GET requests
-  let artifactList: IArtifactListResponse | undefined;
+  const cacheMap = new Map<string, IArtifactResponse>();
 
   app.all('*', (req, res, next) => {
     console.info(`Got a ${req.method} request`, req.path);
@@ -45,31 +49,35 @@ async function startServer() {
 
       if (!fs.pathExistsSync(filepath)) {
         console.log(
-          `Artifact ${artifactId} not found locally, attempting to download it.`
+          `Artifact ${artifactId} not found locally, attempting to download it.`,
         );
 
-        if (!artifactList) {
-          // Cache the response for the runtime of the server.
-          // This avoids doing repeated requests with the same result.
-          const listArtifactsResponse = await artifactApi.listArtifacts();
-          if (Array.isArray(listArtifactsResponse.artifacts)) {
-            artifactList = listArtifactsResponse;
+        let existingArtifact: IArtifactResponse | undefined;
+        if (cacheMap.has(artifactId)) {
+          existingArtifact = cacheMap.get(artifactId);
+        } else {
+          const artifactList = await artifactApi.listArtifacts({
+            name: artifactId,
+          });
+
+          if (Array.isArray(artifactList.artifacts)) {
+            existingArtifact = artifactList.artifacts.find(
+              (artifact) => artifact.name === artifactId,
+            );
           } else {
             console.log(
               'Got an error from GitHub: ',
-              JSON.stringify(listArtifactsResponse, null, 2)
+              JSON.stringify(artifactList, null, 2),
             );
           }
         }
 
-        const existingArtifact = artifactList?.artifacts?.find(
-          (artifact) => artifact.name === artifactId
-        );
-
         if (existingArtifact) {
+          cacheMap.set(artifactId, existingArtifact);
+
           if (existingArtifact.expired) {
             console.log(
-              `Artifact ${artifactId} expired at ${existingArtifact.expires_at}, not downloading.`
+              `Artifact ${artifactId} expired at ${existingArtifact.expires_at}, not downloading.`,
             );
           } else {
             console.log(`Artifact ${artifactId} found.`);
@@ -94,14 +102,20 @@ async function startServer() {
         console.error(err);
         res.end(err);
       });
-    })
+    }),
   );
 
   app.put('/v8/artifacts/:artifactId', (req, res) => {
     const artifactId = req.params.artifactId;
     const filename = `${artifactId}.gz`;
+    // turborepo doesn't calls the put method for existing artifacts, so, we save new cache artifacts inside a folder
+    // and in post.js we will upload only them
+    const newArtifactsDir = path.join(cacheDir, newArtifactsDirName);
+    fs.ensureDirSync(newArtifactsDir);
 
-    const writeStream = fs.createWriteStream(path.join(cacheDir, filename));
+    const writeStream = fs.createWriteStream(
+      path.join(newArtifactsDir, filename),
+    );
 
     req.pipe(writeStream);
 

@@ -38900,6 +38900,7 @@ var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
 
 const DEFAULT_PORT = 9080;
 const cacheDir = external_path_default().join(process.env.RUNNER_TEMP || external_os_default().tmpdir(), 'turbo-cache');
+const newArtifactsDirName = 'new-artifacts';
 var States;
 (function (States) {
     States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
@@ -38929,9 +38930,9 @@ class ArtifactApi {
             },
         });
     }
-    listArtifacts() {
+    listArtifacts(filter = {}) {
         return this.axios
-            .get('/artifacts', { params: { per_page: 100 } })
+            .get('/artifacts', { params: { per_page: 100, ...filter } })
             .then((response) => JSON.parse(response.data));
     }
     downloadArtifact(artifactId) {
@@ -38991,8 +38992,7 @@ async function startServer() {
             required: true,
             trimWhitespace: true,
         });
-    // Used to cache the listArtifacts() call between GET requests
-    let artifactList;
+    const cacheMap = new Map();
     app.all('*', (req, res, next) => {
         external_console_namespaceObject.info(`Got a ${req.method} request`, req.path);
         const { authorization = '' } = req.headers;
@@ -39007,19 +39007,23 @@ async function startServer() {
         const filepath = external_path_default().join(cacheDir, `${artifactId}.gz`);
         if (!lib_default().pathExistsSync(filepath)) {
             external_console_namespaceObject.log(`Artifact ${artifactId} not found locally, attempting to download it.`);
-            if (!artifactList) {
-                // Cache the response for the runtime of the server.
-                // This avoids doing repeated requests with the same result.
-                const listArtifactsResponse = await artifactApi.listArtifacts();
-                if (Array.isArray(listArtifactsResponse.artifacts)) {
-                    artifactList = listArtifactsResponse;
+            let existingArtifact;
+            if (cacheMap.has(artifactId)) {
+                existingArtifact = cacheMap.get(artifactId);
+            }
+            else {
+                const artifactList = await artifactApi.listArtifacts({
+                    name: artifactId,
+                });
+                if (Array.isArray(artifactList.artifacts)) {
+                    existingArtifact = artifactList.artifacts.find((artifact) => artifact.name === artifactId);
                 }
                 else {
-                    external_console_namespaceObject.log('Got an error from GitHub: ', JSON.stringify(listArtifactsResponse, null, 2));
+                    external_console_namespaceObject.log('Got an error from GitHub: ', JSON.stringify(artifactList, null, 2));
                 }
             }
-            const existingArtifact = artifactList?.artifacts?.find((artifact) => artifact.name === artifactId);
             if (existingArtifact) {
+                cacheMap.set(artifactId, existingArtifact);
                 if (existingArtifact.expired) {
                     external_console_namespaceObject.log(`Artifact ${artifactId} expired at ${existingArtifact.expires_at}, not downloading.`);
                 }
@@ -39048,7 +39052,11 @@ async function startServer() {
     app.put('/v8/artifacts/:artifactId', (req, res) => {
         const artifactId = req.params.artifactId;
         const filename = `${artifactId}.gz`;
-        const writeStream = lib_default().createWriteStream(external_path_default().join(cacheDir, filename));
+        // turborepo doesn't calls the put method for existing artifacts, so, we save new cache artifacts inside a folder
+        // and in post.js we will upload only them
+        const newArtifactsDir = external_path_default().join(cacheDir, newArtifactsDirName);
+        lib_default().ensureDirSync(newArtifactsDir);
+        const writeStream = lib_default().createWriteStream(external_path_default().join(newArtifactsDir, filename));
         req.pipe(writeStream);
         writeStream.on('error', (err) => {
             external_console_namespaceObject.error(err);
