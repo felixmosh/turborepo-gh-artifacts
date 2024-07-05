@@ -47,7 +47,9 @@ async function startServer() {
 
       const filepath = path.join(cacheDir, `${artifactId}.gz`);
 
-      if (!fs.pathExistsSync(filepath)) {
+      if (fs.pathExistsSync(filepath)) {
+        console.log(`Artifact ${artifactId} found locally.`);
+      } else {
         console.log(
           `Artifact ${artifactId} not found locally, attempting to download it.`,
         );
@@ -86,11 +88,9 @@ async function startServer() {
         }
 
         if (!fs.pathExistsSync(filepath)) {
-          console.log(`Artifact ${artifactId} could not be downloaded.`);
+          console.log(`Artifact ${artifactId} not present.`);
           return res.status(404).send('Not found');
         }
-      } else {
-        console.log(`Artifact ${artifactId} found locally.`);
       }
 
       const readStream = fs.createReadStream(filepath);
@@ -98,9 +98,9 @@ async function startServer() {
         readStream.pipe(res);
       });
 
-      readStream.on('error', (err) => {
-        console.error(err);
-        res.end(err);
+      readStream.on('error', (error) => {
+        console.error(error);
+        res.end(error);
       });
     }),
   );
@@ -119,8 +119,8 @@ async function startServer() {
 
     req.pipe(writeStream);
 
-    writeStream.on('error', (err) => {
-      console.error(err);
+    writeStream.on('error', (error) => {
+      console.error(error);
       res.status(500).send('ERROR');
     });
 
