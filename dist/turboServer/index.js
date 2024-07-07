@@ -39005,7 +39005,10 @@ async function startServer() {
     app.get('/v8/artifacts/:artifactId', express_async_handler_default()(async (req, res) => {
         const { artifactId } = req.params;
         const filepath = external_path_default().join(cacheDir, `${artifactId}.gz`);
-        if (!lib_default().pathExistsSync(filepath)) {
+        if (lib_default().pathExistsSync(filepath)) {
+            external_console_namespaceObject.log(`Artifact ${artifactId} found locally.`);
+        }
+        else {
             external_console_namespaceObject.log(`Artifact ${artifactId} not found locally, attempting to download it.`);
             let existingArtifact;
             if (cacheMap.has(artifactId)) {
@@ -39033,20 +39036,17 @@ async function startServer() {
                 }
             }
             if (!lib_default().pathExistsSync(filepath)) {
-                external_console_namespaceObject.log(`Artifact ${artifactId} could not be downloaded.`);
+                external_console_namespaceObject.log(`Artifact ${artifactId} not present.`);
                 return res.status(404).send('Not found');
             }
-        }
-        else {
-            external_console_namespaceObject.log(`Artifact ${artifactId} found locally.`);
         }
         const readStream = lib_default().createReadStream(filepath);
         readStream.on('open', () => {
             readStream.pipe(res);
         });
-        readStream.on('error', (err) => {
-            external_console_namespaceObject.error(err);
-            res.end(err);
+        readStream.on('error', (error) => {
+            external_console_namespaceObject.error(error);
+            res.end(error);
         });
     }));
     app.put('/v8/artifacts/:artifactId', (req, res) => {
@@ -39058,8 +39058,8 @@ async function startServer() {
         lib_default().ensureDirSync(newArtifactsDir);
         const writeStream = lib_default().createWriteStream(external_path_default().join(newArtifactsDir, filename));
         req.pipe(writeStream);
-        writeStream.on('error', (err) => {
-            external_console_namespaceObject.error(err);
+        writeStream.on('error', (error) => {
+            external_console_namespaceObject.error(error);
             res.status(500).send('ERROR');
         });
         req.on('end', () => {

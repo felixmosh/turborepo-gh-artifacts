@@ -14,7 +14,7 @@ export async function uploadArtifacts() {
 
   const artifactFiles = files.filter((filename) => filename.endsWith('.gz'));
 
-  debug(`artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
+  debug(`Artifact files: ${JSON.stringify(artifactFiles, null, 2)}`);
 
   const artifactsToUpload = artifactFiles.map((artifactFilename) => {
     const artifactId = path.basename(
@@ -31,7 +31,7 @@ export async function uploadArtifacts() {
     return;
   }
 
-  info(`Gonna upload ${artifactsToUpload.length} artifacts:`);
+  info(`Going to upload ${artifactsToUpload.length} artifacts:`);
   info(
     JSON.stringify(
       artifactsToUpload.map(({ artifactId }) => artifactId),
@@ -50,17 +50,23 @@ export async function uploadArtifacts() {
           [path.join(newArtifactsDir, artifactFilename)],
           newArtifactsDir,
         );
-
         info(`Uploaded ${artifactFilename} successfully`);
-
-        await fs.move(path.join(newArtifactsDir, artifactFilename), path.join(newArtifactsDir, '..', artifactFilename))
-      } catch (err) {
-        if (err instanceof Error && err.message.includes('(409) Conflict:')) {
-          // an artifact with the same hash must have been already uploaded by another job running in parallel
-          info(`Artifact ${artifactFilename} already exists, skipping...`);
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('(409) Conflict:')) {
+          // An artifact with the same hash must have been already uploaded by another job running in parallel
+          info(`Artifact ${artifactFilename} already exists on GitHub, skipping...`);
           return;
         }
-        throw err;
+        throw error;
+      }
+      try {
+        await fs.move(path.join(newArtifactsDir, artifactFilename), path.join(cacheDir, artifactFilename))
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('already exists')) {
+          info(`Artifact ${artifactFilename} already exists locally, skipping...`);
+          return;
+        }
+        throw error;
       }
     }),
   );

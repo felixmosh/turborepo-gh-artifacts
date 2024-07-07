@@ -1,7 +1,4 @@
-import {setFailed} from '@actions/core';
-import fs from 'fs-extra';
-import path from 'path';
-import { cacheDir, newArtifactsDirName } from './utils/constants';
+import { setFailed } from '@actions/core';
 import { printServerLogs } from './utils/printServerLogs';
 import { stopServer } from './utils/stopServer';
 import { uploadArtifacts } from './utils/uploadArtifacts';
@@ -9,9 +6,11 @@ import { uploadArtifacts } from './utils/uploadArtifacts';
 async function post() {
   stopServer();
 
-  await uploadArtifacts();
-
-  printServerLogs();
+  try {
+    await uploadArtifacts();
+  } finally {
+    printServerLogs();
+  }
 }
 
 post().catch((error) => {
