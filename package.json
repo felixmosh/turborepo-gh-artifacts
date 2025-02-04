@@ -11,20 +11,20 @@
     "update:major-tag": "TAG=$(git describe --tags `git rev-list --tags --max-count=1` | cut -b 1-2) && git tag -d $TAG && git push --delete origin $TAG && git tag $TAG && git push origin --tags"
   },
   "devDependencies": {
-    "@actions/artifact": "^2.1.0",
-    "@actions/core": "^1.10.1",
-    "@tsconfig/node20": "^20.1.2",
+    "@actions/artifact": "^2.2.1",
+    "@actions/core": "^1.11.1",
+    "@tsconfig/node20": "^20.1.4",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.11.10",
-    "@vercel/ncc": "^0.38.1",
-    "axios": "^1.6.7",
-    "express": "^4.18.2",
+    "@vercel/ncc": "^0.38.3",
+    "axios": "^1.7.9",
+    "express": "^4.21.2",
     "express-async-handler": "^1.2.0",
-    "fs-extra": "^11.2.0",
+    "fs-extra": "^11.3.0",
     "node-stream-zip": "^1.15.0",
-    "prettier": "^3.2.4",
+    "prettier": "^3.4.2",
     "release-it": "^17.0.3",
-    "typescript": "^5.3.3"
+    "typescript": "^5.7.3"
   },
   "engines": {
     "node": ">=18.0.0"
