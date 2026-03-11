@@ -68930,7 +68930,7 @@ async function startServer() {
             res.send('OK');
         });
     });
-    app.post('/v8/artifacts/events', (_req, res) => {
+    app.post('/v8/artifacts/events', (req, res) => {
         // Analytics endpoint, just ignore it
         res.status(200).send();
     });
