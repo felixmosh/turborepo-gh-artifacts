@@ -68765,15 +68765,13 @@ const {
 const DEFAULT_PORT = 9080;
 const cacheDir = external_path_default().join(process.env.RUNNER_TEMP || external_os_default().tmpdir(), 'turbo-cache');
 const newArtifactsDirName = 'new-artifacts';
-var States;
-(function (States) {
-    States["TURBO_LOCAL_SERVER_PID"] = "TURBO_LOCAL_SERVER_PID";
-})(States || (States = {}));
-var Inputs;
-(function (Inputs) {
-    Inputs["SERVER_TOKEN"] = "server-token";
-    Inputs["REPO_TOKEN"] = "repo-token";
-})(Inputs || (Inputs = {}));
+const States = {
+    TURBO_LOCAL_SERVER_PID: 'TURBO_LOCAL_SERVER_PID',
+};
+const Inputs = {
+    SERVER_TOKEN: 'server-token',
+    REPO_TOKEN: 'repo-token',
+};
 
 ;// CONCATENATED MODULE: ./src/utils/artifactApi.ts
 

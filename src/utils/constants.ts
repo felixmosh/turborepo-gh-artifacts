@@ -10,11 +10,15 @@ export const cacheDir = path.join(
 
 export const newArtifactsDirName = 'new-artifacts'
 
-export enum States {
-  TURBO_LOCAL_SERVER_PID = 'TURBO_LOCAL_SERVER_PID',
-}
+export const States = {
+  TURBO_LOCAL_SERVER_PID: 'TURBO_LOCAL_SERVER_PID',
+} as const;
 
-export enum Inputs {
-  SERVER_TOKEN = 'server-token',
-  REPO_TOKEN = 'repo-token',
-}
+export type States = typeof States[keyof typeof States];
+
+export const Inputs = {
+  SERVER_TOKEN: 'server-token',
+  REPO_TOKEN: 'repo-token',
+} as const
+
+export type Inputs = typeof Inputs[keyof typeof Inputs]
