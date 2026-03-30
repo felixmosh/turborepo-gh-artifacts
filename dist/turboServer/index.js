@@ -236,84 +236,12 @@ function extToMime (type) {
  * Check if mime is valid.
  *
  * @param {String} type
- * @return {String}
+ * @return {Boolean}
  * @private
  */
 
 function validMime (type) {
   return typeof type === 'string'
-}
-
-
-/***/ }),
-
-/***/ 9560:
-/***/ ((module) => {
-
-"use strict";
-
-
-/**
- * Expose `arrayFlatten`.
- */
-module.exports = arrayFlatten
-
-/**
- * Recursive flatten function with depth.
- *
- * @param  {Array}  array
- * @param  {Array}  result
- * @param  {Number} depth
- * @return {Array}
- */
-function flattenWithDepth (array, result, depth) {
-  for (var i = 0; i < array.length; i++) {
-    var value = array[i]
-
-    if (depth > 0 && Array.isArray(value)) {
-      flattenWithDepth(value, result, depth - 1)
-    } else {
-      result.push(value)
-    }
-  }
-
-  return result
-}
-
-/**
- * Recursive flatten function. Omitting depth is slightly faster.
- *
- * @param  {Array} array
- * @param  {Array} result
- * @return {Array}
- */
-function flattenForever (array, result) {
-  for (var i = 0; i < array.length; i++) {
-    var value = array[i]
-
-    if (Array.isArray(value)) {
-      flattenForever(value, result)
-    } else {
-      result.push(value)
-    }
-  }
-
-  return result
-}
-
-/**
- * Flatten an array, with the ability to define a depth.
- *
- * @param  {Array}  array
- * @param  {Number} depth
- * @return {Array}
- */
-function arrayFlatten (array, depth) {
-  if (depth == null) {
-    return flattenForever(array, [])
-  }
-
-  return flattenWithDepth(array, [], depth)
 }
 
 
@@ -773,152 +701,67 @@ function descending(a, b)
 
 
 /**
- * Module dependencies.
- * @private
- */
-
-var deprecate = __nccwpck_require__(95)('body-parser')
-
-/**
- * Cache of loaded parsers.
- * @private
- */
-
-var parsers = Object.create(null)
-
-/**
- * @typedef Parsers
- * @type {function}
- * @property {function} json
- * @property {function} raw
- * @property {function} text
- * @property {function} urlencoded
+ * @typedef {Object} Parsers
+ * @property {Function} json JSON parser
+ * @property {Function} raw Raw parser
+ * @property {Function} text Text parser
+ * @property {Function} urlencoded URL-encoded parser
  */
 
 /**
  * Module exports.
- * @type {Parsers}
+ * @type {Function & Parsers}
  */
-
-exports = module.exports = deprecate.function(bodyParser,
-  'bodyParser: use individual json/urlencoded middlewares')
+exports = module.exports = bodyParser
 
 /**
  * JSON parser.
  * @public
  */
-
 Object.defineProperty(exports, "json", ({
   configurable: true,
   enumerable: true,
-  get: createParserGetter('json')
+  get: () => __nccwpck_require__(2162)
 }))
 
 /**
  * Raw parser.
  * @public
  */
-
 Object.defineProperty(exports, "raw", ({
   configurable: true,
   enumerable: true,
-  get: createParserGetter('raw')
+  get: () => __nccwpck_require__(8496)
 }))
 
 /**
  * Text parser.
  * @public
  */
-
 Object.defineProperty(exports, "text", ({
   configurable: true,
   enumerable: true,
-  get: createParserGetter('text')
+  get: () => __nccwpck_require__(7211)
 }))
 
 /**
  * URL-encoded parser.
  * @public
  */
-
 Object.defineProperty(exports, "urlencoded", ({
   configurable: true,
   enumerable: true,
-  get: createParserGetter('urlencoded')
+  get: () => __nccwpck_require__(7129)
 }))
 
 /**
  * Create a middleware to parse json and urlencoded bodies.
  *
- * @param {object} [options]
- * @return {function}
  * @deprecated
  * @public
  */
-
-function bodyParser (options) {
-  // use default type for parsers
-  var opts = Object.create(options || null, {
-    type: {
-      configurable: true,
-      enumerable: true,
-      value: undefined,
-      writable: true
-    }
-  })
-
-  var _urlencoded = exports.urlencoded(opts)
-  var _json = exports.json(opts)
-
-  return function bodyParser (req, res, next) {
-    _json(req, res, function (err) {
-      if (err) return next(err)
-      _urlencoded(req, res, next)
-    })
-  }
-}
-
-/**
- * Create a getter for loading a parser.
- * @private
- */
-
-function createParserGetter (name) {
-  return function get () {
-    return loadParser(name)
-  }
-}
-
-/**
- * Load a parser module.
- * @private
- */
-
-function loadParser (parserName) {
-  var parser = parsers[parserName]
-
-  if (parser !== undefined) {
-    return parser
-  }
-
-  // this uses a switch for static require analysis
-  switch (parserName) {
-    case 'json':
-      parser = __nccwpck_require__(2162)
-      break
-    case 'raw':
-      parser = __nccwpck_require__(8496)
-      break
-    case 'text':
-      parser = __nccwpck_require__(7211)
-      break
-    case 'urlencoded':
-      parser = __nccwpck_require__(7129)
-      break
-  }
-
-  // store to prevent invoking require()
-  return (parsers[parserName] = parser)
+function bodyParser () {
+  throw new Error('The bodyParser() generic has been split into individual middleware to use instead.')
 }
 
 
@@ -942,12 +785,12 @@ function loadParser (parserName) {
  */
 
 var createError = __nccwpck_require__(8024)
-var destroy = __nccwpck_require__(2194)
 var getBody = __nccwpck_require__(949)
 var iconv = __nccwpck_require__(1748)
 var onFinished = __nccwpck_require__(5698)
-var unpipe = __nccwpck_require__(6367)
-var zlib = __nccwpck_require__(3106)
+var zlib = __nccwpck_require__(8522)
+var hasBody = (__nccwpck_require__(7323).hasBody)
+var { getCharset } = __nccwpck_require__(2045)
 
 /**
  * Module exports.
@@ -958,27 +801,61 @@ module.exports = read
 /**
  * Read a request into a buffer and parse.
  *
- * @param {object} req
- * @param {object} res
- * @param {function} next
- * @param {function} parse
- * @param {function} debug
- * @param {object} options
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Function} next
+ * @param {Function} parse
+ * @param {Function} debug
+ * @param {Object} options
  * @private
  */
-
 function read (req, res, next, parse, debug, options) {
+  if (onFinished.isFinished(req)) {
+    debug('body already parsed')
+    next()
+    return
+  }
+
+  if (!('body' in req)) {
+    req.body = undefined
+  }
+
+  // skip requests without bodies
+  if (!hasBody(req)) {
+    debug('skip empty body')
+    next()
+    return
+  }
+
+  debug('content-type %j', req.headers['content-type'])
+
+  // determine if request should be parsed
+  if (!options.shouldParse(req)) {
+    debug('skip parsing')
+    next()
+    return
+  }
+
+  var encoding = null
+  if (options?.skipCharset !== true) {
+    encoding = getCharset(req) || options.defaultCharset
+
+    // validate charset
+    if (!!options?.isValidCharset && !options.isValidCharset(encoding)) {
+      debug('invalid charset')
+      next(createError(415, 'unsupported charset "' + encoding.toUpperCase() + '"', {
+        charset: encoding,
+        type: 'charset.unsupported'
+      }))
+      return
+    }
+  }
+
   var length
   var opts = options
   var stream
 
-  // flag as parsed
-  req._body = true
-
   // read options
-  var encoding = opts.encoding !== null
-    ? opts.encoding
-    : null
   var verify = opts.verify
 
   try {
@@ -1023,8 +900,8 @@ function read (req, res, next, parse, debug, options) {
 
       // unpipe from stream and destroy
       if (stream !== req) {
-        unpipe(req)
-        destroy(stream, true)
+        req.unpipe()
+        stream.destroy()
       }
 
       // read off entire request
@@ -1055,7 +932,7 @@ function read (req, res, next, parse, debug, options) {
       str = typeof body !== 'string' && encoding !== null
         ? iconv.decode(body, encoding)
         : body
-      req.body = parse(str)
+      req.body = parse(str, encoding)
     } catch (err) {
       next(createError(400, err, {
         body: str,
@@ -1071,17 +948,15 @@ function read (req, res, next, parse, debug, options) {
 /**
  * Get the content stream of the request.
  *
- * @param {object} req
- * @param {function} debug
- * @param {boolean} [inflate=true]
- * @return {object}
- * @api private
+ * @param {Object} req
+ * @param {Function} debug
+ * @param {boolean} inflate
+ * @returns {Object}
+ * @private
  */
-
 function contentstream (req, debug, inflate) {
   var encoding = (req.headers['content-encoding'] || 'identity').toLowerCase()
   var length = req.headers['content-length']
-  var stream
 
   debug('content-encoding "%s"', encoding)
 
@@ -1092,39 +967,49 @@ function contentstream (req, debug, inflate) {
     })
   }
 
+  if (encoding === 'identity') {
+    req.length = length
+    return req
+  }
+
+  var stream = createDecompressionStream(encoding, debug)
+  req.pipe(stream)
+  return stream
+}
+
+/**
+ * Create a decompression stream for the given encoding.
+ * @param {string} encoding
+ * @param {Function} debug
+ * @returns {Object}
+ * @private
+ */
+function createDecompressionStream (encoding, debug) {
   switch (encoding) {
     case 'deflate':
-      stream = zlib.createInflate()
       debug('inflate body')
-      req.pipe(stream)
-      break
+      return zlib.createInflate()
     case 'gzip':
-      stream = zlib.createGunzip()
       debug('gunzip body')
-      req.pipe(stream)
-      break
-    case 'identity':
-      stream = req
-      stream.length = length
-      break
+      return zlib.createGunzip()
+    case 'br':
+      debug('brotli decompress body')
+      return zlib.createBrotliDecompress()
     default:
       throw createError(415, 'unsupported content encoding "' + encoding + '"', {
         encoding: encoding,
         type: 'encoding.unsupported'
       })
   }
-
-  return stream
 }
 
 /**
  * Dump the contents of a request.
  *
- * @param {object} req
- * @param {function} callback
- * @api private
+ * @param {Object} req
+ * @param {Function} callback
+ * @private
  */
-
 function dump (req, callback) {
   if (onFinished.isFinished(req)) {
     callback(null)
@@ -1155,12 +1040,9 @@ function dump (req, callback) {
  * @private
  */
 
-var bytes = __nccwpck_require__(4531)
-var contentType = __nccwpck_require__(756)
-var createError = __nccwpck_require__(8024)
-var debug = __nccwpck_require__(7646)('body-parser:json')
+var debug = __nccwpck_require__(2830)('body-parser:json')
 var read = __nccwpck_require__(7946)
-var typeis = __nccwpck_require__(7323)
+var { normalizeOptions } = __nccwpck_require__(2045)
 
 /**
  * Module exports.
@@ -1179,7 +1061,6 @@ module.exports = json
  *            %x0A /              ; Line feed or New line
  *            %x0D )              ; Carriage return
  */
-
 var FIRST_CHAR_REGEXP = /^[\x20\x09\x0a\x0d]*([^\x20\x09\x0a\x0d])/ // eslint-disable-line no-control-regex
 
 var JSON_SYNTAX_CHAR = '#'
@@ -1188,31 +1069,15 @@ var JSON_SYNTAX_REGEXP = /#+/g
 /**
  * Create a middleware to parse JSON bodies.
  *
- * @param {object} [options]
- * @return {function}
+ * @param {Object} [options]
+ * @returns {Function}
  * @public
  */
-
 function json (options) {
-  var opts = options || {}
+  const normalizedOptions = normalizeOptions(options, 'application/json')
 
-  var limit = typeof opts.limit !== 'number'
-    ? bytes.parse(opts.limit || '100kb')
-    : opts.limit
-  var inflate = opts.inflate !== false
-  var reviver = opts.reviver
-  var strict = opts.strict !== false
-  var type = opts.type || 'application/json'
-  var verify = opts.verify || false
-
-  if (verify !== false && typeof verify !== 'function') {
-    throw new TypeError('option verify must be function')
-  }
-
-  // create the appropriate type checking function
-  var shouldParse = typeof type !== 'function'
-    ? typeChecker(type)
-    : type
+  var reviver = options?.reviver
+  var strict = options?.strict !== false
 
   function parse (body) {
     if (body.length === 0) {
@@ -1241,49 +1106,14 @@ function json (options) {
     }
   }
 
-  return function jsonParser (req, res, next) {
-    if (req._body) {
-      debug('body already parsed')
-      next()
-      return
-    }
-
-    req.body = req.body || {}
-
-    // skip requests without bodies
-    if (!typeis.hasBody(req)) {
-      debug('skip empty body')
-      next()
-      return
-    }
-
-    debug('content-type %j', req.headers['content-type'])
-
-    // determine if request should be parsed
-    if (!shouldParse(req)) {
-      debug('skip parsing')
-      next()
-      return
-    }
-
+  const readOptions = {
+    ...normalizedOptions,
     // assert charset per RFC 7159 sec 8.1
-    var charset = getCharset(req) || 'utf-8'
-    if (charset.slice(0, 4) !== 'utf-') {
-      debug('invalid charset')
-      next(createError(415, 'unsupported charset "' + charset.toUpperCase() + '"', {
-        charset: charset,
-        type: 'charset.unsupported'
-      }))
-      return
-    }
+    isValidCharset: (charset) => charset.slice(0, 4) === 'utf-'
+  }
 
-    // read
-    read(req, res, next, parse, debug, {
-      encoding: charset,
-      inflate: inflate,
-      limit: limit,
-      verify: verify
-    })
+  return function jsonParser (req, res, next) {
+    read(req, res, next, parse, debug, readOptions)
   }
 }
 
@@ -1292,20 +1122,15 @@ function json (options) {
  *
  * @param {string} str
  * @param {string} char
- * @return {Error}
+ * @returns {Error}
  * @private
  */
-
 function createStrictSyntaxError (str, char) {
   var index = str.indexOf(char)
   var partial = ''
 
   if (index !== -1) {
-    partial = str.substring(0, index) + JSON_SYNTAX_CHAR
-
-    for (var i = index + 1; i < str.length; i++) {
-      partial += JSON_SYNTAX_CHAR
-    }
+    partial = str.substring(0, index) + JSON_SYNTAX_CHAR.repeat(str.length - index)
   }
 
   try {
@@ -1324,10 +1149,9 @@ function createStrictSyntaxError (str, char) {
  * Get the first non-whitespace character in a string.
  *
  * @param {string} str
- * @return {function}
+ * @returns {string|undefined}
  * @private
  */
-
 function firstchar (str) {
   var match = FIRST_CHAR_REGEXP.exec(str)
 
@@ -1337,28 +1161,13 @@ function firstchar (str) {
 }
 
 /**
- * Get the charset of a request.
- *
- * @param {object} req
- * @api private
- */
-
-function getCharset (req) {
-  try {
-    return (contentType.parse(req).parameters.charset || '').toLowerCase()
-  } catch (e) {
-    return undefined
-  }
-}
-
-/**
  * Normalize a SyntaxError for JSON.parse.
  *
  * @param {SyntaxError} error
- * @param {object} obj
- * @return {SyntaxError}
+ * @param {Object} obj
+ * @returns {SyntaxError}
+ * @private
  */
-
 function normalizeJsonSyntaxError (error, obj) {
   var keys = Object.getOwnPropertyNames(error)
 
@@ -1374,19 +1183,6 @@ function normalizeJsonSyntaxError (error, obj) {
   error.message = obj.message
 
   return error
-}
-
-/**
- * Get the simple type checker.
- *
- * @param {string} type
- * @return {function}
- */
-
-function typeChecker (type) {
-  return function checkType (req) {
-    return Boolean(typeis(req, type))
-  }
 }
 
 
@@ -1408,10 +1204,9 @@ function typeChecker (type) {
  * Module dependencies.
  */
 
-var bytes = __nccwpck_require__(4531)
-var debug = __nccwpck_require__(7646)('body-parser:raw')
+var debug = __nccwpck_require__(2830)('body-parser:raw')
 var read = __nccwpck_require__(7946)
-var typeis = __nccwpck_require__(7323)
+var { normalizeOptions, passthrough } = __nccwpck_require__(2045)
 
 /**
  * Module exports.
@@ -1422,79 +1217,21 @@ module.exports = raw
 /**
  * Create a middleware to parse raw bodies.
  *
- * @param {object} [options]
- * @return {function}
- * @api public
+ * @param {Object} [options]
+ * @returns {Function}
+ * @public
  */
-
 function raw (options) {
-  var opts = options || {}
+  const normalizedOptions = normalizeOptions(options, 'application/octet-stream')
 
-  var inflate = opts.inflate !== false
-  var limit = typeof opts.limit !== 'number'
-    ? bytes.parse(opts.limit || '100kb')
-    : opts.limit
-  var type = opts.type || 'application/octet-stream'
-  var verify = opts.verify || false
-
-  if (verify !== false && typeof verify !== 'function') {
-    throw new TypeError('option verify must be function')
-  }
-
-  // create the appropriate type checking function
-  var shouldParse = typeof type !== 'function'
-    ? typeChecker(type)
-    : type
-
-  function parse (buf) {
-    return buf
+  const readOptions = {
+    ...normalizedOptions,
+    // Skip charset validation and parse the body as is
+    skipCharset: true
   }
 
   return function rawParser (req, res, next) {
-    if (req._body) {
-      debug('body already parsed')
-      next()
-      return
-    }
-
-    req.body = req.body || {}
-
-    // skip requests without bodies
-    if (!typeis.hasBody(req)) {
-      debug('skip empty body')
-      next()
-      return
-    }
-
-    debug('content-type %j', req.headers['content-type'])
-
-    // determine if request should be parsed
-    if (!shouldParse(req)) {
-      debug('skip parsing')
-      next()
-      return
-    }
-
-    // read
-    read(req, res, next, parse, debug, {
-      encoding: null,
-      inflate: inflate,
-      limit: limit,
-      verify: verify
-    })
-  }
-}
-
-/**
- * Get the simple type checker.
- *
- * @param {string} type
- * @return {function}
- */
-
-function typeChecker (type) {
-  return function checkType (req) {
-    return Boolean(typeis(req, type))
+    read(req, res, next, passthrough, debug, readOptions)
   }
 }
 
@@ -1517,11 +1254,9 @@ function typeChecker (type) {
  * Module dependencies.
  */
 
-var bytes = __nccwpck_require__(4531)
-var contentType = __nccwpck_require__(756)
-var debug = __nccwpck_require__(7646)('body-parser:text')
+var debug = __nccwpck_require__(2830)('body-parser:text')
 var read = __nccwpck_require__(7946)
-var typeis = __nccwpck_require__(7323)
+var { normalizeOptions, passthrough } = __nccwpck_require__(2045)
 
 /**
  * Module exports.
@@ -1532,98 +1267,15 @@ module.exports = text
 /**
  * Create a middleware to parse text bodies.
  *
- * @param {object} [options]
- * @return {function}
- * @api public
+ * @param {Object} [options]
+ * @returns {Function}
+ * @public
  */
-
 function text (options) {
-  var opts = options || {}
-
-  var defaultCharset = opts.defaultCharset || 'utf-8'
-  var inflate = opts.inflate !== false
-  var limit = typeof opts.limit !== 'number'
-    ? bytes.parse(opts.limit || '100kb')
-    : opts.limit
-  var type = opts.type || 'text/plain'
-  var verify = opts.verify || false
-
-  if (verify !== false && typeof verify !== 'function') {
-    throw new TypeError('option verify must be function')
-  }
-
-  // create the appropriate type checking function
-  var shouldParse = typeof type !== 'function'
-    ? typeChecker(type)
-    : type
-
-  function parse (buf) {
-    return buf
-  }
+  const normalizedOptions = normalizeOptions(options, 'text/plain')
 
   return function textParser (req, res, next) {
-    if (req._body) {
-      debug('body already parsed')
-      next()
-      return
-    }
-
-    req.body = req.body || {}
-
-    // skip requests without bodies
-    if (!typeis.hasBody(req)) {
-      debug('skip empty body')
-      next()
-      return
-    }
-
-    debug('content-type %j', req.headers['content-type'])
-
-    // determine if request should be parsed
-    if (!shouldParse(req)) {
-      debug('skip parsing')
-      next()
-      return
-    }
-
-    // get charset
-    var charset = getCharset(req) || defaultCharset
-
-    // read
-    read(req, res, next, parse, debug, {
-      encoding: charset,
-      inflate: inflate,
-      limit: limit,
-      verify: verify
-    })
-  }
-}
-
-/**
- * Get the charset of a request.
- *
- * @param {object} req
- * @api private
- */
-
-function getCharset (req) {
-  try {
-    return (contentType.parse(req).parameters.charset || '').toLowerCase()
-  } catch (e) {
-    return undefined
-  }
-}
-
-/**
- * Get the simple type checker.
- *
- * @param {string} type
- * @return {function}
- */
-
-function typeChecker (type) {
-  return function checkType (req) {
-    return Boolean(typeis(req, type))
+    read(req, res, next, passthrough, debug, normalizedOptions)
   }
 }
 
@@ -1648,13 +1300,11 @@ function typeChecker (type) {
  * @private
  */
 
-var bytes = __nccwpck_require__(4531)
-var contentType = __nccwpck_require__(756)
 var createError = __nccwpck_require__(8024)
-var debug = __nccwpck_require__(7646)('body-parser:urlencoded')
-var deprecate = __nccwpck_require__(95)('body-parser')
+var debug = __nccwpck_require__(2830)('body-parser:urlencoded')
 var read = __nccwpck_require__(7946)
-var typeis = __nccwpck_require__(7323)
+var qs = __nccwpck_require__(240)
+var { normalizeOptions } = __nccwpck_require__(2045)
 
 /**
  * Module exports.
@@ -1663,114 +1313,54 @@ var typeis = __nccwpck_require__(7323)
 module.exports = urlencoded
 
 /**
- * Cache of parser modules.
- */
-
-var parsers = Object.create(null)
-
-/**
  * Create a middleware to parse urlencoded bodies.
  *
- * @param {object} [options]
- * @return {function}
+ * @param {Object} [options]
+ * @returns {Function}
  * @public
  */
-
 function urlencoded (options) {
-  var opts = options || {}
+  const normalizedOptions = normalizeOptions(options, 'application/x-www-form-urlencoded')
 
-  // notice because option default will flip in next major
-  if (opts.extended === undefined) {
-    deprecate('undefined extended: provide extended option')
-  }
-
-  var extended = opts.extended !== false
-  var inflate = opts.inflate !== false
-  var limit = typeof opts.limit !== 'number'
-    ? bytes.parse(opts.limit || '100kb')
-    : opts.limit
-  var type = opts.type || 'application/x-www-form-urlencoded'
-  var verify = opts.verify || false
-
-  if (verify !== false && typeof verify !== 'function') {
-    throw new TypeError('option verify must be function')
+  if (normalizedOptions.defaultCharset !== 'utf-8' && normalizedOptions.defaultCharset !== 'iso-8859-1') {
+    throw new TypeError('option defaultCharset must be either utf-8 or iso-8859-1')
   }
 
   // create the appropriate query parser
-  var queryparse = extended
-    ? extendedparser(opts)
-    : simpleparser(opts)
+  var queryparse = createQueryParser(options)
 
-  // create the appropriate type checking function
-  var shouldParse = typeof type !== 'function'
-    ? typeChecker(type)
-    : type
-
-  function parse (body) {
+  function parse (body, encoding) {
     return body.length
-      ? queryparse(body)
+      ? queryparse(body, encoding)
       : {}
   }
 
-  return function urlencodedParser (req, res, next) {
-    if (req._body) {
-      debug('body already parsed')
-      next()
-      return
-    }
-
-    req.body = req.body || {}
-
-    // skip requests without bodies
-    if (!typeis.hasBody(req)) {
-      debug('skip empty body')
-      next()
-      return
-    }
-
-    debug('content-type %j', req.headers['content-type'])
-
-    // determine if request should be parsed
-    if (!shouldParse(req)) {
-      debug('skip parsing')
-      next()
-      return
-    }
-
+  const readOptions = {
+    ...normalizedOptions,
     // assert charset
-    var charset = getCharset(req) || 'utf-8'
-    if (charset !== 'utf-8') {
-      debug('invalid charset')
-      next(createError(415, 'unsupported charset "' + charset.toUpperCase() + '"', {
-        charset: charset,
-        type: 'charset.unsupported'
-      }))
-      return
-    }
+    isValidCharset: (charset) => charset === 'utf-8' || charset === 'iso-8859-1'
+  }
 
-    // read
-    read(req, res, next, parse, debug, {
-      debug: debug,
-      encoding: charset,
-      inflate: inflate,
-      limit: limit,
-      verify: verify
-    })
+  return function urlencodedParser (req, res, next) {
+    read(req, res, next, parse, debug, readOptions)
   }
 }
 
 /**
  * Get the extended query parser.
  *
- * @param {object} options
+ * @param {Object} options
+ * @returns {Function}
+ * @private
  */
-
-function extendedparser (options) {
-  var parameterLimit = options.parameterLimit !== undefined
-    ? options.parameterLimit
+function createQueryParser (options) {
+  var extended = Boolean(options?.extended)
+  var parameterLimit = options?.parameterLimit !== undefined
+    ? options?.parameterLimit
     : 1000
-  var depth = options.depth !== undefined ? options.depth : 32
-  var parse = parser('qs')
+  var charsetSentinel = options?.charsetSentinel
+  var interpretNumericEntities = options?.interpretNumericEntities
+  var depth = extended ? (options?.depth !== undefined ? options?.depth : 32) : 0
 
   if (isNaN(parameterLimit) || parameterLimit < 1) {
     throw new TypeError('option parameterLimit must be a positive number')
@@ -1784,7 +1374,7 @@ function extendedparser (options) {
     parameterLimit = parameterLimit | 0
   }
 
-  return function queryparse (body) {
+  return function queryparse (body, encoding) {
     var paramCount = parameterCount(body, parameterLimit)
 
     if (paramCount === undefined) {
@@ -1794,16 +1384,19 @@ function extendedparser (options) {
       })
     }
 
-    var arrayLimit = Math.max(100, paramCount)
+    var arrayLimit = extended ? Math.max(100, paramCount) : paramCount
 
-    debug('parse extended urlencoding')
+    debug('parse ' + (extended ? 'extended ' : '') + 'urlencoding')
     try {
-      return parse(body, {
+      return qs.parse(body, {
         allowPrototypes: true,
         arrayLimit: arrayLimit,
         depth: depth,
-        strictDepth: true,
-        parameterLimit: parameterLimit
+        charsetSentinel: charsetSentinel,
+        interpretNumericEntities: interpretNumericEntities,
+        charset: encoding,
+        parameterLimit: parameterLimit,
+        strictDepth: true
       })
     } catch (err) {
       if (err instanceof RangeError) {
@@ -1818,953 +1411,128 @@ function extendedparser (options) {
 }
 
 /**
- * Get the charset of a request.
- *
- * @param {object} req
- * @api private
- */
-
-function getCharset (req) {
-  try {
-    return (contentType.parse(req).parameters.charset || '').toLowerCase()
-  } catch (e) {
-    return undefined
-  }
-}
-
-/**
  * Count the number of parameters, stopping once limit reached
  *
  * @param {string} body
  * @param {number} limit
- * @api private
+ * @returns {number|undefined} Returns undefined if limit exceeded
+ * @private
  */
-
 function parameterCount (body, limit) {
-  var count = 0
-  var index = 0
-
-  while ((index = body.indexOf('&', index)) !== -1) {
+  let count = 0
+  let index = -1
+  do {
     count++
-    index++
-
-    if (count === limit) {
-      return undefined
-    }
-  }
-
+    if (count > limit) return undefined // Early exit if limit exceeded
+    index = body.indexOf('&', index + 1)
+  } while (index !== -1)
   return count
 }
 
+
+/***/ }),
+
+/***/ 2045:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
 /**
- * Get parser for module name dynamically.
- *
- * @param {string} name
- * @return {function}
- * @api private
+ * Module dependencies.
  */
 
-function parser (name) {
-  var mod = parsers[name]
+var bytes = __nccwpck_require__(4531)
+var contentType = __nccwpck_require__(756)
+var typeis = __nccwpck_require__(7323)
 
-  if (mod !== undefined) {
-    return mod.parse
-  }
-
-  // this uses a switch for static require analysis
-  switch (name) {
-    case 'qs':
-      mod = __nccwpck_require__(240)
-      break
-    case 'querystring':
-      mod = __nccwpck_require__(3480)
-      break
-  }
-
-  // store to prevent invoking require()
-  parsers[name] = mod
-
-  return mod.parse
+/**
+ * Module exports.
+ */
+module.exports = {
+  getCharset,
+  normalizeOptions,
+  passthrough
 }
 
 /**
- * Get the simple query parser.
+ * Get the charset of a request.
  *
- * @param {object} options
+ * @param {Object} req
+ * @returns {string | undefined}
+ * @private
  */
-
-function simpleparser (options) {
-  var parameterLimit = options.parameterLimit !== undefined
-    ? options.parameterLimit
-    : 1000
-  var parse = parser('querystring')
-
-  if (isNaN(parameterLimit) || parameterLimit < 1) {
-    throw new TypeError('option parameterLimit must be a positive number')
-  }
-
-  if (isFinite(parameterLimit)) {
-    parameterLimit = parameterLimit | 0
-  }
-
-  return function queryparse (body) {
-    var paramCount = parameterCount(body, parameterLimit)
-
-    if (paramCount === undefined) {
-      debug('too many parameters')
-      throw createError(413, 'too many parameters', {
-        type: 'parameters.too.many'
-      })
-    }
-
-    debug('parse urlencoding')
-    return parse(body, undefined, undefined, { maxKeys: parameterLimit })
+function getCharset (req) {
+  try {
+    return (contentType.parse(req).parameters.charset || '').toLowerCase()
+  } catch {
+    return undefined
   }
 }
 
 /**
  * Get the simple type checker.
  *
- * @param {string} type
- * @return {function}
+ * @param {string | string[]} type
+ * @returns {Function}
+ * @private
  */
-
 function typeChecker (type) {
   return function checkType (req) {
     return Boolean(typeis(req, type))
   }
 }
 
-
-/***/ }),
-
-/***/ 4878:
-/***/ ((module, exports, __nccwpck_require__) => {
-
 /**
- * This is the web browser implementation of `debug()`.
+ * Normalizes the common options for all parsers.
  *
- * Expose `debug()` as the module.
+ * @param {Object} options options to normalize
+ * @param {string | string[] | Function} defaultType default content type(s) or a function to determine it
+ * @returns {Object}
+ * @private
  */
-
-exports = module.exports = __nccwpck_require__(5769);
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome
-               && 'undefined' != typeof chrome.storage
-                  ? chrome.storage.local
-                  : localstorage();
-
-/**
- * Colors.
- */
-
-exports.colors = [
-  'lightseagreen',
-  'forestgreen',
-  'goldenrod',
-  'dodgerblue',
-  'darkorchid',
-  'crimson'
-];
-
-/**
- * Currently only WebKit-based Web Inspectors, Firefox >= v31,
- * and the Firebug extension (any Firefox version) are known
- * to support "%c" CSS customizations.
- *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
- */
-
-function useColors() {
-  // NB: In an Electron preload script, document will be defined but not fully
-  // initialized. Since we know we're in Chrome, we'll just detect this case
-  // explicitly
-  if (typeof window !== 'undefined' && window.process && window.process.type === 'renderer') {
-    return true;
+function normalizeOptions (options, defaultType) {
+  if (!defaultType) {
+    // Parsers must define a default content type
+    throw new TypeError('defaultType must be provided')
   }
 
-  // is webkit? http://stackoverflow.com/a/16459606/376773
-  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-  return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
-    // is firebug? http://stackoverflow.com/a/398120/376773
-    (typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
-    // is firefox >= v31?
-    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-    (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
-    // double check webkit in userAgent just in case we are in a worker
-    (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
-}
+  var inflate = options?.inflate !== false
+  var limit = typeof options?.limit !== 'number'
+    ? bytes.parse(options?.limit || '100kb')
+    : options?.limit
+  var type = options?.type || defaultType
+  var verify = options?.verify || false
+  var defaultCharset = options?.defaultCharset || 'utf-8'
 
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function(v) {
-  try {
-    return JSON.stringify(v);
-  } catch (err) {
-    return '[UnexpectedJSONParseError]: ' + err.message;
-  }
-};
-
-
-/**
- * Colorize log arguments if enabled.
- *
- * @api public
- */
-
-function formatArgs(args) {
-  var useColors = this.useColors;
-
-  args[0] = (useColors ? '%c' : '')
-    + this.namespace
-    + (useColors ? ' %c' : ' ')
-    + args[0]
-    + (useColors ? '%c ' : ' ')
-    + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return;
-
-  var c = 'color: ' + this.color;
-  args.splice(1, 0, c, 'color: inherit')
-
-  // the final "%c" is somewhat tricky, because there could be other
-  // arguments passed either before or after the %c, so we need to
-  // figure out the correct index to insert the CSS into
-  var index = 0;
-  var lastC = 0;
-  args[0].replace(/%[a-zA-Z%]/g, function(match) {
-    if ('%%' === match) return;
-    index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
-      // (the user may have provided their own)
-      lastC = index;
-    }
-  });
-
-  args.splice(lastC, 0, c);
-}
-
-/**
- * Invokes `console.log()` when available.
- * No-op when `console.log` is not a "function".
- *
- * @api public
- */
-
-function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === typeof console
-    && console.log
-    && Function.prototype.apply.call(console.log, console, arguments);
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
-    } else {
-      exports.storage.debug = namespaces;
-    }
-  } catch(e) {}
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  var r;
-  try {
-    r = exports.storage.debug;
-  } catch(e) {}
-
-  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
-  if (!r && typeof process !== 'undefined' && 'env' in process) {
-    r = process.env.DEBUG;
+  if (verify !== false && typeof verify !== 'function') {
+    throw new TypeError('option verify must be function')
   }
 
-  return r;
-}
+  // create the appropriate type checking function
+  var shouldParse = typeof type !== 'function'
+    ? typeChecker(type)
+    : type
 
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
-/**
- * Localstorage attempts to return the localstorage.
- *
- * This is necessary because safari throws
- * when a user disables cookies/localstorage
- * and you attempt to access it.
- *
- * @return {LocalStorage}
- * @api private
- */
-
-function localstorage() {
-  try {
-    return window.localStorage;
-  } catch (e) {}
-}
-
-
-/***/ }),
-
-/***/ 5769:
-/***/ ((module, exports, __nccwpck_require__) => {
-
-
-/**
- * This is the common logic for both the Node.js and web browser
- * implementations of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = createDebug.debug = createDebug['default'] = createDebug;
-exports.coerce = coerce;
-exports.disable = disable;
-exports.enable = enable;
-exports.enabled = enabled;
-exports.humanize = __nccwpck_require__(2888);
-
-/**
- * The currently active debug mode names, and names to skip.
- */
-
-exports.names = [];
-exports.skips = [];
-
-/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
- */
-
-exports.formatters = {};
-
-/**
- * Previous log timestamp.
- */
-
-var prevTime;
-
-/**
- * Select a color.
- * @param {String} namespace
- * @return {Number}
- * @api private
- */
-
-function selectColor(namespace) {
-  var hash = 0, i;
-
-  for (i in namespace) {
-    hash  = ((hash << 5) - hash) + namespace.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
-  }
-
-  return exports.colors[Math.abs(hash) % exports.colors.length];
-}
-
-/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
-
-function createDebug(namespace) {
-
-  function debug() {
-    // disabled?
-    if (!debug.enabled) return;
-
-    var self = debug;
-
-    // set `diff` timestamp
-    var curr = +new Date();
-    var ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
-
-    // turn the `arguments` into a proper Array
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i];
-    }
-
-    args[0] = exports.coerce(args[0]);
-
-    if ('string' !== typeof args[0]) {
-      // anything else let's inspect with %O
-      args.unshift('%O');
-    }
-
-    // apply any `formatters` transformations
-    var index = 0;
-    args[0] = args[0].replace(/%([a-zA-Z%])/g, function(match, format) {
-      // if we encounter an escaped % then don't increase the array index
-      if (match === '%%') return match;
-      index++;
-      var formatter = exports.formatters[format];
-      if ('function' === typeof formatter) {
-        var val = args[index];
-        match = formatter.call(self, val);
-
-        // now we need to remove `args[index]` since it's inlined in the `format`
-        args.splice(index, 1);
-        index--;
-      }
-      return match;
-    });
-
-    // apply env-specific formatting (colors, etc.)
-    exports.formatArgs.call(self, args);
-
-    var logFn = debug.log || exports.log || console.log.bind(console);
-    logFn.apply(self, args);
-  }
-
-  debug.namespace = namespace;
-  debug.enabled = exports.enabled(namespace);
-  debug.useColors = exports.useColors();
-  debug.color = selectColor(namespace);
-
-  // env-specific initialization logic for debug instances
-  if ('function' === typeof exports.init) {
-    exports.init(debug);
-  }
-
-  return debug;
-}
-
-/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
-
-function enable(namespaces) {
-  exports.save(namespaces);
-
-  exports.names = [];
-  exports.skips = [];
-
-  var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
-  var len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    if (!split[i]) continue; // ignore empty strings
-    namespaces = split[i].replace(/\*/g, '.*?');
-    if (namespaces[0] === '-') {
-      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-    } else {
-      exports.names.push(new RegExp('^' + namespaces + '$'));
-    }
+  return {
+    inflate,
+    limit,
+    verify,
+    defaultCharset,
+    shouldParse
   }
 }
 
 /**
- * Disable debug output.
+ * Passthrough function that returns input unchanged.
+ * Used by parsers that don't need to transform the data.
  *
- * @api public
+ * @param {*} value
+ * @returns {*}
+ * @private
  */
-
-function disable() {
-  exports.enable('');
-}
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-function enabled(name) {
-  var i, len;
-  for (i = 0, len = exports.skips.length; i < len; i++) {
-    if (exports.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (i = 0, len = exports.names.length; i < len; i++) {
-    if (exports.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-
-/***/ }),
-
-/***/ 7646:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-/**
- * Detect Electron renderer process, which is node, but we should
- * treat as a browser.
- */
-
-if (typeof process !== 'undefined' && process.type === 'renderer') {
-  module.exports = __nccwpck_require__(4878);
-} else {
-  module.exports = __nccwpck_require__(1796);
-}
-
-
-/***/ }),
-
-/***/ 1796:
-/***/ ((module, exports, __nccwpck_require__) => {
-
-/**
- * Module dependencies.
- */
-
-var tty = __nccwpck_require__(2018);
-var util = __nccwpck_require__(9023);
-
-/**
- * This is the Node.js implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = __nccwpck_require__(5769);
-exports.init = init;
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-
-/**
- * Colors.
- */
-
-exports.colors = [6, 2, 3, 4, 5, 1];
-
-/**
- * Build up the default `inspectOpts` object from the environment variables.
- *
- *   $ DEBUG_COLORS=no DEBUG_DEPTH=10 DEBUG_SHOW_HIDDEN=enabled node script.js
- */
-
-exports.inspectOpts = Object.keys(process.env).filter(function (key) {
-  return /^debug_/i.test(key);
-}).reduce(function (obj, key) {
-  // camel-case
-  var prop = key
-    .substring(6)
-    .toLowerCase()
-    .replace(/_([a-z])/g, function (_, k) { return k.toUpperCase() });
-
-  // coerce string value into JS value
-  var val = process.env[key];
-  if (/^(yes|on|true|enabled)$/i.test(val)) val = true;
-  else if (/^(no|off|false|disabled)$/i.test(val)) val = false;
-  else if (val === 'null') val = null;
-  else val = Number(val);
-
-  obj[prop] = val;
-  return obj;
-}, {});
-
-/**
- * The file descriptor to write the `debug()` calls to.
- * Set the `DEBUG_FD` env variable to override with another value. i.e.:
- *
- *   $ DEBUG_FD=3 node script.js 3>debug.log
- */
-
-var fd = parseInt(process.env.DEBUG_FD, 10) || 2;
-
-if (1 !== fd && 2 !== fd) {
-  util.deprecate(function(){}, 'except for stderr(2) and stdout(1), any other usage of DEBUG_FD is deprecated. Override debug.log if you want to use a different log function (https://git.io/debug_fd)')()
-}
-
-var stream = 1 === fd ? process.stdout :
-             2 === fd ? process.stderr :
-             createWritableStdioStream(fd);
-
-/**
- * Is stdout a TTY? Colored output is enabled when `true`.
- */
-
-function useColors() {
-  return 'colors' in exports.inspectOpts
-    ? Boolean(exports.inspectOpts.colors)
-    : tty.isatty(fd);
-}
-
-/**
- * Map %o to `util.inspect()`, all on a single line.
- */
-
-exports.formatters.o = function(v) {
-  this.inspectOpts.colors = this.useColors;
-  return util.inspect(v, this.inspectOpts)
-    .split('\n').map(function(str) {
-      return str.trim()
-    }).join(' ');
-};
-
-/**
- * Map %o to `util.inspect()`, allowing multiple lines if needed.
- */
-
-exports.formatters.O = function(v) {
-  this.inspectOpts.colors = this.useColors;
-  return util.inspect(v, this.inspectOpts);
-};
-
-/**
- * Adds ANSI color escape codes if enabled.
- *
- * @api public
- */
-
-function formatArgs(args) {
-  var name = this.namespace;
-  var useColors = this.useColors;
-
-  if (useColors) {
-    var c = this.color;
-    var prefix = '  \u001b[3' + c + ';1m' + name + ' ' + '\u001b[0m';
-
-    args[0] = prefix + args[0].split('\n').join('\n' + prefix);
-    args.push('\u001b[3' + c + 'm+' + exports.humanize(this.diff) + '\u001b[0m');
-  } else {
-    args[0] = new Date().toUTCString()
-      + ' ' + name + ' ' + args[0];
-  }
-}
-
-/**
- * Invokes `util.format()` with the specified arguments and writes to `stream`.
- */
-
-function log() {
-  return stream.write(util.format.apply(util, arguments) + '\n');
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  if (null == namespaces) {
-    // If you set a process.env field to null or undefined, it gets cast to the
-    // string 'null' or 'undefined'. Just delete instead.
-    delete process.env.DEBUG;
-  } else {
-    process.env.DEBUG = namespaces;
-  }
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  return process.env.DEBUG;
-}
-
-/**
- * Copied from `node/src/node.js`.
- *
- * XXX: It's lame that node doesn't expose this API out-of-the-box. It also
- * relies on the undocumented `tty_wrap.guessHandleType()` which is also lame.
- */
-
-function createWritableStdioStream (fd) {
-  var stream;
-  var tty_wrap = process.binding('tty_wrap');
-
-  // Note stream._type is used for test-module-load-list.js
-
-  switch (tty_wrap.guessHandleType(fd)) {
-    case 'TTY':
-      stream = new tty.WriteStream(fd);
-      stream._type = 'tty';
-
-      // Hack to have stream not keep the event loop alive.
-      // See https://github.com/joyent/node/issues/1726
-      if (stream._handle && stream._handle.unref) {
-        stream._handle.unref();
-      }
-      break;
-
-    case 'FILE':
-      var fs = __nccwpck_require__(9896);
-      stream = new fs.SyncWriteStream(fd, { autoClose: false });
-      stream._type = 'fs';
-      break;
-
-    case 'PIPE':
-    case 'TCP':
-      var net = __nccwpck_require__(9278);
-      stream = new net.Socket({
-        fd: fd,
-        readable: false,
-        writable: true
-      });
-
-      // FIXME Should probably have an option in net.Socket to create a
-      // stream from an existing fd which is writable only. But for now
-      // we'll just add this hack and set the `readable` member to false.
-      // Test: ./node test/fixtures/echo.js < /etc/passwd
-      stream.readable = false;
-      stream.read = null;
-      stream._type = 'pipe';
-
-      // FIXME Hack to have stream not keep the event loop alive.
-      // See https://github.com/joyent/node/issues/1726
-      if (stream._handle && stream._handle.unref) {
-        stream._handle.unref();
-      }
-      break;
-
-    default:
-      // Probably an error on in uv_guess_handle()
-      throw new Error('Implement me. Unknown stream file type!');
-  }
-
-  // For supporting legacy API we put the FD here.
-  stream.fd = fd;
-
-  stream._isStdio = true;
-
-  return stream;
-}
-
-/**
- * Init logic for `debug` instances.
- *
- * Create a new `inspectOpts` object in case `useColors` is set
- * differently for a particular `debug` instance.
- */
-
-function init (debug) {
-  debug.inspectOpts = {};
-
-  var keys = Object.keys(exports.inspectOpts);
-  for (var i = 0; i < keys.length; i++) {
-    debug.inspectOpts[keys[i]] = exports.inspectOpts[keys[i]];
-  }
-}
-
-/**
- * Enable namespaces listed in `process.env.DEBUG` initially.
- */
-
-exports.enable(load());
-
-
-/***/ }),
-
-/***/ 2888:
-/***/ ((module) => {
-
-/**
- * Helpers.
- */
-
-var s = 1000;
-var m = s * 60;
-var h = m * 60;
-var d = h * 24;
-var y = d * 365.25;
-
-/**
- * Parse or format the given `val`.
- *
- * Options:
- *
- *  - `long` verbose formatting [false]
- *
- * @param {String|Number} val
- * @param {Object} [options]
- * @throws {Error} throw an error if val is not a non-empty string or a number
- * @return {String|Number}
- * @api public
- */
-
-module.exports = function(val, options) {
-  options = options || {};
-  var type = typeof val;
-  if (type === 'string' && val.length > 0) {
-    return parse(val);
-  } else if (type === 'number' && isNaN(val) === false) {
-    return options.long ? fmtLong(val) : fmtShort(val);
-  }
-  throw new Error(
-    'val is not a non-empty string or a valid number. val=' +
-      JSON.stringify(val)
-  );
-};
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @param {String} str
- * @return {Number}
- * @api private
- */
-
-function parse(str) {
-  str = String(str);
-  if (str.length > 100) {
-    return;
-  }
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(
-    str
-  );
-  if (!match) {
-    return;
-  }
-  var n = parseFloat(match[1]);
-  var type = (match[2] || 'ms').toLowerCase();
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y;
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d;
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h;
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m;
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s;
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n;
-    default:
-      return undefined;
-  }
-}
-
-/**
- * Short format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtShort(ms) {
-  if (ms >= d) {
-    return Math.round(ms / d) + 'd';
-  }
-  if (ms >= h) {
-    return Math.round(ms / h) + 'h';
-  }
-  if (ms >= m) {
-    return Math.round(ms / m) + 'm';
-  }
-  if (ms >= s) {
-    return Math.round(ms / s) + 's';
-  }
-  return ms + 'ms';
-}
-
-/**
- * Long format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtLong(ms) {
-  return plural(ms, d, 'day') ||
-    plural(ms, h, 'hour') ||
-    plural(ms, m, 'minute') ||
-    plural(ms, s, 'second') ||
-    ms + ' ms';
-}
-
-/**
- * Pluralization helper.
- */
-
-function plural(ms, n, name) {
-  if (ms < n) {
-    return;
-  }
-  if (ms < n * 1.5) {
-    return Math.floor(ms / n) + ' ' + name;
-  }
-  return Math.ceil(ms / n) + ' ' + name + 's';
+function passthrough (value) {
+  return value
 }
 
 
@@ -3293,7 +2061,6 @@ module.exports.parse = parse
  */
 
 var basename = (__nccwpck_require__(6928).basename)
-var Buffer = (__nccwpck_require__(3058).Buffer)
 
 /**
  * RegExp to match non attr-char, *after* encodeURIComponent (i.e. not including "%")
@@ -3516,7 +2283,7 @@ function format (obj) {
     for (var i = 0; i < params.length; i++) {
       param = params[i]
 
-      var val = param.substr(-1) === '*'
+      var val = param.slice(-1) === '*'
         ? ustring(parameters[param])
         : qstring(parameters[param])
 
@@ -3554,6 +2321,7 @@ function decodefield (str) {
       value = getlatin1(binary)
       break
     case 'utf-8':
+    case 'utf8':
       value = Buffer.from(binary, 'binary').toString('utf8')
       break
     default:
@@ -3605,7 +2373,7 @@ function parse (string) {
   var value
 
   // calculate index to start at
-  index = PARAM_REGEXP.lastIndex = match[0].substr(-1) === ';'
+  index = PARAM_REGEXP.lastIndex = match[0].slice(-1) === ';'
     ? index - 1
     : index
 
@@ -3642,7 +2410,7 @@ function parse (string) {
     if (value[0] === '"') {
       // remove quotes and escapes
       value = value
-        .substr(1, value.length - 2)
+        .slice(1, -1)
         .replace(QESC_REGEXP, '$1')
     }
 
@@ -3985,7 +2753,7 @@ var crypto = __nccwpck_require__(6982);
  */
 
 exports.sign = function(val, secret){
-  if ('string' !== typeof val) throw new TypeError("Cookie value must be provided as a string.");
+  if ('string' != typeof val) throw new TypeError("Cookie value must be provided as a string.");
   if (null == secret) throw new TypeError("Secret key must be provided.");
   return val + '.' + crypto
     .createHmac('sha256', secret)
@@ -3995,31 +2763,27 @@ exports.sign = function(val, secret){
 };
 
 /**
- * Unsign and decode the given `val` with `secret`,
+ * Unsign and decode the given `input` with `secret`,
  * returning `false` if the signature is invalid.
  *
- * @param {String} val
+ * @param {String} input
  * @param {String|NodeJS.ArrayBufferView|crypto.KeyObject} secret
  * @return {String|Boolean}
  * @api private
  */
 
-exports.unsign = function(val, secret){
-  if ('string' !== typeof val) throw new TypeError("Signed cookie string must be provided.");
+exports.unsign = function(input, secret){
+  if ('string' != typeof input) throw new TypeError("Signed cookie string must be provided.");
   if (null == secret) throw new TypeError("Secret key must be provided.");
-  var str = val.slice(0, val.lastIndexOf('.'))
-    , mac = exports.sign(str, secret);
-  
-  return sha1(mac) == sha1(val) ? str : false;
+  var tentativeValue = input.slice(0, input.lastIndexOf('.')),
+      expectedInput = exports.sign(tentativeValue, secret),
+      expectedBuffer = Buffer.from(expectedInput),
+      inputBuffer = Buffer.from(input);
+  return (
+    expectedBuffer.length === inputBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, inputBuffer)
+   ) ? tentativeValue : false;
 };
-
-/**
- * Private
- */
-
-function sha1(str){
-  return crypto.createHash('sha1').update(str).digest('hex');
-}
 
 
 /***/ }),
@@ -5891,223 +4655,6 @@ function DeprecationError (namespace, message, stack) {
 
 /***/ }),
 
-/***/ 2194:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-/*!
- * destroy
- * Copyright(c) 2014 Jonathan Ong
- * Copyright(c) 2015-2022 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-
-
-/**
- * Module dependencies.
- * @private
- */
-
-var EventEmitter = (__nccwpck_require__(4434).EventEmitter)
-var ReadStream = (__nccwpck_require__(9896).ReadStream)
-var Stream = __nccwpck_require__(2203)
-var Zlib = __nccwpck_require__(3106)
-
-/**
- * Module exports.
- * @public
- */
-
-module.exports = destroy
-
-/**
- * Destroy the given stream, and optionally suppress any future `error` events.
- *
- * @param {object} stream
- * @param {boolean} suppress
- * @public
- */
-
-function destroy (stream, suppress) {
-  if (isFsReadStream(stream)) {
-    destroyReadStream(stream)
-  } else if (isZlibStream(stream)) {
-    destroyZlibStream(stream)
-  } else if (hasDestroy(stream)) {
-    stream.destroy()
-  }
-
-  if (isEventEmitter(stream) && suppress) {
-    stream.removeAllListeners('error')
-    stream.addListener('error', noop)
-  }
-
-  return stream
-}
-
-/**
- * Destroy a ReadStream.
- *
- * @param {object} stream
- * @private
- */
-
-function destroyReadStream (stream) {
-  stream.destroy()
-
-  if (typeof stream.close === 'function') {
-    // node.js core bug work-around
-    stream.on('open', onOpenClose)
-  }
-}
-
-/**
- * Close a Zlib stream.
- *
- * Zlib streams below Node.js 4.5.5 have a buggy implementation
- * of .close() when zlib encountered an error.
- *
- * @param {object} stream
- * @private
- */
-
-function closeZlibStream (stream) {
-  if (stream._hadError === true) {
-    var prop = stream._binding === null
-      ? '_binding'
-      : '_handle'
-
-    stream[prop] = {
-      close: function () { this[prop] = null }
-    }
-  }
-
-  stream.close()
-}
-
-/**
- * Destroy a Zlib stream.
- *
- * Zlib streams don't have a destroy function in Node.js 6. On top of that
- * simply calling destroy on a zlib stream in Node.js 8+ will result in a
- * memory leak. So until that is fixed, we need to call both close AND destroy.
- *
- * PR to fix memory leak: https://github.com/nodejs/node/pull/23734
- *
- * In Node.js 6+8, it's important that destroy is called before close as the
- * stream would otherwise emit the error 'zlib binding closed'.
- *
- * @param {object} stream
- * @private
- */
-
-function destroyZlibStream (stream) {
-  if (typeof stream.destroy === 'function') {
-    // node.js core bug work-around
-    // istanbul ignore if: node.js 0.8
-    if (stream._binding) {
-      // node.js < 0.10.0
-      stream.destroy()
-      if (stream._processing) {
-        stream._needDrain = true
-        stream.once('drain', onDrainClearBinding)
-      } else {
-        stream._binding.clear()
-      }
-    } else if (stream._destroy && stream._destroy !== Stream.Transform.prototype._destroy) {
-      // node.js >= 12, ^11.1.0, ^10.15.1
-      stream.destroy()
-    } else if (stream._destroy && typeof stream.close === 'function') {
-      // node.js 7, 8
-      stream.destroyed = true
-      stream.close()
-    } else {
-      // fallback
-      // istanbul ignore next
-      stream.destroy()
-    }
-  } else if (typeof stream.close === 'function') {
-    // node.js < 8 fallback
-    closeZlibStream(stream)
-  }
-}
-
-/**
- * Determine if stream has destroy.
- * @private
- */
-
-function hasDestroy (stream) {
-  return stream instanceof Stream &&
-    typeof stream.destroy === 'function'
-}
-
-/**
- * Determine if val is EventEmitter.
- * @private
- */
-
-function isEventEmitter (val) {
-  return val instanceof EventEmitter
-}
-
-/**
- * Determine if stream is fs.ReadStream stream.
- * @private
- */
-
-function isFsReadStream (stream) {
-  return stream instanceof ReadStream
-}
-
-/**
- * Determine if stream is Zlib stream.
- * @private
- */
-
-function isZlibStream (stream) {
-  return stream instanceof Zlib.Gzip ||
-    stream instanceof Zlib.Gunzip ||
-    stream instanceof Zlib.Deflate ||
-    stream instanceof Zlib.DeflateRaw ||
-    stream instanceof Zlib.Inflate ||
-    stream instanceof Zlib.InflateRaw ||
-    stream instanceof Zlib.Unzip
-}
-
-/**
- * No-op function.
- * @private
- */
-
-function noop () {}
-
-/**
- * On drain handler to clear binding.
- * @private
- */
-
-// istanbul ignore next: node.js 0.8
-function onDrainClearBinding () {
-  this._binding.clear()
-}
-
-/**
- * On open handler to close stream.
- * @private
- */
-
-function onOpenClose () {
-  if (typeof this.fd === 'number') {
-    // actually close down the fd
-    this.close()
-  }
-}
-
-
-/***/ }),
-
 /***/ 6669:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -6703,21 +5250,6 @@ function stattag (stat) {
 
 /***/ }),
 
-/***/ 9912:
-/***/ ((module) => {
-
-const asyncUtil = fn =>
-function asyncUtilWrap(...args) {
-  const fnReturn = fn(...args)
-  const next = args[args.length-1]
-  return Promise.resolve(fnReturn).catch(next)
-}
-
-module.exports = asyncUtil
-
-
-/***/ }),
-
 /***/ 5152:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -6757,29 +5289,24 @@ module.exports = __nccwpck_require__(9192);
  */
 
 var finalhandler = __nccwpck_require__(8864);
-var Router = __nccwpck_require__(8240);
-var methods = __nccwpck_require__(806);
-var middleware = __nccwpck_require__(791);
-var query = __nccwpck_require__(4321);
-var debug = __nccwpck_require__(8854)('express:application');
+var debug = __nccwpck_require__(2830)('express:application');
 var View = __nccwpck_require__(9123);
-var http = __nccwpck_require__(8611);
-var compileETag = (__nccwpck_require__(9253).compileETag);
-var compileQueryParser = (__nccwpck_require__(9253).compileQueryParser);
-var compileTrust = (__nccwpck_require__(9253).compileTrust);
-var deprecate = __nccwpck_require__(95)('express');
-var flatten = __nccwpck_require__(9560);
-var merge = __nccwpck_require__(1448);
-var resolve = (__nccwpck_require__(6928).resolve);
-var setPrototypeOf = __nccwpck_require__(1015)
+var http = __nccwpck_require__(7067);
+var methods = (__nccwpck_require__(9253)/* .methods */ .vX);
+var compileETag = (__nccwpck_require__(9253)/* .compileETag */ .Rx);
+var compileQueryParser = (__nccwpck_require__(9253)/* .compileQueryParser */ .HD);
+var compileTrust = (__nccwpck_require__(9253)/* .compileTrust */ .y6);
+var resolve = (__nccwpck_require__(6760).resolve);
+var once = __nccwpck_require__(5560)
+var Router = __nccwpck_require__(2969);
 
 /**
  * Module variables.
  * @private
  */
 
-var hasOwnProperty = Object.prototype.hasOwnProperty
 var slice = Array.prototype.slice;
+var flatten = Array.prototype.flat;
 
 /**
  * Application prototype.
@@ -6805,11 +5332,29 @@ var trustProxyDefaultSymbol = '@@symbol:trust_proxy_default';
  */
 
 app.init = function init() {
-  this.cache = {};
-  this.engines = {};
-  this.settings = {};
+  var router = null;
+
+  this.cache = Object.create(null);
+  this.engines = Object.create(null);
+  this.settings = Object.create(null);
 
   this.defaultConfiguration();
+
+  // Setup getting to lazily add base router
+  Object.defineProperty(this, 'router', {
+    configurable: true,
+    enumerable: true,
+    get: function getrouter() {
+      if (router === null) {
+        router = new Router({
+          caseSensitive: this.enabled('case sensitive routing'),
+          strict: this.enabled('strict routing')
+        });
+      }
+
+      return router;
+    }
+  });
 };
 
 /**
@@ -6824,7 +5369,7 @@ app.defaultConfiguration = function defaultConfiguration() {
   this.enable('x-powered-by');
   this.set('etag', 'weak');
   this.set('env', env);
-  this.set('query parser', 'extended');
+  this.set('query parser', 'simple')
   this.set('subdomain offset', 2);
   this.set('trust proxy', false);
 
@@ -6845,10 +5390,10 @@ app.defaultConfiguration = function defaultConfiguration() {
     }
 
     // inherit protos
-    setPrototypeOf(this.request, parent.request)
-    setPrototypeOf(this.response, parent.response)
-    setPrototypeOf(this.engines, parent.engines)
-    setPrototypeOf(this.settings, parent.settings)
+    Object.setPrototypeOf(this.request, parent.request)
+    Object.setPrototypeOf(this.response, parent.response)
+    Object.setPrototypeOf(this.engines, parent.engines)
+    Object.setPrototypeOf(this.settings, parent.settings)
   });
 
   // setup locals
@@ -6868,32 +5413,6 @@ app.defaultConfiguration = function defaultConfiguration() {
   if (env === 'production') {
     this.enable('view cache');
   }
-
-  Object.defineProperty(this, 'router', {
-    get: function() {
-      throw new Error('\'app.router\' is deprecated!\nPlease see the 3.x to 4.x migration guide for details on how to update your app.');
-    }
-  });
-};
-
-/**
- * lazily adds the base router if it has not yet been added.
- *
- * We cannot add the base router in the defaultConfiguration because
- * it reads app settings which might be set after that has run.
- *
- * @private
- */
-app.lazyrouter = function lazyrouter() {
-  if (!this._router) {
-    this._router = new Router({
-      caseSensitive: this.enabled('case sensitive routing'),
-      strict: this.enabled('strict routing')
-    });
-
-    this._router.use(query(this.get('query parser fn')));
-    this._router.use(middleware.init(this));
-  }
 };
 
 /**
@@ -6906,22 +5425,31 @@ app.lazyrouter = function lazyrouter() {
  */
 
 app.handle = function handle(req, res, callback) {
-  var router = this._router;
-
   // final handler
   var done = callback || finalhandler(req, res, {
     env: this.get('env'),
     onerror: logerror.bind(this)
   });
 
-  // no routes
-  if (!router) {
-    debug('no routes defined on app');
-    done();
-    return;
+  // set powered by header
+  if (this.enabled('x-powered-by')) {
+    res.setHeader('X-Powered-By', 'Express');
   }
 
-  router.handle(req, res, done);
+  // set circular references
+  req.res = res;
+  res.req = req;
+
+  // alter the prototypes
+  Object.setPrototypeOf(req, this.request)
+  Object.setPrototypeOf(res, this.response)
+
+  // setup locals
+  if (!res.locals) {
+    res.locals = Object.create(null);
+  }
+
+  this.router.handle(req, res, done);
 };
 
 /**
@@ -6954,15 +5482,14 @@ app.use = function use(fn) {
     }
   }
 
-  var fns = flatten(slice.call(arguments, offset));
+  var fns = flatten.call(slice.call(arguments, offset), Infinity);
 
   if (fns.length === 0) {
     throw new TypeError('app.use() requires a middleware function')
   }
 
-  // setup router
-  this.lazyrouter();
-  var router = this._router;
+  // get router
+  var router = this.router;
 
   fns.forEach(function (fn) {
     // non-express app
@@ -6978,8 +5505,8 @@ app.use = function use(fn) {
     router.use(path, function mounted_app(req, res, next) {
       var orig = req.app;
       fn.handle(req, res, function (err) {
-        setPrototypeOf(req, orig.request)
-        setPrototypeOf(res, orig.response)
+        Object.setPrototypeOf(req, orig.request)
+        Object.setPrototypeOf(res, orig.response)
         next(err);
       });
     });
@@ -7002,8 +5529,7 @@ app.use = function use(fn) {
  */
 
 app.route = function route(path) {
-  this.lazyrouter();
-  return this._router.route(path);
+  return this.router.route(path);
 };
 
 /**
@@ -7069,8 +5595,6 @@ app.engine = function engine(ext, fn) {
  */
 
 app.param = function param(name, fn) {
-  this.lazyrouter();
-
   if (Array.isArray(name)) {
     for (var i = 0; i < name.length; i++) {
       this.param(name[i], fn);
@@ -7079,7 +5603,7 @@ app.param = function param(name, fn) {
     return this;
   }
 
-  this._router.param(name, fn);
+  this.router.param(name, fn);
 
   return this;
 };
@@ -7102,17 +5626,7 @@ app.param = function param(name, fn) {
 app.set = function set(setting, val) {
   if (arguments.length === 1) {
     // app.get(setting)
-    var settings = this.settings
-
-    while (settings && settings !== Object.prototype) {
-      if (hasOwnProperty.call(settings, setting)) {
-        return settings[setting]
-      }
-
-      settings = Object.getPrototypeOf(settings)
-    }
-
-    return undefined
+    return this.settings[setting];
   }
 
   debug('set "%s" to %o', setting, val);
@@ -7229,16 +5743,14 @@ app.disable = function disable(setting) {
  * Delegate `.VERB(...)` calls to `router.VERB(...)`.
  */
 
-methods.forEach(function(method){
-  app[method] = function(path){
+methods.forEach(function (method) {
+  app[method] = function (path) {
     if (method === 'get' && arguments.length === 1) {
       // app.get(setting)
       return this.set(path);
     }
 
-    this.lazyrouter();
-
-    var route = this._router.route(path);
+    var route = this.route(path);
     route[method].apply(route, slice.call(arguments, 1));
     return this;
   };
@@ -7255,9 +5767,7 @@ methods.forEach(function(method){
  */
 
 app.all = function all(path) {
-  this.lazyrouter();
-
-  var route = this._router.route(path);
+  var route = this.route(path);
   var args = slice.call(arguments, 1);
 
   for (var i = 0; i < methods.length; i++) {
@@ -7266,10 +5776,6 @@ app.all = function all(path) {
 
   return this;
 };
-
-// del -> delete alias
-
-app.del = deprecate.function(app.delete, 'app.del: Use app.delete instead');
 
 /**
  * Render the given view `name` name with `options`
@@ -7293,7 +5799,6 @@ app.render = function render(name, options, callback) {
   var done = callback;
   var engines = this.engines;
   var opts = options;
-  var renderOptions = {};
   var view;
 
   // support callback function as second arg
@@ -7302,16 +5807,8 @@ app.render = function render(name, options, callback) {
     opts = {};
   }
 
-  // merge app.locals
-  merge(renderOptions, this.locals);
-
-  // merge options._locals
-  if (opts._locals) {
-    merge(renderOptions, opts._locals);
-  }
-
   // merge options
-  merge(renderOptions, opts);
+  var renderOptions = { ...this.locals, ...opts._locals, ...opts };
 
   // set .cache unless explicitly provided
   if (renderOptions.cache == null) {
@@ -7361,8 +5858,8 @@ app.render = function render(name, options, callback) {
  * and HTTPS server you may do so with the "http"
  * and "https" modules as shown here:
  *
- *    var http = require('http')
- *      , https = require('https')
+ *    var http = require('node:http')
+ *      , https = require('node:https')
  *      , express = require('express')
  *      , app = express();
  *
@@ -7374,9 +5871,14 @@ app.render = function render(name, options, callback) {
  */
 
 app.listen = function listen() {
-  var server = http.createServer(this);
-  return server.listen.apply(server, arguments);
-};
+  var server = http.createServer(this)
+  var args = slice.call(arguments)
+  if (typeof args[args.length - 1] === 'function') {
+    var done = args[args.length - 1] = once(args[args.length - 1])
+    server.once('error', done)
+  }
+  return server.listen.apply(server, args)
+}
 
 /**
  * Log error using console.error.
@@ -7425,11 +5927,10 @@ function tryRender(view, options, callback) {
  */
 
 var bodyParser = __nccwpck_require__(6536)
-var EventEmitter = (__nccwpck_require__(4434).EventEmitter);
+var EventEmitter = (__nccwpck_require__(8474).EventEmitter);
 var mixin = __nccwpck_require__(1339);
 var proto = __nccwpck_require__(5314);
-var Route = __nccwpck_require__(4049);
-var Router = __nccwpck_require__(8240);
+var Router = __nccwpck_require__(2969);
 var req = __nccwpck_require__(81);
 var res = __nccwpck_require__(917);
 
@@ -7480,7 +5981,7 @@ exports.response = res;
  * Expose constructors.
  */
 
-exports.Route = Route;
+exports.Route = Router.Route;
 exports.Router = Router;
 
 /**
@@ -7488,150 +5989,10 @@ exports.Router = Router;
  */
 
 exports.json = bodyParser.json
-exports.query = __nccwpck_require__(4321);
 exports.raw = bodyParser.raw
 exports["static"] = __nccwpck_require__(6004);
 exports.text = bodyParser.text
 exports.urlencoded = bodyParser.urlencoded
-
-/**
- * Replace removed middleware with an appropriate error message.
- */
-
-var removedMiddlewares = [
-  'bodyParser',
-  'compress',
-  'cookieSession',
-  'session',
-  'logger',
-  'cookieParser',
-  'favicon',
-  'responseTime',
-  'errorHandler',
-  'timeout',
-  'methodOverride',
-  'vhost',
-  'csrf',
-  'directory',
-  'limit',
-  'multipart',
-  'staticCache'
-]
-
-removedMiddlewares.forEach(function (name) {
-  Object.defineProperty(exports, name, {
-    get: function () {
-      throw new Error('Most middleware (like ' + name + ') is no longer bundled with Express and must be installed separately. Please see https://github.com/senchalabs/connect#middleware.');
-    },
-    configurable: true
-  });
-});
-
-
-/***/ }),
-
-/***/ 791:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-/*!
- * express
- * Copyright(c) 2009-2013 TJ Holowaychuk
- * Copyright(c) 2013 Roman Shtylman
- * Copyright(c) 2014-2015 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-
-
-/**
- * Module dependencies.
- * @private
- */
-
-var setPrototypeOf = __nccwpck_require__(1015)
-
-/**
- * Initialization middleware, exposing the
- * request and response to each other, as well
- * as defaulting the X-Powered-By header field.
- *
- * @param {Function} app
- * @return {Function}
- * @api private
- */
-
-exports.init = function(app){
-  return function expressInit(req, res, next){
-    if (app.enabled('x-powered-by')) res.setHeader('X-Powered-By', 'Express');
-    req.res = res;
-    res.req = req;
-    req.next = next;
-
-    setPrototypeOf(req, app.request)
-    setPrototypeOf(res, app.response)
-
-    res.locals = res.locals || Object.create(null);
-
-    next();
-  };
-};
-
-
-
-/***/ }),
-
-/***/ 4321:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-/*!
- * express
- * Copyright(c) 2009-2013 TJ Holowaychuk
- * Copyright(c) 2013 Roman Shtylman
- * Copyright(c) 2014-2015 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-
-
-/**
- * Module dependencies.
- */
-
-var merge = __nccwpck_require__(1448)
-var parseUrl = __nccwpck_require__(3404);
-var qs = __nccwpck_require__(240);
-
-/**
- * @param {Object} options
- * @return {Function}
- * @api public
- */
-
-module.exports = function query(options) {
-  var opts = merge({}, options)
-  var queryparse = qs.parse;
-
-  if (typeof options === 'function') {
-    queryparse = options;
-    opts = undefined;
-  }
-
-  if (opts !== undefined && opts.allowPrototypes === undefined) {
-    // back-compat for qs module
-    opts.allowPrototypes = true;
-  }
-
-  return function query(req, res, next){
-    if (!req.query) {
-      var val = parseUrl(req).query;
-      req.query = queryparse(val, opts);
-    }
-
-    next();
-  };
-};
 
 
 /***/ }),
@@ -7656,10 +6017,9 @@ module.exports = function query(options) {
  */
 
 var accepts = __nccwpck_require__(6661);
-var deprecate = __nccwpck_require__(95)('express');
-var isIP = (__nccwpck_require__(9278).isIP);
+var isIP = (__nccwpck_require__(7030).isIP);
 var typeis = __nccwpck_require__(7323);
-var http = __nccwpck_require__(8611);
+var http = __nccwpck_require__(7067);
 var fresh = __nccwpck_require__(755);
 var parseRange = __nccwpck_require__(6412);
 var parse = __nccwpck_require__(3404);
@@ -7789,9 +6149,6 @@ req.acceptsEncodings = function(){
   return accept.encodings.apply(accept, arguments);
 };
 
-req.acceptsEncoding = deprecate.function(req.acceptsEncodings,
-  'req.acceptsEncoding: Use acceptsEncodings instead');
-
 /**
  * Check if the given `charset`s are acceptable,
  * otherwise you should respond with 406 "Not Acceptable".
@@ -7806,9 +6163,6 @@ req.acceptsCharsets = function(){
   return accept.charsets.apply(accept, arguments);
 };
 
-req.acceptsCharset = deprecate.function(req.acceptsCharsets,
-  'req.acceptsCharset: Use acceptsCharsets instead');
-
 /**
  * Check if the given `lang`s are acceptable,
  * otherwise you should respond with 406 "Not Acceptable".
@@ -7818,13 +6172,9 @@ req.acceptsCharset = deprecate.function(req.acceptsCharsets,
  * @public
  */
 
-req.acceptsLanguages = function(){
-  var accept = accepts(this);
-  return accept.languages.apply(accept, arguments);
+req.acceptsLanguages = function(...languages) {
+  return accepts(this).languages(...languages);
 };
-
-req.acceptsLanguage = deprecate.function(req.acceptsLanguages,
-  'req.acceptsLanguage: Use acceptsLanguages instead');
 
 /**
  * Parse Range header field, capping to the given `size`.
@@ -7858,38 +6208,27 @@ req.range = function range(size, options) {
 };
 
 /**
- * Return the value of param `name` when present or `defaultValue`.
+ * Parse the query string of `req.url`.
  *
- *  - Checks route placeholders, ex: _/user/:id_
- *  - Checks body params, ex: id=12, {"id":12}
- *  - Checks query string params, ex: ?id=12
+ * This uses the "query parser" setting to parse the raw
+ * string into an object.
  *
- * To utilize request bodies, `req.body`
- * should be an object. This can be done by using
- * the `bodyParser()` middleware.
- *
- * @param {String} name
- * @param {Mixed} [defaultValue]
  * @return {String}
- * @public
+ * @api public
  */
 
-req.param = function param(name, defaultValue) {
-  var params = this.params || {};
-  var body = this.body || {};
-  var query = this.query || {};
+defineGetter(req, 'query', function query(){
+  var queryparse = this.app.get('query parser fn');
 
-  var args = arguments.length === 1
-    ? 'name'
-    : 'name, default';
-  deprecate('req.param(' + args + '): Use req.params, req.body, or req.query instead');
+  if (!queryparse) {
+    // parsing is disabled
+    return Object.create(null);
+  }
 
-  if (null != params[name] && params.hasOwnProperty(name)) return params[name];
-  if (null != body[name]) return body[name];
-  if (null != query[name]) return query[name];
+  var querystring = parse(this).query;
 
-  return defaultValue;
-};
+  return queryparse(querystring);
+});
 
 /**
  * Check if the incoming request contains the "Content-Type"
@@ -7946,12 +6285,12 @@ req.is = function is(types) {
  */
 
 defineGetter(req, 'protocol', function protocol(){
-  var proto = this.connection.encrypted
+  var proto = this.socket.encrypted
     ? 'https'
     : 'http';
   var trust = this.app.get('trust proxy fn');
 
-  if (!trust(this.connection.remoteAddress, 0)) {
+  if (!trust(this.socket.remoteAddress, 0)) {
     return proto;
   }
 
@@ -8056,7 +6395,7 @@ defineGetter(req, 'path', function path() {
 });
 
 /**
- * Parse the "Host" header field to a hostname.
+ * Parse the "Host" header field to a host.
  *
  * When the "trust proxy" setting trusts the socket
  * address, the "X-Forwarded-Host" header field will
@@ -8066,17 +6405,34 @@ defineGetter(req, 'path', function path() {
  * @public
  */
 
-defineGetter(req, 'hostname', function hostname(){
+defineGetter(req, 'host', function host(){
   var trust = this.app.get('trust proxy fn');
-  var host = this.get('X-Forwarded-Host');
+  var val = this.get('X-Forwarded-Host');
 
-  if (!host || !trust(this.connection.remoteAddress, 0)) {
-    host = this.get('Host');
-  } else if (host.indexOf(',') !== -1) {
+  if (!val || !trust(this.socket.remoteAddress, 0)) {
+    val = this.get('Host');
+  } else if (val.indexOf(',') !== -1) {
     // Note: X-Forwarded-Host is normally only ever a
     //       single value, but this is to be safe.
-    host = host.substring(0, host.indexOf(',')).trimRight()
+    val = val.substring(0, val.indexOf(',')).trimRight()
   }
+
+  return val || undefined;
+});
+
+/**
+ * Parse the "Host" header field to a hostname.
+ *
+ * When the "trust proxy" setting trusts the socket
+ * address, the "X-Forwarded-Host" header field will
+ * be trusted.
+ *
+ * @return {String}
+ * @api public
+ */
+
+defineGetter(req, 'hostname', function hostname(){
+  var host = this.host;
 
   if (!host) return;
 
@@ -8091,15 +6447,9 @@ defineGetter(req, 'hostname', function hostname(){
     : host;
 });
 
-// TODO: change req.host to return host in next major
-
-defineGetter(req, 'host', deprecate.function(function host(){
-  return this.hostname;
-}, 'req.host: Use req.hostname instead'));
-
 /**
  * Check if the request is fresh, aka
- * Last-Modified and/or the ETag
+ * Last-Modified or the ETag
  * still match.
  *
  * @return {Boolean}
@@ -8187,28 +6537,27 @@ function defineGetter(obj, name, getter) {
  * @private
  */
 
-var Buffer = (__nccwpck_require__(3058).Buffer)
 var contentDisposition = __nccwpck_require__(8111);
 var createError = __nccwpck_require__(8024)
 var deprecate = __nccwpck_require__(95)('express');
 var encodeUrl = __nccwpck_require__(3835);
 var escapeHtml = __nccwpck_require__(2759);
-var http = __nccwpck_require__(8611);
-var isAbsolute = (__nccwpck_require__(9253).isAbsolute);
+var http = __nccwpck_require__(7067);
 var onFinished = __nccwpck_require__(5698);
-var path = __nccwpck_require__(6928);
+var mime = __nccwpck_require__(4096)
+var path = __nccwpck_require__(6760);
+var pathIsAbsolute = (__nccwpck_require__(6760).isAbsolute);
 var statuses = __nccwpck_require__(4650)
-var merge = __nccwpck_require__(1448);
 var sign = (__nccwpck_require__(4349).sign);
-var normalizeType = (__nccwpck_require__(9253).normalizeType);
-var normalizeTypes = (__nccwpck_require__(9253).normalizeTypes);
-var setCharset = (__nccwpck_require__(9253).setCharset);
+var normalizeType = (__nccwpck_require__(9253)/* .normalizeType */ .AZ);
+var normalizeTypes = (__nccwpck_require__(9253)/* .normalizeTypes */ .Zs);
+var setCharset = (__nccwpck_require__(9253)/* .setCharset */ .Jm);
 var cookie = __nccwpck_require__(3814);
 var send = __nccwpck_require__(814);
 var extname = path.extname;
-var mime = send.mime;
 var resolve = path.resolve;
 var vary = __nccwpck_require__(5116);
+const { Buffer } = __nccwpck_require__(4573);
 
 /**
  * Response prototype.
@@ -8225,24 +6574,28 @@ var res = Object.create(http.ServerResponse.prototype)
 module.exports = res
 
 /**
- * Module variables.
- * @private
- */
-
-var charsetRegExp = /;\s*charset\s*=/;
-
-/**
- * Set status `code`.
+ * Set the HTTP status code for the response.
  *
- * @param {Number} code
- * @return {ServerResponse}
+ * Expects an integer value between 100 and 999 inclusive.
+ * Throws an error if the provided status code is not an integer or if it's outside the allowable range.
+ *
+ * @param {number} code - The HTTP status code to set.
+ * @return {ServerResponse} - Returns itself for chaining methods.
+ * @throws {TypeError} If `code` is not an integer.
+ * @throws {RangeError} If `code` is outside the range 100 to 999.
  * @public
  */
 
 res.status = function status(code) {
-  if ((typeof code === 'string' || Math.floor(code) !== code) && code > 99 && code < 1000) {
-    deprecate('res.status(' + JSON.stringify(code) + '): use res.status(' + Math.floor(code) + ') instead')
+  // Check if the status code is not an integer
+  if (!Number.isInteger(code)) {
+    throw new TypeError(`Invalid status code: ${JSON.stringify(code)}. Status code must be an integer.`);
   }
+  // Check if the status code is outside of Node's valid range
+  if (code < 100 || code > 999) {
+    throw new RangeError(`Invalid status code: ${JSON.stringify(code)}. Status code must be greater than 99 and less than 1000.`);
+  }
+
   this.statusCode = code;
   return this;
 };
@@ -8254,7 +6607,11 @@ res.status = function status(code) {
  *
  *    res.links({
  *      next: 'http://api.example.com/users?page=2',
- *      last: 'http://api.example.com/users?page=5'
+ *      last: 'http://api.example.com/users?page=5',
+ *      pages: [
+ *        'http://api.example.com/users?page=1',
+ *        'http://api.example.com/users?page=2'
+ *      ]
  *    });
  *
  * @param {Object} links
@@ -8262,11 +6619,18 @@ res.status = function status(code) {
  * @public
  */
 
-res.links = function(links){
+res.links = function(links) {
   var link = this.get('Link') || '';
   if (link) link += ', ';
-  return this.set('Link', link + Object.keys(links).map(function(rel){
-    return '<' + links[rel] + '>; rel="' + rel + '"';
+  return this.set('Link', link + Object.keys(links).map(function(rel) {
+    // Allow multiple links if links[rel] is an array
+    if (Array.isArray(links[rel])) {
+      return links[rel].map(function (singleLink) {
+        return `<${singleLink}>; rel="${rel}"`;
+      }).join(', ');
+    } else {
+      return `<${links[rel]}>; rel="${rel}"`;
+    }
   }).join(', '));
 };
 
@@ -8292,31 +6656,6 @@ res.send = function send(body) {
   // settings
   var app = this.app;
 
-  // allow status / body
-  if (arguments.length === 2) {
-    // res.send(body, status) backwards compat
-    if (typeof arguments[0] !== 'number' && typeof arguments[1] === 'number') {
-      deprecate('res.send(body, status): Use res.status(status).send(body) instead');
-      this.statusCode = arguments[1];
-    } else {
-      deprecate('res.send(status, body): Use res.status(status).send(body) instead');
-      this.statusCode = arguments[0];
-      chunk = arguments[1];
-    }
-  }
-
-  // disambiguate res.send(status) and res.send(status, num)
-  if (typeof chunk === 'number' && arguments.length === 1) {
-    // res.send(status) will set status message as text string
-    if (!this.get('Content-Type')) {
-      this.type('txt');
-    }
-
-    deprecate('res.send(status): Use res.sendStatus(status) instead');
-    this.statusCode = chunk;
-    chunk = statuses.message[chunk]
-  }
-
   switch (typeof chunk) {
     // string defaulting to html
     case 'string':
@@ -8329,7 +6668,7 @@ res.send = function send(body) {
     case 'object':
       if (chunk === null) {
         chunk = '';
-      } else if (Buffer.isBuffer(chunk)) {
+      } else if (ArrayBuffer.isView(chunk)) {
         if (!this.get('Content-Type')) {
           this.type('bin');
         }
@@ -8382,7 +6721,7 @@ res.send = function send(body) {
   }
 
   // freshness
-  if (req.fresh) this.statusCode = 304;
+  if (req.fresh) this.status(304);
 
   // strip irrelevant headers
   if (204 === this.statusCode || 304 === this.statusCode) {
@@ -8423,27 +6762,12 @@ res.send = function send(body) {
  */
 
 res.json = function json(obj) {
-  var val = obj;
-
-  // allow status / body
-  if (arguments.length === 2) {
-    // res.json(body, status) backwards compat
-    if (typeof arguments[1] === 'number') {
-      deprecate('res.json(obj, status): Use res.status(status).json(obj) instead');
-      this.statusCode = arguments[1];
-    } else {
-      deprecate('res.json(status, obj): Use res.status(status).json(obj) instead');
-      this.statusCode = arguments[0];
-      val = arguments[1];
-    }
-  }
-
   // settings
   var app = this.app;
   var escape = app.get('json escape')
   var replacer = app.get('json replacer');
   var spaces = app.get('json spaces');
-  var body = stringify(val, replacer, spaces, escape)
+  var body = stringify(obj, replacer, spaces, escape)
 
   // content-type
   if (!this.get('Content-Type')) {
@@ -8466,27 +6790,12 @@ res.json = function json(obj) {
  */
 
 res.jsonp = function jsonp(obj) {
-  var val = obj;
-
-  // allow status / body
-  if (arguments.length === 2) {
-    // res.jsonp(body, status) backwards compat
-    if (typeof arguments[1] === 'number') {
-      deprecate('res.jsonp(obj, status): Use res.status(status).jsonp(obj) instead');
-      this.statusCode = arguments[1];
-    } else {
-      deprecate('res.jsonp(status, obj): Use res.status(status).jsonp(obj) instead');
-      this.statusCode = arguments[0];
-      val = arguments[1];
-    }
-  }
-
   // settings
   var app = this.app;
   var escape = app.get('json escape')
   var replacer = app.get('json replacer');
   var spaces = app.get('json spaces');
-  var body = stringify(val, replacer, spaces, escape)
+  var body = stringify(obj, replacer, spaces, escape)
   var callback = this.req.query[app.get('jsonp callback name')];
 
   // content-type
@@ -8544,7 +6853,7 @@ res.jsonp = function jsonp(obj) {
 res.sendStatus = function sendStatus(statusCode) {
   var body = statuses.message[statusCode] || String(statusCode)
 
-  this.statusCode = statusCode;
+  this.status(statusCode);
   this.type('txt');
 
   return this.send(body);
@@ -8612,12 +6921,15 @@ res.sendFile = function sendFile(path, options, callback) {
     opts = {};
   }
 
-  if (!opts.root && !isAbsolute(path)) {
+  if (!opts.root && !pathIsAbsolute(path)) {
     throw new TypeError('path must be absolute or specify root to res.sendFile');
   }
 
   // create file stream
   var pathname = encodeURI(path);
+
+  // wire application etag option to send
+  opts.etag = this.app.enabled('etag');
   var file = send(req, pathname, opts);
 
   // transfer
@@ -8631,78 +6943,6 @@ res.sendFile = function sendFile(path, options, callback) {
     }
   });
 };
-
-/**
- * Transfer the file at the given `path`.
- *
- * Automatically sets the _Content-Type_ response header field.
- * The callback `callback(err)` is invoked when the transfer is complete
- * or when an error occurs. Be sure to check `res.headersSent`
- * if you wish to attempt responding, as the header and some data
- * may have already been transferred.
- *
- * Options:
- *
- *   - `maxAge`   defaulting to 0 (can be string converted by `ms`)
- *   - `root`     root directory for relative filenames
- *   - `headers`  object of headers to serve with file
- *   - `dotfiles` serve dotfiles, defaulting to false; can be `"allow"` to send them
- *
- * Other options are passed along to `send`.
- *
- * Examples:
- *
- *  The following example illustrates how `res.sendfile()` may
- *  be used as an alternative for the `static()` middleware for
- *  dynamic situations. The code backing `res.sendfile()` is actually
- *  the same code, so HTTP cache support etc is identical.
- *
- *     app.get('/user/:uid/photos/:file', function(req, res){
- *       var uid = req.params.uid
- *         , file = req.params.file;
- *
- *       req.user.mayViewFilesFrom(uid, function(yes){
- *         if (yes) {
- *           res.sendfile('/uploads/' + uid + '/' + file);
- *         } else {
- *           res.send(403, 'Sorry! you cant see that.');
- *         }
- *       });
- *     });
- *
- * @public
- */
-
-res.sendfile = function (path, options, callback) {
-  var done = callback;
-  var req = this.req;
-  var res = this;
-  var next = req.next;
-  var opts = options || {};
-
-  // support function as second arg
-  if (typeof options === 'function') {
-    done = options;
-    opts = {};
-  }
-
-  // create file stream
-  var file = send(req, path, opts);
-
-  // transfer
-  sendfile(res, file, opts, function (err) {
-    if (done) return done(err);
-    if (err && err.code === 'EISDIR') return next();
-
-    // next() all but write errors
-    if (err && err.code !== 'ECONNABORTED' && err.syscall !== 'write') {
-      next(err);
-    }
-  });
-};
-
-res.sendfile = deprecate.function(res.sendfile,
-  'res.sendfile: Use res.sendFile instead');
 
 /**
  * Transfer the file at the given `path` as an attachment.
@@ -8774,8 +7014,10 @@ res.download = function download (path, filename, options, callback) {
 };
 
 /**
- * Set _Content-Type_ response header with `type` through `mime.lookup()`
+ * Set _Content-Type_ response header with `type` through `mime.contentType()`
  * when it does not contain "/", or set the Content-Type to `type` otherwise.
+ * When no mapping is found though `mime.contentType()`, the type is set to
+ * "application/octet-stream".
  *
  * Examples:
  *
@@ -8793,7 +7035,7 @@ res.download = function download (path, filename, options, callback) {
 res.contentType =
 res.type = function contentType(type) {
   var ct = type.indexOf('/') === -1
-    ? mime.lookup(type)
+    ? (mime.contentType(type) || 'application/octet-stream')
     : type;
 
   return this.set('Content-Type', ct);
@@ -8942,6 +7184,9 @@ res.append = function append(field, val) {
  *
  * Aliased as `res.header()`.
  *
+ * When the set header is "Content-Type", the type is expanded to include
+ * the charset if not present using `mime.contentType()`.
+ *
  * @param {String|Object} field
  * @param {String|Array} val
  * @return {ServerResponse} for chaining
@@ -8960,10 +7205,7 @@ res.header = function header(field, val) {
       if (Array.isArray(value)) {
         throw new TypeError('Content-Type cannot be set to an Array');
       }
-      if (!charsetRegExp.test(value)) {
-        var charset = mime.charsets.lookup(value.split(';')[0]);
-        if (charset) value += '; charset=' + charset.toLowerCase();
-      }
+      value = mime.contentType(value)
     }
 
     this.setHeader(field, value);
@@ -8997,15 +7239,10 @@ res.get = function(field){
  */
 
 res.clearCookie = function clearCookie(name, options) {
-  if (options) {
-    if (options.maxAge) {
-      deprecate('res.clearCookie: Passing "options.maxAge" is deprecated. In v5.0.0 of Express, this option will be ignored, as res.clearCookie will automatically set cookies to expire immediately. Please update your code to omit this option.');
-    }
-    if (options.expires) {
-      deprecate('res.clearCookie: Passing "options.expires" is deprecated. In v5.0.0 of Express, this option will be ignored, as res.clearCookie will automatically set cookies to expire immediately. Please update your code to omit this option.');
-    }
-  }
-  var opts = merge({ expires: new Date(1), path: '/' }, options);
+  // Force cookie expiration by setting expires to the past
+  const opts = { path: '/', ...options, expires: new Date(1)};
+  // ensure maxAge is not passed
+  delete opts.maxAge
 
   return this.cookie(name, '', opts);
 };
@@ -9035,7 +7272,7 @@ res.clearCookie = function clearCookie(name, options) {
  */
 
 res.cookie = function (name, value, options) {
-  var opts = merge({}, options);
+  var opts = { ...options };
   var secret = this.req.secret;
   var signed = opts.signed;
 
@@ -9087,26 +7324,12 @@ res.cookie = function (name, value, options) {
  */
 
 res.location = function location(url) {
-  var loc;
-
-  // "back" is an alias for the referrer
-  if (url === 'back') {
-    deprecate('res.location("back"): use res.location(req.get("Referrer") || "/") and refer to https://dub.sh/security-redirect for best practices');
-    loc = this.req.get('Referrer') || '/';
-  } else {
-    loc = String(url);
-  }
-
-  return this.set('Location', encodeUrl(loc));
+  return this.set('Location', encodeUrl(url));
 };
 
 /**
  * Redirect to the given `url` with optional response `status`
  * defaulting to 302.
- *
- * The resulting `url` is determined by `res.location()`, so
- * it will play nicely with mounted apps, relative paths,
- * `"back"` etc.
  *
  * Examples:
  *
@@ -9125,13 +7348,20 @@ res.redirect = function redirect(url) {
 
   // allow status / url
   if (arguments.length === 2) {
-    if (typeof arguments[0] === 'number') {
-      status = arguments[0];
-      address = arguments[1];
-    } else {
-      deprecate('res.redirect(url, status): Use res.redirect(status, url) instead');
-      status = arguments[1];
-    }
+    status = arguments[0]
+    address = arguments[1]
+  }
+
+  if (!address) {
+    deprecate('Provide a url argument');
+  }
+
+  if (typeof address !== 'string') {
+    deprecate('Url must be a string');
+  }
+
+  if (typeof status !== 'number') {
+    deprecate('Status must be a number');
   }
 
   // Set location header
@@ -9154,7 +7384,7 @@ res.redirect = function redirect(url) {
   });
 
   // Respond
-  this.statusCode = status;
+  this.status(status);
   this.set('Content-Length', Buffer.byteLength(body));
 
   if (this.req.method === 'HEAD') {
@@ -9174,12 +7404,6 @@ res.redirect = function redirect(url) {
  */
 
 res.vary = function(field){
-  // checks for back-compat
-  if (!field || (Array.isArray(field) && !field.length)) {
-    deprecate('res.vary(): Provide a field name');
-    return this;
-  }
-
   vary(this, field);
 
   return this;
@@ -9356,1114 +7580,6 @@ function stringify (value, replacer, spaces, escape) {
 
 /***/ }),
 
-/***/ 8240:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-/*!
- * express
- * Copyright(c) 2009-2013 TJ Holowaychuk
- * Copyright(c) 2013 Roman Shtylman
- * Copyright(c) 2014-2015 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-
-
-/**
- * Module dependencies.
- * @private
- */
-
-var Route = __nccwpck_require__(4049);
-var Layer = __nccwpck_require__(9177);
-var methods = __nccwpck_require__(806);
-var mixin = __nccwpck_require__(1448);
-var debug = __nccwpck_require__(8854)('express:router');
-var deprecate = __nccwpck_require__(95)('express');
-var flatten = __nccwpck_require__(9560);
-var parseUrl = __nccwpck_require__(3404);
-var setPrototypeOf = __nccwpck_require__(1015)
-
-/**
- * Module variables.
- * @private
- */
-
-var objectRegExp = /^\[object (\S+)\]$/;
-var slice = Array.prototype.slice;
-var toString = Object.prototype.toString;
-
-/**
- * Initialize a new `Router` with the given `options`.
- *
- * @param {Object} [options]
- * @return {Router} which is a callable function
- * @public
- */
-
-var proto = module.exports = function(options) {
-  var opts = options || {};
-
-  function router(req, res, next) {
-    router.handle(req, res, next);
-  }
-
-  // mixin Router class functions
-  setPrototypeOf(router, proto)
-
-  router.params = {};
-  router._params = [];
-  router.caseSensitive = opts.caseSensitive;
-  router.mergeParams = opts.mergeParams;
-  router.strict = opts.strict;
-  router.stack = [];
-
-  return router;
-};
-
-/**
- * Map the given param placeholder `name`(s) to the given callback.
- *
- * Parameter mapping is used to provide pre-conditions to routes
- * which use normalized placeholders. For example a _:user_id_ parameter
- * could automatically load a user's information from the database without
- * any additional code,
- *
- * The callback uses the same signature as middleware, the only difference
- * being that the value of the placeholder is passed, in this case the _id_
- * of the user. Once the `next()` function is invoked, just like middleware
- * it will continue on to execute the route, or subsequent parameter functions.
- *
- * Just like in middleware, you must either respond to the request or call next
- * to avoid stalling the request.
- *
- *  app.param('user_id', function(req, res, next, id){
- *    User.find(id, function(err, user){
- *      if (err) {
- *        return next(err);
- *      } else if (!user) {
- *        return next(new Error('failed to load user'));
- *      }
- *      req.user = user;
- *      next();
- *    });
- *  });
- *
- * @param {String} name
- * @param {Function} fn
- * @return {app} for chaining
- * @public
- */
-
-proto.param = function param(name, fn) {
-  // param logic
-  if (typeof name === 'function') {
-    deprecate('router.param(fn): Refactor to use path params');
-    this._params.push(name);
-    return;
-  }
-
-  // apply param functions
-  var params = this._params;
-  var len = params.length;
-  var ret;
-
-  if (name[0] === ':') {
-    deprecate('router.param(' + JSON.stringify(name) + ', fn): Use router.param(' + JSON.stringify(name.slice(1)) + ', fn) instead')
-    name = name.slice(1)
-  }
-
-  for (var i = 0; i < len; ++i) {
-    if (ret = params[i](name, fn)) {
-      fn = ret;
-    }
-  }
-
-  // ensure we end up with a
-  // middleware function
-  if ('function' !== typeof fn) {
-    throw new Error('invalid param() call for ' + name + ', got ' + fn);
-  }
-
-  (this.params[name] = this.params[name] || []).push(fn);
-  return this;
-};
-
-/**
- * Dispatch a req, res into the router.
- * @private
- */
-
-proto.handle = function handle(req, res, out) {
-  var self = this;
-
-  debug('dispatching %s %s', req.method, req.url);
-
-  var idx = 0;
-  var protohost = getProtohost(req.url) || ''
-  var removed = '';
-  var slashAdded = false;
-  var sync = 0
-  var paramcalled = {};
-
-  // store options for OPTIONS request
-  // only used if OPTIONS request
-  var options = [];
-
-  // middleware and routes
-  var stack = self.stack;
-
-  // manage inter-router variables
-  var parentParams = req.params;
-  var parentUrl = req.baseUrl || '';
-  var done = restore(out, req, 'baseUrl', 'next', 'params');
-
-  // setup next layer
-  req.next = next;
-
-  // for options requests, respond with a default if nothing else responds
-  if (req.method === 'OPTIONS') {
-    done = wrap(done, function(old, err) {
-      if (err || options.length === 0) return old(err);
-      sendOptionsResponse(res, options, old);
-    });
-  }
-
-  // setup basic req values
-  req.baseUrl = parentUrl;
-  req.originalUrl = req.originalUrl || req.url;
-
-  next();
-
-  function next(err) {
-    var layerError = err === 'route'
-      ? null
-      : err;
-
-    // remove added slash
-    if (slashAdded) {
-      req.url = req.url.slice(1)
-      slashAdded = false;
-    }
-
-    // restore altered req.url
-    if (removed.length !== 0) {
-      req.baseUrl = parentUrl;
-      req.url = protohost + removed + req.url.slice(protohost.length)
-      removed = '';
-    }
-
-    // signal to exit router
-    if (layerError === 'router') {
-      setImmediate(done, null)
-      return
-    }
-
-    // no more matching layers
-    if (idx >= stack.length) {
-      setImmediate(done, layerError);
-      return;
-    }
-
-    // max sync stack
-    if (++sync > 100) {
-      return setImmediate(next, err)
-    }
-
-    // get pathname of request
-    var path = getPathname(req);
-
-    if (path == null) {
-      return done(layerError);
-    }
-
-    // find next matching layer
-    var layer;
-    var match;
-    var route;
-
-    while (match !== true && idx < stack.length) {
-      layer = stack[idx++];
-      match = matchLayer(layer, path);
-      route = layer.route;
-
-      if (typeof match !== 'boolean') {
-        // hold on to layerError
-        layerError = layerError || match;
-      }
-
-      if (match !== true) {
-        continue;
-      }
-
-      if (!route) {
-        // process non-route handlers normally
-        continue;
-      }
-
-      if (layerError) {
-        // routes do not match with a pending error
-        match = false;
-        continue;
-      }
-
-      var method = req.method;
-      var has_method = route._handles_method(method);
-
-      // build up automatic options response
-      if (!has_method && method === 'OPTIONS') {
-        appendMethods(options, route._options());
-      }
-
-      // don't even bother matching route
-      if (!has_method && method !== 'HEAD') {
-        match = false;
-      }
-    }
-
-    // no match
-    if (match !== true) {
-      return done(layerError);
-    }
-
-    // store route for dispatch on change
-    if (route) {
-      req.route = route;
-    }
-
-    // Capture one-time layer values
-    req.params = self.mergeParams
-      ? mergeParams(layer.params, parentParams)
-      : layer.params;
-    var layerPath = layer.path;
-
-    // this should be done for the layer
-    self.process_params(layer, paramcalled, req, res, function (err) {
-      if (err) {
-        next(layerError || err)
-      } else if (route) {
-        layer.handle_request(req, res, next)
-      } else {
-        trim_prefix(layer, layerError, layerPath, path)
-      }
-
-      sync = 0
-    });
-  }
-
-  function trim_prefix(layer, layerError, layerPath, path) {
-    if (layerPath.length !== 0) {
-      // Validate path is a prefix match
-      if (layerPath !== path.slice(0, layerPath.length)) {
-        next(layerError)
-        return
-      }
-
-      // Validate path breaks on a path separator
-      var c = path[layerPath.length]
-      if (c && c !== '/' && c !== '.') return next(layerError)
-
-      // Trim off the part of the url that matches the route
-      // middleware (.use stuff) needs to have the path stripped
-      debug('trim prefix (%s) from url %s', layerPath, req.url);
-      removed = layerPath;
-      req.url = protohost + req.url.slice(protohost.length + removed.length)
-
-      // Ensure leading slash
-      if (!protohost && req.url[0] !== '/') {
-        req.url = '/' + req.url;
-        slashAdded = true;
-      }
-
-      // Setup base URL (no trailing slash)
-      req.baseUrl = parentUrl + (removed[removed.length - 1] === '/'
-        ? removed.substring(0, removed.length - 1)
-        : removed);
-    }
-
-    debug('%s %s : %s', layer.name, layerPath, req.originalUrl);
-
-    if (layerError) {
-      layer.handle_error(layerError, req, res, next);
-    } else {
-      layer.handle_request(req, res, next);
-    }
-  }
-};
-
-/**
- * Process any parameters for the layer.
- * @private
- */
-
-proto.process_params = function process_params(layer, called, req, res, done) {
-  var params = this.params;
-
-  // captured parameters from the layer, keys and values
-  var keys = layer.keys;
-
-  // fast track
-  if (!keys || keys.length === 0) {
-    return done();
-  }
-
-  var i = 0;
-  var name;
-  var paramIndex = 0;
-  var key;
-  var paramVal;
-  var paramCallbacks;
-  var paramCalled;
-
-  // process params in order
-  // param callbacks can be async
-  function param(err) {
-    if (err) {
-      return done(err);
-    }
-
-    if (i >= keys.length ) {
-      return done();
-    }
-
-    paramIndex = 0;
-    key = keys[i++];
-    name = key.name;
-    paramVal = req.params[name];
-    paramCallbacks = params[name];
-    paramCalled = called[name];
-
-    if (paramVal === undefined || !paramCallbacks) {
-      return param();
-    }
-
-    // param previously called with same value or error occurred
-    if (paramCalled && (paramCalled.match === paramVal
-      || (paramCalled.error && paramCalled.error !== 'route'))) {
-      // restore value
-      req.params[name] = paramCalled.value;
-
-      // next param
-      return param(paramCalled.error);
-    }
-
-    called[name] = paramCalled = {
-      error: null,
-      match: paramVal,
-      value: paramVal
-    };
-
-    paramCallback();
-  }
-
-  // single param callbacks
-  function paramCallback(err) {
-    var fn = paramCallbacks[paramIndex++];
-
-    // store updated value
-    paramCalled.value = req.params[key.name];
-
-    if (err) {
-      // store error
-      paramCalled.error = err;
-      param(err);
-      return;
-    }
-
-    if (!fn) return param();
-
-    try {
-      fn(req, res, paramCallback, paramVal, key.name);
-    } catch (e) {
-      paramCallback(e);
-    }
-  }
-
-  param();
-};
-
-/**
- * Use the given middleware function, with optional path, defaulting to "/".
- *
- * Use (like `.all`) will run for any http METHOD, but it will not add
- * handlers for those methods so OPTIONS requests will not consider `.use`
- * functions even if they could respond.
- *
- * The other difference is that _route_ path is stripped and not visible
- * to the handler function. The main effect of this feature is that mounted
- * handlers can operate without any code changes regardless of the "prefix"
- * pathname.
- *
- * @public
- */
-
-proto.use = function use(fn) {
-  var offset = 0;
-  var path = '/';
-
-  // default path to '/'
-  // disambiguate router.use([fn])
-  if (typeof fn !== 'function') {
-    var arg = fn;
-
-    while (Array.isArray(arg) && arg.length !== 0) {
-      arg = arg[0];
-    }
-
-    // first arg is the path
-    if (typeof arg !== 'function') {
-      offset = 1;
-      path = fn;
-    }
-  }
-
-  var callbacks = flatten(slice.call(arguments, offset));
-
-  if (callbacks.length === 0) {
-    throw new TypeError('Router.use() requires a middleware function')
-  }
-
-  for (var i = 0; i < callbacks.length; i++) {
-    var fn = callbacks[i];
-
-    if (typeof fn !== 'function') {
-      throw new TypeError('Router.use() requires a middleware function but got a ' + gettype(fn))
-    }
-
-    // add the middleware
-    debug('use %o %s', path, fn.name || '<anonymous>')
-
-    var layer = new Layer(path, {
-      sensitive: this.caseSensitive,
-      strict: false,
-      end: false
-    }, fn);
-
-    layer.route = undefined;
-
-    this.stack.push(layer);
-  }
-
-  return this;
-};
-
-/**
- * Create a new Route for the given path.
- *
- * Each route contains a separate middleware stack and VERB handlers.
- *
- * See the Route api documentation for details on adding handlers
- * and middleware to routes.
- *
- * @param {String} path
- * @return {Route}
- * @public
- */
-
-proto.route = function route(path) {
-  var route = new Route(path);
-
-  var layer = new Layer(path, {
-    sensitive: this.caseSensitive,
-    strict: this.strict,
-    end: true
-  }, route.dispatch.bind(route));
-
-  layer.route = route;
-
-  this.stack.push(layer);
-  return route;
-};
-
-// create Router#VERB functions
-methods.concat('all').forEach(function(method){
-  proto[method] = function(path){
-    var route = this.route(path)
-    route[method].apply(route, slice.call(arguments, 1));
-    return this;
-  };
-});
-
-// append methods to a list of methods
-function appendMethods(list, addition) {
-  for (var i = 0; i < addition.length; i++) {
-    var method = addition[i];
-    if (list.indexOf(method) === -1) {
-      list.push(method);
-    }
-  }
-}
-
-// get pathname of request
-function getPathname(req) {
-  try {
-    return parseUrl(req).pathname;
-  } catch (err) {
-    return undefined;
-  }
-}
-
-// Get get protocol + host for a URL
-function getProtohost(url) {
-  if (typeof url !== 'string' || url.length === 0 || url[0] === '/') {
-    return undefined
-  }
-
-  var searchIndex = url.indexOf('?')
-  var pathLength = searchIndex !== -1
-    ? searchIndex
-    : url.length
-  var fqdnIndex = url.slice(0, pathLength).indexOf('://')
-
-  return fqdnIndex !== -1
-    ? url.substring(0, url.indexOf('/', 3 + fqdnIndex))
-    : undefined
-}
-
-// get type for error message
-function gettype(obj) {
-  var type = typeof obj;
-
-  if (type !== 'object') {
-    return type;
-  }
-
-  // inspect [[Class]] for objects
-  return toString.call(obj)
-    .replace(objectRegExp, '$1');
-}
-
-/**
- * Match path to a layer.
- *
- * @param {Layer} layer
- * @param {string} path
- * @private
- */
-
-function matchLayer(layer, path) {
-  try {
-    return layer.match(path);
-  } catch (err) {
-    return err;
-  }
-}
-
-// merge params with parent params
-function mergeParams(params, parent) {
-  if (typeof parent !== 'object' || !parent) {
-    return params;
-  }
-
-  // make copy of parent for base
-  var obj = mixin({}, parent);
-
-  // simple non-numeric merging
-  if (!(0 in params) || !(0 in parent)) {
-    return mixin(obj, params);
-  }
-
-  var i = 0;
-  var o = 0;
-
-  // determine numeric gaps
-  while (i in params) {
-    i++;
-  }
-
-  while (o in parent) {
-    o++;
-  }
-
-  // offset numeric indices in params before merge
-  for (i--; i >= 0; i--) {
-    params[i + o] = params[i];
-
-    // create holes for the merge when necessary
-    if (i < o) {
-      delete params[i];
-    }
-  }
-
-  return mixin(obj, params);
-}
-
-// restore obj props after function
-function restore(fn, obj) {
-  var props = new Array(arguments.length - 2);
-  var vals = new Array(arguments.length - 2);
-
-  for (var i = 0; i < props.length; i++) {
-    props[i] = arguments[i + 2];
-    vals[i] = obj[props[i]];
-  }
-
-  return function () {
-    // restore vals
-    for (var i = 0; i < props.length; i++) {
-      obj[props[i]] = vals[i];
-    }
-
-    return fn.apply(this, arguments);
-  };
-}
-
-// send an OPTIONS response
-function sendOptionsResponse(res, options, next) {
-  try {
-    var body = options.join(',');
-    res.set('Allow', body);
-    res.send(body);
-  } catch (err) {
-    next(err);
-  }
-}
-
-// wrap a function
-function wrap(old, fn) {
-  return function proxy() {
-    var args = new Array(arguments.length + 1);
-
-    args[0] = old;
-    for (var i = 0, len = arguments.length; i < len; i++) {
-      args[i + 1] = arguments[i];
-    }
-
-    fn.apply(this, args);
-  };
-}
-
-
-/***/ }),
-
-/***/ 9177:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-/*!
- * express
- * Copyright(c) 2009-2013 TJ Holowaychuk
- * Copyright(c) 2013 Roman Shtylman
- * Copyright(c) 2014-2015 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-
-
-/**
- * Module dependencies.
- * @private
- */
-
-var pathRegexp = __nccwpck_require__(9455);
-var debug = __nccwpck_require__(8854)('express:router:layer');
-
-/**
- * Module variables.
- * @private
- */
-
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-/**
- * Module exports.
- * @public
- */
-
-module.exports = Layer;
-
-function Layer(path, options, fn) {
-  if (!(this instanceof Layer)) {
-    return new Layer(path, options, fn);
-  }
-
-  debug('new %o', path)
-  var opts = options || {};
-
-  this.handle = fn;
-  this.name = fn.name || '<anonymous>';
-  this.params = undefined;
-  this.path = undefined;
-  this.regexp = pathRegexp(path, this.keys = [], opts);
-
-  // set fast path flags
-  this.regexp.fast_star = path === '*'
-  this.regexp.fast_slash = path === '/' && opts.end === false
-}
-
-/**
- * Handle the error for the layer.
- *
- * @param {Error} error
- * @param {Request} req
- * @param {Response} res
- * @param {function} next
- * @api private
- */
-
-Layer.prototype.handle_error = function handle_error(error, req, res, next) {
-  var fn = this.handle;
-
-  if (fn.length !== 4) {
-    // not a standard error handler
-    return next(error);
-  }
-
-  try {
-    fn(error, req, res, next);
-  } catch (err) {
-    next(err);
-  }
-};
-
-/**
- * Handle the request for the layer.
- *
- * @param {Request} req
- * @param {Response} res
- * @param {function} next
- * @api private
- */
-
-Layer.prototype.handle_request = function handle(req, res, next) {
-  var fn = this.handle;
-
-  if (fn.length > 3) {
-    // not a standard request handler
-    return next();
-  }
-
-  try {
-    fn(req, res, next);
-  } catch (err) {
-    next(err);
-  }
-};
-
-/**
- * Check if this route matches `path`, if so
- * populate `.params`.
- *
- * @param {String} path
- * @return {Boolean}
- * @api private
- */
-
-Layer.prototype.match = function match(path) {
-  var match
-
-  if (path != null) {
-    // fast path non-ending match for / (any path matches)
-    if (this.regexp.fast_slash) {
-      this.params = {}
-      this.path = ''
-      return true
-    }
-
-    // fast path for * (everything matched in a param)
-    if (this.regexp.fast_star) {
-      this.params = {'0': decode_param(path)}
-      this.path = path
-      return true
-    }
-
-    // match the path
-    match = this.regexp.exec(path)
-  }
-
-  if (!match) {
-    this.params = undefined;
-    this.path = undefined;
-    return false;
-  }
-
-  // store values
-  this.params = {};
-  this.path = match[0]
-
-  var keys = this.keys;
-  var params = this.params;
-
-  for (var i = 1; i < match.length; i++) {
-    var key = keys[i - 1];
-    var prop = key.name;
-    var val = decode_param(match[i])
-
-    if (val !== undefined || !(hasOwnProperty.call(params, prop))) {
-      params[prop] = val;
-    }
-  }
-
-  return true;
-};
-
-/**
- * Decode param value.
- *
- * @param {string} val
- * @return {string}
- * @private
- */
-
-function decode_param(val) {
-  if (typeof val !== 'string' || val.length === 0) {
-    return val;
-  }
-
-  try {
-    return decodeURIComponent(val);
-  } catch (err) {
-    if (err instanceof URIError) {
-      err.message = 'Failed to decode param \'' + val + '\'';
-      err.status = err.statusCode = 400;
-    }
-
-    throw err;
-  }
-}
-
-
-/***/ }),
-
-/***/ 4049:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-/*!
- * express
- * Copyright(c) 2009-2013 TJ Holowaychuk
- * Copyright(c) 2013 Roman Shtylman
- * Copyright(c) 2014-2015 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-
-
-/**
- * Module dependencies.
- * @private
- */
-
-var debug = __nccwpck_require__(8854)('express:router:route');
-var flatten = __nccwpck_require__(9560);
-var Layer = __nccwpck_require__(9177);
-var methods = __nccwpck_require__(806);
-
-/**
- * Module variables.
- * @private
- */
-
-var slice = Array.prototype.slice;
-var toString = Object.prototype.toString;
-
-/**
- * Module exports.
- * @public
- */
-
-module.exports = Route;
-
-/**
- * Initialize `Route` with the given `path`,
- *
- * @param {String} path
- * @public
- */
-
-function Route(path) {
-  this.path = path;
-  this.stack = [];
-
-  debug('new %o', path)
-
-  // route handlers for various http methods
-  this.methods = {};
-}
-
-/**
- * Determine if the route handles a given method.
- * @private
- */
-
-Route.prototype._handles_method = function _handles_method(method) {
-  if (this.methods._all) {
-    return true;
-  }
-
-  // normalize name
-  var name = typeof method === 'string'
-    ? method.toLowerCase()
-    : method
-
-  if (name === 'head' && !this.methods['head']) {
-    name = 'get';
-  }
-
-  return Boolean(this.methods[name]);
-};
-
-/**
- * @return {Array} supported HTTP methods
- * @private
- */
-
-Route.prototype._options = function _options() {
-  var methods = Object.keys(this.methods);
-
-  // append automatic head
-  if (this.methods.get && !this.methods.head) {
-    methods.push('head');
-  }
-
-  for (var i = 0; i < methods.length; i++) {
-    // make upper case
-    methods[i] = methods[i].toUpperCase();
-  }
-
-  return methods;
-};
-
-/**
- * dispatch req, res into this route
- * @private
- */
-
-Route.prototype.dispatch = function dispatch(req, res, done) {
-  var idx = 0;
-  var stack = this.stack;
-  var sync = 0
-
-  if (stack.length === 0) {
-    return done();
-  }
-  var method = typeof req.method === 'string'
-    ? req.method.toLowerCase()
-    : req.method
-
-  if (method === 'head' && !this.methods['head']) {
-    method = 'get';
-  }
-
-  req.route = this;
-
-  next();
-
-  function next(err) {
-    // signal to exit route
-    if (err && err === 'route') {
-      return done();
-    }
-
-    // signal to exit router
-    if (err && err === 'router') {
-      return done(err)
-    }
-
-    // max sync stack
-    if (++sync > 100) {
-      return setImmediate(next, err)
-    }
-
-    var layer = stack[idx++]
-
-    // end of layers
-    if (!layer) {
-      return done(err)
-    }
-
-    if (layer.method && layer.method !== method) {
-      next(err)
-    } else if (err) {
-      layer.handle_error(err, req, res, next);
-    } else {
-      layer.handle_request(req, res, next);
-    }
-
-    sync = 0
-  }
-};
-
-/**
- * Add a handler for all HTTP verbs to this route.
- *
- * Behaves just like middleware and can respond or call `next`
- * to continue processing.
- *
- * You can use multiple `.all` call to add multiple handlers.
- *
- *   function check_something(req, res, next){
- *     next();
- *   };
- *
- *   function validate_user(req, res, next){
- *     next();
- *   };
- *
- *   route
- *   .all(validate_user)
- *   .all(check_something)
- *   .get(function(req, res, next){
- *     res.send('hello world');
- *   });
- *
- * @param {function} handler
- * @return {Route} for chaining
- * @api public
- */
-
-Route.prototype.all = function all() {
-  var handles = flatten(slice.call(arguments));
-
-  for (var i = 0; i < handles.length; i++) {
-    var handle = handles[i];
-
-    if (typeof handle !== 'function') {
-      var type = toString.call(handle);
-      var msg = 'Route.all() requires a callback function but got a ' + type
-      throw new TypeError(msg);
-    }
-
-    var layer = Layer('/', {}, handle);
-    layer.method = undefined;
-
-    this.methods._all = true;
-    this.stack.push(layer);
-  }
-
-  return this;
-};
-
-methods.forEach(function(method){
-  Route.prototype[method] = function(){
-    var handles = flatten(slice.call(arguments));
-
-    for (var i = 0; i < handles.length; i++) {
-      var handle = handles[i];
-
-      if (typeof handle !== 'function') {
-        var type = toString.call(handle);
-        var msg = 'Route.' + method + '() requires a callback function but got a ' + type
-        throw new Error(msg);
-      }
-
-      debug('%s %o', method, this.path)
-
-      var layer = Layer('/', {}, handle);
-      layer.method = method;
-
-      this.methods[method] = true;
-      this.stack.push(layer);
-    }
-
-    return this;
-  };
-});
-
-
-/***/ }),
-
 /***/ 9253:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -10482,16 +7598,21 @@ methods.forEach(function(method){
  * @api private
  */
 
-var Buffer = (__nccwpck_require__(3058).Buffer)
-var contentDisposition = __nccwpck_require__(8111);
+var { METHODS } = __nccwpck_require__(7067);
 var contentType = __nccwpck_require__(756);
-var deprecate = __nccwpck_require__(95)('express');
-var flatten = __nccwpck_require__(9560);
-var mime = (__nccwpck_require__(814).mime);
 var etag = __nccwpck_require__(1825);
+var mime = __nccwpck_require__(4096)
 var proxyaddr = __nccwpck_require__(8916);
 var qs = __nccwpck_require__(240);
-var querystring = __nccwpck_require__(3480);
+var querystring = __nccwpck_require__(1792);
+const { Buffer } = __nccwpck_require__(4573);
+
+
+/**
+ * A list of lowercased HTTP methods that are supported by Node.js.
+ * @api private
+ */
+exports.vX = METHODS.map((method) => method.toLowerCase());
 
 /**
  * Return strong ETag for `body`.
@@ -10502,7 +7623,7 @@ var querystring = __nccwpck_require__(3480);
  * @api private
  */
 
-exports.etag = createETagGenerator({ weak: false })
+exports.wN = createETagGenerator({ weak: false })
 
 /**
  * Return weak ETag for `body`.
@@ -10513,32 +7634,7 @@ exports.etag = createETagGenerator({ weak: false })
  * @api private
  */
 
-exports.wetag = createETagGenerator({ weak: true })
-
-/**
- * Check if `path` looks absolute.
- *
- * @param {String} path
- * @return {Boolean}
- * @api private
- */
-
-exports.isAbsolute = function(path){
-  if ('/' === path[0]) return true;
-  if (':' === path[1] && ('\\' === path[2] || '/' === path[2])) return true; // Windows device path
-  if ('\\\\' === path.substring(0, 2)) return true; // Microsoft Azure absolute path
-};
-
-/**
- * Flatten the given `arr`.
- *
- * @param {Array} arr
- * @return {Array}
- * @api private
- */
-
-exports.flatten = deprecate.function(flatten,
-  'utils.flatten: use array-flatten npm module instead');
+exports.N5 = createETagGenerator({ weak: true })
 
 /**
  * Normalize the given `type`, for example "html" becomes "text/html".
@@ -10548,10 +7644,10 @@ exports.flatten = deprecate.function(flatten,
  * @api private
  */
 
-exports.normalizeType = function(type){
+exports.AZ = function(type){
   return ~type.indexOf('/')
     ? acceptParams(type)
-    : { value: mime.lookup(type), params: {} };
+    : { value: (mime.lookup(type) || 'application/octet-stream'), params: {} }
 };
 
 /**
@@ -10562,27 +7658,10 @@ exports.normalizeType = function(type){
  * @api private
  */
 
-exports.normalizeTypes = function(types){
-  var ret = [];
-
-  for (var i = 0; i < types.length; ++i) {
-    ret.push(exports.normalizeType(types[i]));
-  }
-
-  return ret;
+exports.Zs = function(types) {
+  return types.map(exports.AZ);
 };
 
-/**
- * Generate Content-Disposition header appropriate for the filename.
- * non-ascii filenames are urlencoded and a filename* parameter is added
- *
- * @param {String} filename
- * @return {String}
- * @api private
- */
-
-exports.contentDisposition = deprecate.function(contentDisposition,
-  'utils.contentDisposition: use content-disposition npm module instead');
 
 /**
  * Parse accept params `str` returning an
@@ -10594,16 +7673,33 @@ exports.contentDisposition = deprecate.function(contentDisposition,
  */
 
 function acceptParams (str) {
-  var parts = str.split(/ *; */);
-  var ret = { value: parts[0], quality: 1, params: {} }
+  var length = str.length;
+  var colonIndex = str.indexOf(';');
+  var index = colonIndex === -1 ? length : colonIndex;
+  var ret = { value: str.slice(0, index).trim(), quality: 1, params: {} };
 
-  for (var i = 1; i < parts.length; ++i) {
-    var pms = parts[i].split(/ *= */);
-    if ('q' === pms[0]) {
-      ret.quality = parseFloat(pms[1]);
-    } else {
-      ret.params[pms[0]] = pms[1];
+  while (index < length) {
+    var splitIndex = str.indexOf('=', index);
+    if (splitIndex === -1) break;
+
+    var colonIndex = str.indexOf(';', index);
+    var endIndex = colonIndex === -1 ? length : colonIndex;
+
+    if (splitIndex > endIndex) {
+      index = str.lastIndexOf(';', splitIndex - 1) + 1;
+      continue;
     }
+
+    var key = str.slice(index, splitIndex).trim();
+    var value = str.slice(splitIndex + 1, endIndex).trim();
+
+    if (key === 'q') {
+      ret.quality = parseFloat(value);
+    } else {
+      ret.params[key] = value;
+    }
+
+    index = endIndex + 1;
   }
 
   return ret;
@@ -10617,7 +7713,7 @@ function acceptParams (str) {
  * @api private
  */
 
-exports.compileETag = function(val) {
+exports.Rx = function(val) {
   var fn;
 
   if (typeof val === 'function') {
@@ -10627,12 +7723,12 @@ exports.compileETag = function(val) {
   switch (val) {
     case true:
     case 'weak':
-      fn = exports.wetag;
+      fn = exports.N5;
       break;
     case false:
       break;
     case 'strong':
-      fn = exports.etag;
+      fn = exports.wN;
       break;
     default:
       throw new TypeError('unknown value for etag function: ' + val);
@@ -10649,7 +7745,7 @@ exports.compileETag = function(val) {
  * @api private
  */
 
-exports.compileQueryParser = function compileQueryParser(val) {
+exports.HD = function compileQueryParser(val) {
   var fn;
 
   if (typeof val === 'function') {
@@ -10662,7 +7758,6 @@ exports.compileQueryParser = function compileQueryParser(val) {
       fn = querystring.parse;
       break;
     case false:
-      fn = newObject;
       break;
     case 'extended':
       fn = parseExtendedQueryString;
@@ -10682,7 +7777,7 @@ exports.compileQueryParser = function compileQueryParser(val) {
  * @api private
  */
 
-exports.compileTrust = function(val) {
+exports.y6 = function(val) {
   if (typeof val === 'function') return val;
 
   if (val === true) {
@@ -10713,7 +7808,7 @@ exports.compileTrust = function(val) {
  * @api private
  */
 
-exports.setCharset = function setCharset(type, charset) {
+exports.Jm = function setCharset(type, charset) {
   if (!type || !charset) {
     return type;
   }
@@ -10761,17 +7856,6 @@ function parseExtendedQueryString(str) {
   });
 }
 
-/**
- * Return new empty object.
- *
- * @return {Object}
- * @api private
- */
-
-function newObject() {
-  return {};
-}
-
 
 /***/ }),
 
@@ -10794,9 +7878,9 @@ function newObject() {
  * @private
  */
 
-var debug = __nccwpck_require__(8854)('express:view');
-var path = __nccwpck_require__(6928);
-var fs = __nccwpck_require__(9896);
+var debug = __nccwpck_require__(2830)('express:view');
+var path = __nccwpck_require__(6760);
+var fs = __nccwpck_require__(3024);
 
 /**
  * Module variables.
@@ -10912,8 +7996,31 @@ View.prototype.lookup = function lookup(name) {
  */
 
 View.prototype.render = function render(options, callback) {
+  var sync = true;
+
   debug('render "%s"', this.path);
-  this.engine(this.path, options, callback);
+
+  // render, normalizing sync callbacks
+  this.engine(this.path, options, function onRender() {
+    if (!sync) {
+      return callback.apply(this, arguments);
+    }
+
+    // copy arguments
+    var args = new Array(arguments.length);
+    var cntx = this;
+
+    for (var i = 0; i < arguments.length; i++) {
+      args[i] = arguments[i];
+    }
+
+    // force callback to be async
+    return process.nextTick(function renderTick() {
+      return callback.apply(cntx, args);
+    });
+  });
+
+  sync = false;
 };
 
 /**
@@ -10965,838 +8072,6 @@ function tryStat(path) {
 
 /***/ }),
 
-/***/ 6358:
-/***/ ((module, exports, __nccwpck_require__) => {
-
-/**
- * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = __nccwpck_require__(1633);
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome
-               && 'undefined' != typeof chrome.storage
-                  ? chrome.storage.local
-                  : localstorage();
-
-/**
- * Colors.
- */
-
-exports.colors = [
-  'lightseagreen',
-  'forestgreen',
-  'goldenrod',
-  'dodgerblue',
-  'darkorchid',
-  'crimson'
-];
-
-/**
- * Currently only WebKit-based Web Inspectors, Firefox >= v31,
- * and the Firebug extension (any Firefox version) are known
- * to support "%c" CSS customizations.
- *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
- */
-
-function useColors() {
-  // NB: In an Electron preload script, document will be defined but not fully
-  // initialized. Since we know we're in Chrome, we'll just detect this case
-  // explicitly
-  if (typeof window !== 'undefined' && window.process && window.process.type === 'renderer') {
-    return true;
-  }
-
-  // is webkit? http://stackoverflow.com/a/16459606/376773
-  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-  return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
-    // is firebug? http://stackoverflow.com/a/398120/376773
-    (typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
-    // is firefox >= v31?
-    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-    (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
-    // double check webkit in userAgent just in case we are in a worker
-    (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
-}
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function(v) {
-  try {
-    return JSON.stringify(v);
-  } catch (err) {
-    return '[UnexpectedJSONParseError]: ' + err.message;
-  }
-};
-
-
-/**
- * Colorize log arguments if enabled.
- *
- * @api public
- */
-
-function formatArgs(args) {
-  var useColors = this.useColors;
-
-  args[0] = (useColors ? '%c' : '')
-    + this.namespace
-    + (useColors ? ' %c' : ' ')
-    + args[0]
-    + (useColors ? '%c ' : ' ')
-    + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return;
-
-  var c = 'color: ' + this.color;
-  args.splice(1, 0, c, 'color: inherit')
-
-  // the final "%c" is somewhat tricky, because there could be other
-  // arguments passed either before or after the %c, so we need to
-  // figure out the correct index to insert the CSS into
-  var index = 0;
-  var lastC = 0;
-  args[0].replace(/%[a-zA-Z%]/g, function(match) {
-    if ('%%' === match) return;
-    index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
-      // (the user may have provided their own)
-      lastC = index;
-    }
-  });
-
-  args.splice(lastC, 0, c);
-}
-
-/**
- * Invokes `console.log()` when available.
- * No-op when `console.log` is not a "function".
- *
- * @api public
- */
-
-function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === typeof console
-    && console.log
-    && Function.prototype.apply.call(console.log, console, arguments);
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
-    } else {
-      exports.storage.debug = namespaces;
-    }
-  } catch(e) {}
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  var r;
-  try {
-    r = exports.storage.debug;
-  } catch(e) {}
-
-  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
-  if (!r && typeof process !== 'undefined' && 'env' in process) {
-    r = process.env.DEBUG;
-  }
-
-  return r;
-}
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
-/**
- * Localstorage attempts to return the localstorage.
- *
- * This is necessary because safari throws
- * when a user disables cookies/localstorage
- * and you attempt to access it.
- *
- * @return {LocalStorage}
- * @api private
- */
-
-function localstorage() {
-  try {
-    return window.localStorage;
-  } catch (e) {}
-}
-
-
-/***/ }),
-
-/***/ 1633:
-/***/ ((module, exports, __nccwpck_require__) => {
-
-
-/**
- * This is the common logic for both the Node.js and web browser
- * implementations of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = createDebug.debug = createDebug['default'] = createDebug;
-exports.coerce = coerce;
-exports.disable = disable;
-exports.enable = enable;
-exports.enabled = enabled;
-exports.humanize = __nccwpck_require__(2000);
-
-/**
- * The currently active debug mode names, and names to skip.
- */
-
-exports.names = [];
-exports.skips = [];
-
-/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
- */
-
-exports.formatters = {};
-
-/**
- * Previous log timestamp.
- */
-
-var prevTime;
-
-/**
- * Select a color.
- * @param {String} namespace
- * @return {Number}
- * @api private
- */
-
-function selectColor(namespace) {
-  var hash = 0, i;
-
-  for (i in namespace) {
-    hash  = ((hash << 5) - hash) + namespace.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
-  }
-
-  return exports.colors[Math.abs(hash) % exports.colors.length];
-}
-
-/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
-
-function createDebug(namespace) {
-
-  function debug() {
-    // disabled?
-    if (!debug.enabled) return;
-
-    var self = debug;
-
-    // set `diff` timestamp
-    var curr = +new Date();
-    var ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
-
-    // turn the `arguments` into a proper Array
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i];
-    }
-
-    args[0] = exports.coerce(args[0]);
-
-    if ('string' !== typeof args[0]) {
-      // anything else let's inspect with %O
-      args.unshift('%O');
-    }
-
-    // apply any `formatters` transformations
-    var index = 0;
-    args[0] = args[0].replace(/%([a-zA-Z%])/g, function(match, format) {
-      // if we encounter an escaped % then don't increase the array index
-      if (match === '%%') return match;
-      index++;
-      var formatter = exports.formatters[format];
-      if ('function' === typeof formatter) {
-        var val = args[index];
-        match = formatter.call(self, val);
-
-        // now we need to remove `args[index]` since it's inlined in the `format`
-        args.splice(index, 1);
-        index--;
-      }
-      return match;
-    });
-
-    // apply env-specific formatting (colors, etc.)
-    exports.formatArgs.call(self, args);
-
-    var logFn = debug.log || exports.log || console.log.bind(console);
-    logFn.apply(self, args);
-  }
-
-  debug.namespace = namespace;
-  debug.enabled = exports.enabled(namespace);
-  debug.useColors = exports.useColors();
-  debug.color = selectColor(namespace);
-
-  // env-specific initialization logic for debug instances
-  if ('function' === typeof exports.init) {
-    exports.init(debug);
-  }
-
-  return debug;
-}
-
-/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
-
-function enable(namespaces) {
-  exports.save(namespaces);
-
-  exports.names = [];
-  exports.skips = [];
-
-  var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
-  var len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    if (!split[i]) continue; // ignore empty strings
-    namespaces = split[i].replace(/\*/g, '.*?');
-    if (namespaces[0] === '-') {
-      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-    } else {
-      exports.names.push(new RegExp('^' + namespaces + '$'));
-    }
-  }
-}
-
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-function disable() {
-  exports.enable('');
-}
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-function enabled(name) {
-  var i, len;
-  for (i = 0, len = exports.skips.length; i < len; i++) {
-    if (exports.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (i = 0, len = exports.names.length; i < len; i++) {
-    if (exports.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-
-/***/ }),
-
-/***/ 8854:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-/**
- * Detect Electron renderer process, which is node, but we should
- * treat as a browser.
- */
-
-if (typeof process !== 'undefined' && process.type === 'renderer') {
-  module.exports = __nccwpck_require__(6358);
-} else {
-  module.exports = __nccwpck_require__(9148);
-}
-
-
-/***/ }),
-
-/***/ 9148:
-/***/ ((module, exports, __nccwpck_require__) => {
-
-/**
- * Module dependencies.
- */
-
-var tty = __nccwpck_require__(2018);
-var util = __nccwpck_require__(9023);
-
-/**
- * This is the Node.js implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = __nccwpck_require__(1633);
-exports.init = init;
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-
-/**
- * Colors.
- */
-
-exports.colors = [6, 2, 3, 4, 5, 1];
-
-/**
- * Build up the default `inspectOpts` object from the environment variables.
- *
- *   $ DEBUG_COLORS=no DEBUG_DEPTH=10 DEBUG_SHOW_HIDDEN=enabled node script.js
- */
-
-exports.inspectOpts = Object.keys(process.env).filter(function (key) {
-  return /^debug_/i.test(key);
-}).reduce(function (obj, key) {
-  // camel-case
-  var prop = key
-    .substring(6)
-    .toLowerCase()
-    .replace(/_([a-z])/g, function (_, k) { return k.toUpperCase() });
-
-  // coerce string value into JS value
-  var val = process.env[key];
-  if (/^(yes|on|true|enabled)$/i.test(val)) val = true;
-  else if (/^(no|off|false|disabled)$/i.test(val)) val = false;
-  else if (val === 'null') val = null;
-  else val = Number(val);
-
-  obj[prop] = val;
-  return obj;
-}, {});
-
-/**
- * The file descriptor to write the `debug()` calls to.
- * Set the `DEBUG_FD` env variable to override with another value. i.e.:
- *
- *   $ DEBUG_FD=3 node script.js 3>debug.log
- */
-
-var fd = parseInt(process.env.DEBUG_FD, 10) || 2;
-
-if (1 !== fd && 2 !== fd) {
-  util.deprecate(function(){}, 'except for stderr(2) and stdout(1), any other usage of DEBUG_FD is deprecated. Override debug.log if you want to use a different log function (https://git.io/debug_fd)')()
-}
-
-var stream = 1 === fd ? process.stdout :
-             2 === fd ? process.stderr :
-             createWritableStdioStream(fd);
-
-/**
- * Is stdout a TTY? Colored output is enabled when `true`.
- */
-
-function useColors() {
-  return 'colors' in exports.inspectOpts
-    ? Boolean(exports.inspectOpts.colors)
-    : tty.isatty(fd);
-}
-
-/**
- * Map %o to `util.inspect()`, all on a single line.
- */
-
-exports.formatters.o = function(v) {
-  this.inspectOpts.colors = this.useColors;
-  return util.inspect(v, this.inspectOpts)
-    .split('\n').map(function(str) {
-      return str.trim()
-    }).join(' ');
-};
-
-/**
- * Map %o to `util.inspect()`, allowing multiple lines if needed.
- */
-
-exports.formatters.O = function(v) {
-  this.inspectOpts.colors = this.useColors;
-  return util.inspect(v, this.inspectOpts);
-};
-
-/**
- * Adds ANSI color escape codes if enabled.
- *
- * @api public
- */
-
-function formatArgs(args) {
-  var name = this.namespace;
-  var useColors = this.useColors;
-
-  if (useColors) {
-    var c = this.color;
-    var prefix = '  \u001b[3' + c + ';1m' + name + ' ' + '\u001b[0m';
-
-    args[0] = prefix + args[0].split('\n').join('\n' + prefix);
-    args.push('\u001b[3' + c + 'm+' + exports.humanize(this.diff) + '\u001b[0m');
-  } else {
-    args[0] = new Date().toUTCString()
-      + ' ' + name + ' ' + args[0];
-  }
-}
-
-/**
- * Invokes `util.format()` with the specified arguments and writes to `stream`.
- */
-
-function log() {
-  return stream.write(util.format.apply(util, arguments) + '\n');
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  if (null == namespaces) {
-    // If you set a process.env field to null or undefined, it gets cast to the
-    // string 'null' or 'undefined'. Just delete instead.
-    delete process.env.DEBUG;
-  } else {
-    process.env.DEBUG = namespaces;
-  }
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  return process.env.DEBUG;
-}
-
-/**
- * Copied from `node/src/node.js`.
- *
- * XXX: It's lame that node doesn't expose this API out-of-the-box. It also
- * relies on the undocumented `tty_wrap.guessHandleType()` which is also lame.
- */
-
-function createWritableStdioStream (fd) {
-  var stream;
-  var tty_wrap = process.binding('tty_wrap');
-
-  // Note stream._type is used for test-module-load-list.js
-
-  switch (tty_wrap.guessHandleType(fd)) {
-    case 'TTY':
-      stream = new tty.WriteStream(fd);
-      stream._type = 'tty';
-
-      // Hack to have stream not keep the event loop alive.
-      // See https://github.com/joyent/node/issues/1726
-      if (stream._handle && stream._handle.unref) {
-        stream._handle.unref();
-      }
-      break;
-
-    case 'FILE':
-      var fs = __nccwpck_require__(9896);
-      stream = new fs.SyncWriteStream(fd, { autoClose: false });
-      stream._type = 'fs';
-      break;
-
-    case 'PIPE':
-    case 'TCP':
-      var net = __nccwpck_require__(9278);
-      stream = new net.Socket({
-        fd: fd,
-        readable: false,
-        writable: true
-      });
-
-      // FIXME Should probably have an option in net.Socket to create a
-      // stream from an existing fd which is writable only. But for now
-      // we'll just add this hack and set the `readable` member to false.
-      // Test: ./node test/fixtures/echo.js < /etc/passwd
-      stream.readable = false;
-      stream.read = null;
-      stream._type = 'pipe';
-
-      // FIXME Hack to have stream not keep the event loop alive.
-      // See https://github.com/joyent/node/issues/1726
-      if (stream._handle && stream._handle.unref) {
-        stream._handle.unref();
-      }
-      break;
-
-    default:
-      // Probably an error on in uv_guess_handle()
-      throw new Error('Implement me. Unknown stream file type!');
-  }
-
-  // For supporting legacy API we put the FD here.
-  stream.fd = fd;
-
-  stream._isStdio = true;
-
-  return stream;
-}
-
-/**
- * Init logic for `debug` instances.
- *
- * Create a new `inspectOpts` object in case `useColors` is set
- * differently for a particular `debug` instance.
- */
-
-function init (debug) {
-  debug.inspectOpts = {};
-
-  var keys = Object.keys(exports.inspectOpts);
-  for (var i = 0; i < keys.length; i++) {
-    debug.inspectOpts[keys[i]] = exports.inspectOpts[keys[i]];
-  }
-}
-
-/**
- * Enable namespaces listed in `process.env.DEBUG` initially.
- */
-
-exports.enable(load());
-
-
-/***/ }),
-
-/***/ 2000:
-/***/ ((module) => {
-
-/**
- * Helpers.
- */
-
-var s = 1000;
-var m = s * 60;
-var h = m * 60;
-var d = h * 24;
-var y = d * 365.25;
-
-/**
- * Parse or format the given `val`.
- *
- * Options:
- *
- *  - `long` verbose formatting [false]
- *
- * @param {String|Number} val
- * @param {Object} [options]
- * @throws {Error} throw an error if val is not a non-empty string or a number
- * @return {String|Number}
- * @api public
- */
-
-module.exports = function(val, options) {
-  options = options || {};
-  var type = typeof val;
-  if (type === 'string' && val.length > 0) {
-    return parse(val);
-  } else if (type === 'number' && isNaN(val) === false) {
-    return options.long ? fmtLong(val) : fmtShort(val);
-  }
-  throw new Error(
-    'val is not a non-empty string or a valid number. val=' +
-      JSON.stringify(val)
-  );
-};
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @param {String} str
- * @return {Number}
- * @api private
- */
-
-function parse(str) {
-  str = String(str);
-  if (str.length > 100) {
-    return;
-  }
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(
-    str
-  );
-  if (!match) {
-    return;
-  }
-  var n = parseFloat(match[1]);
-  var type = (match[2] || 'ms').toLowerCase();
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y;
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d;
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h;
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m;
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s;
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n;
-    default:
-      return undefined;
-  }
-}
-
-/**
- * Short format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtShort(ms) {
-  if (ms >= d) {
-    return Math.round(ms / d) + 'd';
-  }
-  if (ms >= h) {
-    return Math.round(ms / h) + 'h';
-  }
-  if (ms >= m) {
-    return Math.round(ms / m) + 'm';
-  }
-  if (ms >= s) {
-    return Math.round(ms / s) + 's';
-  }
-  return ms + 'ms';
-}
-
-/**
- * Long format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtLong(ms) {
-  return plural(ms, d, 'day') ||
-    plural(ms, h, 'hour') ||
-    plural(ms, m, 'minute') ||
-    plural(ms, s, 'second') ||
-    ms + ' ms';
-}
-
-/**
- * Pluralization helper.
- */
-
-function plural(ms, n, name) {
-  if (ms < n) {
-    return;
-  }
-  if (ms < n * 1.5) {
-    return Math.floor(ms / n) + ' ' + name;
-  }
-  return Math.ceil(ms / n) + ' ' + name + 's';
-}
-
-
-/***/ }),
-
 /***/ 8864:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -11814,26 +8089,18 @@ function plural(ms, n, name) {
  * @private
  */
 
-var debug = __nccwpck_require__(2118)('finalhandler')
+var debug = __nccwpck_require__(2830)('finalhandler')
 var encodeUrl = __nccwpck_require__(3835)
 var escapeHtml = __nccwpck_require__(2759)
 var onFinished = __nccwpck_require__(5698)
 var parseUrl = __nccwpck_require__(3404)
 var statuses = __nccwpck_require__(4650)
-var unpipe = __nccwpck_require__(6367)
 
 /**
  * Module variables.
  * @private
  */
 
-var DOUBLE_SPACE_REGEXP = /\x20{2}/g
-var NEWLINE_REGEXP = /\n/g
-
-/* istanbul ignore next */
-var defer = typeof setImmediate === 'function'
-  ? setImmediate
-  : function (fn) { process.nextTick(fn.bind.apply(fn, arguments)) }
 var isFinished = onFinished.isFinished
 
 /**
@@ -11845,8 +8112,8 @@ var isFinished = onFinished.isFinished
 
 function createHtmlDocument (message) {
   var body = escapeHtml(message)
-    .replace(NEWLINE_REGEXP, '<br>')
-    .replace(DOUBLE_SPACE_REGEXP, ' &nbsp;')
+    .replaceAll('\n', '<br>')
+    .replaceAll('  ', ' &nbsp;')
 
   return '<!DOCTYPE html>\n' +
     '<html lang="en">\n' +
@@ -11892,7 +8159,7 @@ function finalhandler (req, res, options) {
     var status
 
     // ignore 404 on in-flight response
-    if (!err && headersSent(res)) {
+    if (!err && res.headersSent) {
       debug('cannot 404 after headers sent')
       return
     }
@@ -11922,11 +8189,11 @@ function finalhandler (req, res, options) {
 
     // schedule onerror callback
     if (err && onerror) {
-      defer(onerror, err, req, res)
+      setImmediate(onerror, err, req, res)
     }
 
     // cannot actually respond
-    if (headersSent(res)) {
+    if (res.headersSent) {
       debug('cannot %d after headers sent', status)
       if (req.socket) {
         req.socket.destroy()
@@ -11952,15 +8219,7 @@ function getErrorHeaders (err) {
     return undefined
   }
 
-  var headers = Object.create(null)
-  var keys = Object.keys(err.headers)
-
-  for (var i = 0; i < keys.length; i++) {
-    var key = keys[i]
-    headers[key] = err.headers[key]
-  }
-
-  return headers
+  return { ...err.headers }
 }
 
 /**
@@ -12050,20 +8309,6 @@ function getResponseStatusCode (res) {
 }
 
 /**
- * Determine if the response headers have been sent.
- *
- * @param {object} res
- * @returns {boolean}
- * @private
- */
-
-function headersSent (res) {
-  return typeof res.headersSent !== 'boolean'
-    ? Boolean(res._header)
-    : res.headersSent
-}
-
-/**
  * Send response.
  *
  * @param {IncomingMessage} req
@@ -12092,7 +8337,9 @@ function send (req, res, status, headers, message) {
     res.removeHeader('Content-Range')
 
     // response headers
-    setHeaders(res, headers)
+    for (const [key, value] of Object.entries(headers ?? {})) {
+      res.setHeader(key, value)
+    }
 
     // security headers
     res.setHeader('Content-Security-Policy', "default-src 'none'")
@@ -12116,863 +8363,11 @@ function send (req, res, status, headers, message) {
   }
 
   // unpipe everything from the request
-  unpipe(req)
+  req.unpipe()
 
   // flush the request
   onFinished(req, write)
   req.resume()
-}
-
-/**
- * Set response headers from an object.
- *
- * @param {OutgoingMessage} res
- * @param {object} headers
- * @private
- */
-
-function setHeaders (res, headers) {
-  if (!headers) {
-    return
-  }
-
-  var keys = Object.keys(headers)
-  for (var i = 0; i < keys.length; i++) {
-    var key = keys[i]
-    res.setHeader(key, headers[key])
-  }
-}
-
-
-/***/ }),
-
-/***/ 502:
-/***/ ((module, exports, __nccwpck_require__) => {
-
-/**
- * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = __nccwpck_require__(8433);
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome
-               && 'undefined' != typeof chrome.storage
-                  ? chrome.storage.local
-                  : localstorage();
-
-/**
- * Colors.
- */
-
-exports.colors = [
-  'lightseagreen',
-  'forestgreen',
-  'goldenrod',
-  'dodgerblue',
-  'darkorchid',
-  'crimson'
-];
-
-/**
- * Currently only WebKit-based Web Inspectors, Firefox >= v31,
- * and the Firebug extension (any Firefox version) are known
- * to support "%c" CSS customizations.
- *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
- */
-
-function useColors() {
-  // NB: In an Electron preload script, document will be defined but not fully
-  // initialized. Since we know we're in Chrome, we'll just detect this case
-  // explicitly
-  if (typeof window !== 'undefined' && window.process && window.process.type === 'renderer') {
-    return true;
-  }
-
-  // is webkit? http://stackoverflow.com/a/16459606/376773
-  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-  return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
-    // is firebug? http://stackoverflow.com/a/398120/376773
-    (typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
-    // is firefox >= v31?
-    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-    (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
-    // double check webkit in userAgent just in case we are in a worker
-    (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
-}
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function(v) {
-  try {
-    return JSON.stringify(v);
-  } catch (err) {
-    return '[UnexpectedJSONParseError]: ' + err.message;
-  }
-};
-
-
-/**
- * Colorize log arguments if enabled.
- *
- * @api public
- */
-
-function formatArgs(args) {
-  var useColors = this.useColors;
-
-  args[0] = (useColors ? '%c' : '')
-    + this.namespace
-    + (useColors ? ' %c' : ' ')
-    + args[0]
-    + (useColors ? '%c ' : ' ')
-    + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return;
-
-  var c = 'color: ' + this.color;
-  args.splice(1, 0, c, 'color: inherit')
-
-  // the final "%c" is somewhat tricky, because there could be other
-  // arguments passed either before or after the %c, so we need to
-  // figure out the correct index to insert the CSS into
-  var index = 0;
-  var lastC = 0;
-  args[0].replace(/%[a-zA-Z%]/g, function(match) {
-    if ('%%' === match) return;
-    index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
-      // (the user may have provided their own)
-      lastC = index;
-    }
-  });
-
-  args.splice(lastC, 0, c);
-}
-
-/**
- * Invokes `console.log()` when available.
- * No-op when `console.log` is not a "function".
- *
- * @api public
- */
-
-function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === typeof console
-    && console.log
-    && Function.prototype.apply.call(console.log, console, arguments);
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
-    } else {
-      exports.storage.debug = namespaces;
-    }
-  } catch(e) {}
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  var r;
-  try {
-    r = exports.storage.debug;
-  } catch(e) {}
-
-  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
-  if (!r && typeof process !== 'undefined' && 'env' in process) {
-    r = process.env.DEBUG;
-  }
-
-  return r;
-}
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
-/**
- * Localstorage attempts to return the localstorage.
- *
- * This is necessary because safari throws
- * when a user disables cookies/localstorage
- * and you attempt to access it.
- *
- * @return {LocalStorage}
- * @api private
- */
-
-function localstorage() {
-  try {
-    return window.localStorage;
-  } catch (e) {}
-}
-
-
-/***/ }),
-
-/***/ 8433:
-/***/ ((module, exports, __nccwpck_require__) => {
-
-
-/**
- * This is the common logic for both the Node.js and web browser
- * implementations of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = createDebug.debug = createDebug['default'] = createDebug;
-exports.coerce = coerce;
-exports.disable = disable;
-exports.enable = enable;
-exports.enabled = enabled;
-exports.humanize = __nccwpck_require__(3584);
-
-/**
- * The currently active debug mode names, and names to skip.
- */
-
-exports.names = [];
-exports.skips = [];
-
-/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
- */
-
-exports.formatters = {};
-
-/**
- * Previous log timestamp.
- */
-
-var prevTime;
-
-/**
- * Select a color.
- * @param {String} namespace
- * @return {Number}
- * @api private
- */
-
-function selectColor(namespace) {
-  var hash = 0, i;
-
-  for (i in namespace) {
-    hash  = ((hash << 5) - hash) + namespace.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
-  }
-
-  return exports.colors[Math.abs(hash) % exports.colors.length];
-}
-
-/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
-
-function createDebug(namespace) {
-
-  function debug() {
-    // disabled?
-    if (!debug.enabled) return;
-
-    var self = debug;
-
-    // set `diff` timestamp
-    var curr = +new Date();
-    var ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
-
-    // turn the `arguments` into a proper Array
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i];
-    }
-
-    args[0] = exports.coerce(args[0]);
-
-    if ('string' !== typeof args[0]) {
-      // anything else let's inspect with %O
-      args.unshift('%O');
-    }
-
-    // apply any `formatters` transformations
-    var index = 0;
-    args[0] = args[0].replace(/%([a-zA-Z%])/g, function(match, format) {
-      // if we encounter an escaped % then don't increase the array index
-      if (match === '%%') return match;
-      index++;
-      var formatter = exports.formatters[format];
-      if ('function' === typeof formatter) {
-        var val = args[index];
-        match = formatter.call(self, val);
-
-        // now we need to remove `args[index]` since it's inlined in the `format`
-        args.splice(index, 1);
-        index--;
-      }
-      return match;
-    });
-
-    // apply env-specific formatting (colors, etc.)
-    exports.formatArgs.call(self, args);
-
-    var logFn = debug.log || exports.log || console.log.bind(console);
-    logFn.apply(self, args);
-  }
-
-  debug.namespace = namespace;
-  debug.enabled = exports.enabled(namespace);
-  debug.useColors = exports.useColors();
-  debug.color = selectColor(namespace);
-
-  // env-specific initialization logic for debug instances
-  if ('function' === typeof exports.init) {
-    exports.init(debug);
-  }
-
-  return debug;
-}
-
-/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
-
-function enable(namespaces) {
-  exports.save(namespaces);
-
-  exports.names = [];
-  exports.skips = [];
-
-  var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
-  var len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    if (!split[i]) continue; // ignore empty strings
-    namespaces = split[i].replace(/\*/g, '.*?');
-    if (namespaces[0] === '-') {
-      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-    } else {
-      exports.names.push(new RegExp('^' + namespaces + '$'));
-    }
-  }
-}
-
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-function disable() {
-  exports.enable('');
-}
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-function enabled(name) {
-  var i, len;
-  for (i = 0, len = exports.skips.length; i < len; i++) {
-    if (exports.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (i = 0, len = exports.names.length; i < len; i++) {
-    if (exports.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-
-/***/ }),
-
-/***/ 2118:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-/**
- * Detect Electron renderer process, which is node, but we should
- * treat as a browser.
- */
-
-if (typeof process !== 'undefined' && process.type === 'renderer') {
-  module.exports = __nccwpck_require__(502);
-} else {
-  module.exports = __nccwpck_require__(6060);
-}
-
-
-/***/ }),
-
-/***/ 6060:
-/***/ ((module, exports, __nccwpck_require__) => {
-
-/**
- * Module dependencies.
- */
-
-var tty = __nccwpck_require__(2018);
-var util = __nccwpck_require__(9023);
-
-/**
- * This is the Node.js implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = __nccwpck_require__(8433);
-exports.init = init;
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-
-/**
- * Colors.
- */
-
-exports.colors = [6, 2, 3, 4, 5, 1];
-
-/**
- * Build up the default `inspectOpts` object from the environment variables.
- *
- *   $ DEBUG_COLORS=no DEBUG_DEPTH=10 DEBUG_SHOW_HIDDEN=enabled node script.js
- */
-
-exports.inspectOpts = Object.keys(process.env).filter(function (key) {
-  return /^debug_/i.test(key);
-}).reduce(function (obj, key) {
-  // camel-case
-  var prop = key
-    .substring(6)
-    .toLowerCase()
-    .replace(/_([a-z])/g, function (_, k) { return k.toUpperCase() });
-
-  // coerce string value into JS value
-  var val = process.env[key];
-  if (/^(yes|on|true|enabled)$/i.test(val)) val = true;
-  else if (/^(no|off|false|disabled)$/i.test(val)) val = false;
-  else if (val === 'null') val = null;
-  else val = Number(val);
-
-  obj[prop] = val;
-  return obj;
-}, {});
-
-/**
- * The file descriptor to write the `debug()` calls to.
- * Set the `DEBUG_FD` env variable to override with another value. i.e.:
- *
- *   $ DEBUG_FD=3 node script.js 3>debug.log
- */
-
-var fd = parseInt(process.env.DEBUG_FD, 10) || 2;
-
-if (1 !== fd && 2 !== fd) {
-  util.deprecate(function(){}, 'except for stderr(2) and stdout(1), any other usage of DEBUG_FD is deprecated. Override debug.log if you want to use a different log function (https://git.io/debug_fd)')()
-}
-
-var stream = 1 === fd ? process.stdout :
-             2 === fd ? process.stderr :
-             createWritableStdioStream(fd);
-
-/**
- * Is stdout a TTY? Colored output is enabled when `true`.
- */
-
-function useColors() {
-  return 'colors' in exports.inspectOpts
-    ? Boolean(exports.inspectOpts.colors)
-    : tty.isatty(fd);
-}
-
-/**
- * Map %o to `util.inspect()`, all on a single line.
- */
-
-exports.formatters.o = function(v) {
-  this.inspectOpts.colors = this.useColors;
-  return util.inspect(v, this.inspectOpts)
-    .split('\n').map(function(str) {
-      return str.trim()
-    }).join(' ');
-};
-
-/**
- * Map %o to `util.inspect()`, allowing multiple lines if needed.
- */
-
-exports.formatters.O = function(v) {
-  this.inspectOpts.colors = this.useColors;
-  return util.inspect(v, this.inspectOpts);
-};
-
-/**
- * Adds ANSI color escape codes if enabled.
- *
- * @api public
- */
-
-function formatArgs(args) {
-  var name = this.namespace;
-  var useColors = this.useColors;
-
-  if (useColors) {
-    var c = this.color;
-    var prefix = '  \u001b[3' + c + ';1m' + name + ' ' + '\u001b[0m';
-
-    args[0] = prefix + args[0].split('\n').join('\n' + prefix);
-    args.push('\u001b[3' + c + 'm+' + exports.humanize(this.diff) + '\u001b[0m');
-  } else {
-    args[0] = new Date().toUTCString()
-      + ' ' + name + ' ' + args[0];
-  }
-}
-
-/**
- * Invokes `util.format()` with the specified arguments and writes to `stream`.
- */
-
-function log() {
-  return stream.write(util.format.apply(util, arguments) + '\n');
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  if (null == namespaces) {
-    // If you set a process.env field to null or undefined, it gets cast to the
-    // string 'null' or 'undefined'. Just delete instead.
-    delete process.env.DEBUG;
-  } else {
-    process.env.DEBUG = namespaces;
-  }
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  return process.env.DEBUG;
-}
-
-/**
- * Copied from `node/src/node.js`.
- *
- * XXX: It's lame that node doesn't expose this API out-of-the-box. It also
- * relies on the undocumented `tty_wrap.guessHandleType()` which is also lame.
- */
-
-function createWritableStdioStream (fd) {
-  var stream;
-  var tty_wrap = process.binding('tty_wrap');
-
-  // Note stream._type is used for test-module-load-list.js
-
-  switch (tty_wrap.guessHandleType(fd)) {
-    case 'TTY':
-      stream = new tty.WriteStream(fd);
-      stream._type = 'tty';
-
-      // Hack to have stream not keep the event loop alive.
-      // See https://github.com/joyent/node/issues/1726
-      if (stream._handle && stream._handle.unref) {
-        stream._handle.unref();
-      }
-      break;
-
-    case 'FILE':
-      var fs = __nccwpck_require__(9896);
-      stream = new fs.SyncWriteStream(fd, { autoClose: false });
-      stream._type = 'fs';
-      break;
-
-    case 'PIPE':
-    case 'TCP':
-      var net = __nccwpck_require__(9278);
-      stream = new net.Socket({
-        fd: fd,
-        readable: false,
-        writable: true
-      });
-
-      // FIXME Should probably have an option in net.Socket to create a
-      // stream from an existing fd which is writable only. But for now
-      // we'll just add this hack and set the `readable` member to false.
-      // Test: ./node test/fixtures/echo.js < /etc/passwd
-      stream.readable = false;
-      stream.read = null;
-      stream._type = 'pipe';
-
-      // FIXME Hack to have stream not keep the event loop alive.
-      // See https://github.com/joyent/node/issues/1726
-      if (stream._handle && stream._handle.unref) {
-        stream._handle.unref();
-      }
-      break;
-
-    default:
-      // Probably an error on in uv_guess_handle()
-      throw new Error('Implement me. Unknown stream file type!');
-  }
-
-  // For supporting legacy API we put the FD here.
-  stream.fd = fd;
-
-  stream._isStdio = true;
-
-  return stream;
-}
-
-/**
- * Init logic for `debug` instances.
- *
- * Create a new `inspectOpts` object in case `useColors` is set
- * differently for a particular `debug` instance.
- */
-
-function init (debug) {
-  debug.inspectOpts = {};
-
-  var keys = Object.keys(exports.inspectOpts);
-  for (var i = 0; i < keys.length; i++) {
-    debug.inspectOpts[keys[i]] = exports.inspectOpts[keys[i]];
-  }
-}
-
-/**
- * Enable namespaces listed in `process.env.DEBUG` initially.
- */
-
-exports.enable(load());
-
-
-/***/ }),
-
-/***/ 3584:
-/***/ ((module) => {
-
-/**
- * Helpers.
- */
-
-var s = 1000;
-var m = s * 60;
-var h = m * 60;
-var d = h * 24;
-var y = d * 365.25;
-
-/**
- * Parse or format the given `val`.
- *
- * Options:
- *
- *  - `long` verbose formatting [false]
- *
- * @param {String|Number} val
- * @param {Object} [options]
- * @throws {Error} throw an error if val is not a non-empty string or a number
- * @return {String|Number}
- * @api public
- */
-
-module.exports = function(val, options) {
-  options = options || {};
-  var type = typeof val;
-  if (type === 'string' && val.length > 0) {
-    return parse(val);
-  } else if (type === 'number' && isNaN(val) === false) {
-    return options.long ? fmtLong(val) : fmtShort(val);
-  }
-  throw new Error(
-    'val is not a non-empty string or a valid number. val=' +
-      JSON.stringify(val)
-  );
-};
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @param {String} str
- * @return {Number}
- * @api private
- */
-
-function parse(str) {
-  str = String(str);
-  if (str.length > 100) {
-    return;
-  }
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(
-    str
-  );
-  if (!match) {
-    return;
-  }
-  var n = parseFloat(match[1]);
-  var type = (match[2] || 'ms').toLowerCase();
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y;
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d;
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h;
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m;
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s;
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n;
-    default:
-      return undefined;
-  }
-}
-
-/**
- * Short format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtShort(ms) {
-  if (ms >= d) {
-    return Math.round(ms / d) + 'd';
-  }
-  if (ms >= h) {
-    return Math.round(ms / h) + 'h';
-  }
-  if (ms >= m) {
-    return Math.round(ms / m) + 'm';
-  }
-  if (ms >= s) {
-    return Math.round(ms / s) + 's';
-  }
-  return ms + 'ms';
-}
-
-/**
- * Long format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtLong(ms) {
-  return plural(ms, d, 'day') ||
-    plural(ms, h, 'hour') ||
-    plural(ms, m, 'minute') ||
-    plural(ms, s, 'second') ||
-    ms + ' ms';
-}
-
-/**
- * Pluralization helper.
- */
-
-function plural(ms, n, name) {
-  if (ms < n) {
-    return;
-  }
-  if (ms < n * 1.5) {
-    return Math.floor(ms / n) + ' ' + name;
-  }
-  return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
 
@@ -13708,7 +9103,7 @@ var parseUrl = (__nccwpck_require__(7016).parse);
 var fs = __nccwpck_require__(9896);
 var Stream = (__nccwpck_require__(2203).Stream);
 var crypto = __nccwpck_require__(6982);
-var mime = __nccwpck_require__(4096);
+var mime = __nccwpck_require__(4305);
 var asynckit = __nccwpck_require__(1324);
 var setToStringTag = __nccwpck_require__(8700);
 var hasOwn = __nccwpck_require__(4076);
@@ -14213,6 +9608,221 @@ module.exports = function (dst, src) {
 
 /***/ }),
 
+/***/ 9070:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+/*!
+ * mime-db
+ * Copyright(c) 2014 Jonathan Ong
+ * Copyright(c) 2015-2022 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+/**
+ * Module exports.
+ */
+
+module.exports = __nccwpck_require__(7286)
+
+
+/***/ }),
+
+/***/ 4305:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+/*!
+ * mime-types
+ * Copyright(c) 2014 Jonathan Ong
+ * Copyright(c) 2015 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+var db = __nccwpck_require__(9070)
+var extname = (__nccwpck_require__(6928).extname)
+
+/**
+ * Module variables.
+ * @private
+ */
+
+var EXTRACT_TYPE_REGEXP = /^\s*([^;\s]*)(?:;|\s|$)/
+var TEXT_TYPE_REGEXP = /^text\//i
+
+/**
+ * Module exports.
+ * @public
+ */
+
+exports.charset = charset
+exports.charsets = { lookup: charset }
+exports.contentType = contentType
+exports.extension = extension
+exports.extensions = Object.create(null)
+exports.lookup = lookup
+exports.types = Object.create(null)
+
+// Populate the extensions/types maps
+populateMaps(exports.extensions, exports.types)
+
+/**
+ * Get the default charset for a MIME type.
+ *
+ * @param {string} type
+ * @return {boolean|string}
+ */
+
+function charset (type) {
+  if (!type || typeof type !== 'string') {
+    return false
+  }
+
+  // TODO: use media-typer
+  var match = EXTRACT_TYPE_REGEXP.exec(type)
+  var mime = match && db[match[1].toLowerCase()]
+
+  if (mime && mime.charset) {
+    return mime.charset
+  }
+
+  // default text/* to utf-8
+  if (match && TEXT_TYPE_REGEXP.test(match[1])) {
+    return 'UTF-8'
+  }
+
+  return false
+}
+
+/**
+ * Create a full Content-Type header given a MIME type or extension.
+ *
+ * @param {string} str
+ * @return {boolean|string}
+ */
+
+function contentType (str) {
+  // TODO: should this even be in this module?
+  if (!str || typeof str !== 'string') {
+    return false
+  }
+
+  var mime = str.indexOf('/') === -1
+    ? exports.lookup(str)
+    : str
+
+  if (!mime) {
+    return false
+  }
+
+  // TODO: use content-type or other module
+  if (mime.indexOf('charset') === -1) {
+    var charset = exports.charset(mime)
+    if (charset) mime += '; charset=' + charset.toLowerCase()
+  }
+
+  return mime
+}
+
+/**
+ * Get the default extension for a MIME type.
+ *
+ * @param {string} type
+ * @return {boolean|string}
+ */
+
+function extension (type) {
+  if (!type || typeof type !== 'string') {
+    return false
+  }
+
+  // TODO: use media-typer
+  var match = EXTRACT_TYPE_REGEXP.exec(type)
+
+  // get extensions
+  var exts = match && exports.extensions[match[1].toLowerCase()]
+
+  if (!exts || !exts.length) {
+    return false
+  }
+
+  return exts[0]
+}
+
+/**
+ * Lookup the MIME type for a file path/extension.
+ *
+ * @param {string} path
+ * @return {boolean|string}
+ */
+
+function lookup (path) {
+  if (!path || typeof path !== 'string') {
+    return false
+  }
+
+  // get the extension ("ext" or ".ext" or full path)
+  var extension = extname('x.' + path)
+    .toLowerCase()
+    .substr(1)
+
+  if (!extension) {
+    return false
+  }
+
+  return exports.types[extension] || false
+}
+
+/**
+ * Populate the extensions and types maps.
+ * @private
+ */
+
+function populateMaps (extensions, types) {
+  // source preference (least -> most)
+  var preference = ['nginx', 'apache', undefined, 'iana']
+
+  Object.keys(db).forEach(function forEachMimeType (type) {
+    var mime = db[type]
+    var exts = mime.extensions
+
+    if (!exts || !exts.length) {
+      return
+    }
+
+    // mime -> extensions
+    extensions[type] = exts
+
+    // extension -> mime
+    for (var i = 0; i < exts.length; i++) {
+      var extension = exts[i]
+
+      if (types[extension]) {
+        var from = preference.indexOf(db[types[extension]].source)
+        var to = preference.indexOf(mime.source)
+
+        if (types[extension] !== 'application/octet-stream' &&
+          (from > to || (from === to && types[extension].substr(0, 12) === 'application/'))) {
+          // skip the remapping
+          continue
+        }
+      }
+
+      // set the extension -> mime
+      types[extension] = type
+    }
+  })
+}
+
+
+/***/ }),
+
 /***/ 5200:
 /***/ ((module) => {
 
@@ -14365,27 +9975,26 @@ function fresh (reqHeaders, resHeaders) {
     return false
   }
 
-  // if-none-match
-  if (noneMatch && noneMatch !== '*') {
-    var etag = resHeaders['etag']
+  // if-none-match takes precedent over if-modified-since
+  if (noneMatch) {
+    if (noneMatch === '*') {
+      return true
+    }
+    var etag = resHeaders.etag
 
     if (!etag) {
       return false
     }
 
-    var etagStale = true
     var matches = parseTokenList(noneMatch)
     for (var i = 0; i < matches.length; i++) {
       var match = matches[i]
       if (match === etag || match === 'W/' + etag || 'W/' + match === etag) {
-        etagStale = false
-        break
+        return true
       }
     }
 
-    if (etagStale) {
-      return false
-    }
+    return false
   }
 
   // if-modified-since
@@ -18112,560 +13721,537 @@ function toClassName (name) {
 
 "use strict";
 
-var Buffer = (__nccwpck_require__(2803).Buffer);
+var Buffer = (__nccwpck_require__(2803).Buffer)
 
 // Multibyte codec. In this scheme, a character is represented by 1 or more bytes.
 // Our codec supports UTF-16 surrogates, extensions for GB18030 and unicode sequences.
 // To save memory and loading time, we read table files only when requested.
 
-exports._dbcs = DBCSCodec;
+exports._dbcs = DBCSCodec
 
-var UNASSIGNED = -1,
-    GB18030_CODE = -2,
-    SEQ_START  = -10,
-    NODE_START = -1000,
-    UNASSIGNED_NODE = new Array(0x100),
-    DEF_CHAR = -1;
+var UNASSIGNED = -1
+var GB18030_CODE = -2
+var SEQ_START = -10
+var NODE_START = -1000
+var UNASSIGNED_NODE = new Array(0x100)
+var DEF_CHAR = -1
 
-for (var i = 0; i < 0x100; i++)
-    UNASSIGNED_NODE[i] = UNASSIGNED;
-
+for (var i = 0; i < 0x100; i++) { UNASSIGNED_NODE[i] = UNASSIGNED }
 
 // Class DBCSCodec reads and initializes mapping tables.
-function DBCSCodec(codecOptions, iconv) {
-    this.encodingName = codecOptions.encodingName;
-    if (!codecOptions)
-        throw new Error("DBCS codec is called without the data.")
-    if (!codecOptions.table)
-        throw new Error("Encoding '" + this.encodingName + "' has no data.");
+function DBCSCodec (codecOptions, iconv) {
+  this.encodingName = codecOptions.encodingName
+  if (!codecOptions) { throw new Error("DBCS codec is called without the data.") }
+  if (!codecOptions.table) { throw new Error("Encoding '" + this.encodingName + "' has no data.") }
 
-    // Load tables.
-    var mappingTable = codecOptions.table();
+  // Load tables.
+  var mappingTable = codecOptions.table()
 
+  // Decode tables: MBCS -> Unicode.
 
-    // Decode tables: MBCS -> Unicode.
+  // decodeTables is a trie, encoded as an array of arrays of integers. Internal arrays are trie nodes and all have len = 256.
+  // Trie root is decodeTables[0].
+  // Values: >=  0 -> unicode character code. can be > 0xFFFF
+  //         == UNASSIGNED -> unknown/unassigned sequence.
+  //         == GB18030_CODE -> this is the end of a GB18030 4-byte sequence.
+  //         <= NODE_START -> index of the next node in our trie to process next byte.
+  //         <= SEQ_START  -> index of the start of a character code sequence, in decodeTableSeq.
+  this.decodeTables = []
+  this.decodeTables[0] = UNASSIGNED_NODE.slice(0) // Create root node.
 
-    // decodeTables is a trie, encoded as an array of arrays of integers. Internal arrays are trie nodes and all have len = 256.
-    // Trie root is decodeTables[0].
-    // Values: >=  0 -> unicode character code. can be > 0xFFFF
-    //         == UNASSIGNED -> unknown/unassigned sequence.
-    //         == GB18030_CODE -> this is the end of a GB18030 4-byte sequence.
-    //         <= NODE_START -> index of the next node in our trie to process next byte.
-    //         <= SEQ_START  -> index of the start of a character code sequence, in decodeTableSeq.
-    this.decodeTables = [];
-    this.decodeTables[0] = UNASSIGNED_NODE.slice(0); // Create root node.
+  // Sometimes a MBCS char corresponds to a sequence of unicode chars. We store them as arrays of integers here.
+  this.decodeTableSeq = []
 
-    // Sometimes a MBCS char corresponds to a sequence of unicode chars. We store them as arrays of integers here. 
-    this.decodeTableSeq = [];
+  // Actual mapping tables consist of chunks. Use them to fill up decode tables.
+  for (var i = 0; i < mappingTable.length; i++) { this._addDecodeChunk(mappingTable[i]) }
 
-    // Actual mapping tables consist of chunks. Use them to fill up decode tables.
-    for (var i = 0; i < mappingTable.length; i++)
-        this._addDecodeChunk(mappingTable[i]);
+  // Load & create GB18030 tables when needed.
+  if (typeof codecOptions.gb18030 === "function") {
+    this.gb18030 = codecOptions.gb18030() // Load GB18030 ranges.
 
-    this.defaultCharUnicode = iconv.defaultCharUnicode;
+    // Add GB18030 common decode nodes.
+    var commonThirdByteNodeIdx = this.decodeTables.length
+    this.decodeTables.push(UNASSIGNED_NODE.slice(0))
 
-    
-    // Encode tables: Unicode -> DBCS.
+    var commonFourthByteNodeIdx = this.decodeTables.length
+    this.decodeTables.push(UNASSIGNED_NODE.slice(0))
 
-    // `encodeTable` is array mapping from unicode char to encoded char. All its values are integers for performance.
-    // Because it can be sparse, it is represented as array of buckets by 256 chars each. Bucket can be null.
-    // Values: >=  0 -> it is a normal char. Write the value (if <=256 then 1 byte, if <=65536 then 2 bytes, etc.).
-    //         == UNASSIGNED -> no conversion found. Output a default char.
-    //         <= SEQ_START  -> it's an index in encodeTableSeq, see below. The character starts a sequence.
-    this.encodeTable = [];
-    
-    // `encodeTableSeq` is used when a sequence of unicode characters is encoded as a single code. We use a tree of
-    // objects where keys correspond to characters in sequence and leafs are the encoded dbcs values. A special DEF_CHAR key
-    // means end of sequence (needed when one sequence is a strict subsequence of another).
-    // Objects are kept separately from encodeTable to increase performance.
-    this.encodeTableSeq = [];
-
-    // Some chars can be decoded, but need not be encoded.
-    var skipEncodeChars = {};
-    if (codecOptions.encodeSkipVals)
-        for (var i = 0; i < codecOptions.encodeSkipVals.length; i++) {
-            var val = codecOptions.encodeSkipVals[i];
-            if (typeof val === 'number')
-                skipEncodeChars[val] = true;
-            else
-                for (var j = val.from; j <= val.to; j++)
-                    skipEncodeChars[j] = true;
+    // Fill out the tree
+    var firstByteNode = this.decodeTables[0]
+    for (var i = 0x81; i <= 0xFE; i++) {
+      var secondByteNode = this.decodeTables[NODE_START - firstByteNode[i]]
+      for (var j = 0x30; j <= 0x39; j++) {
+        if (secondByteNode[j] === UNASSIGNED) {
+          secondByteNode[j] = NODE_START - commonThirdByteNodeIdx
+        } else if (secondByteNode[j] > NODE_START) {
+          throw new Error("gb18030 decode tables conflict at byte 2")
         }
-        
-    // Use decode trie to recursively fill out encode tables.
-    this._fillEncodeTable(0, 0, skipEncodeChars);
 
-    // Add more encoding pairs when needed.
-    if (codecOptions.encodeAdd) {
-        for (var uChar in codecOptions.encodeAdd)
-            if (Object.prototype.hasOwnProperty.call(codecOptions.encodeAdd, uChar))
-                this._setEncodeChar(uChar.charCodeAt(0), codecOptions.encodeAdd[uChar]);
+        var thirdByteNode = this.decodeTables[NODE_START - secondByteNode[j]]
+        for (var k = 0x81; k <= 0xFE; k++) {
+          if (thirdByteNode[k] === UNASSIGNED) {
+            thirdByteNode[k] = NODE_START - commonFourthByteNodeIdx
+          } else if (thirdByteNode[k] === NODE_START - commonFourthByteNodeIdx) {
+            continue
+          } else if (thirdByteNode[k] > NODE_START) {
+            throw new Error("gb18030 decode tables conflict at byte 3")
+          }
+
+          var fourthByteNode = this.decodeTables[NODE_START - thirdByteNode[k]]
+          for (var l = 0x30; l <= 0x39; l++) {
+            if (fourthByteNode[l] === UNASSIGNED) { fourthByteNode[l] = GB18030_CODE }
+          }
+        }
+      }
     }
+  }
 
-    this.defCharSB  = this.encodeTable[0][iconv.defaultCharSingleByte.charCodeAt(0)];
-    if (this.defCharSB === UNASSIGNED) this.defCharSB = this.encodeTable[0]['?'];
-    if (this.defCharSB === UNASSIGNED) this.defCharSB = "?".charCodeAt(0);
+  this.defaultCharUnicode = iconv.defaultCharUnicode
 
+  // Encode tables: Unicode -> DBCS.
 
-    // Load & create GB18030 tables when needed.
-    if (typeof codecOptions.gb18030 === 'function') {
-        this.gb18030 = codecOptions.gb18030(); // Load GB18030 ranges.
+  // `encodeTable` is array mapping from unicode char to encoded char. All its values are integers for performance.
+  // Because it can be sparse, it is represented as array of buckets by 256 chars each. Bucket can be null.
+  // Values: >=  0 -> it is a normal char. Write the value (if <=256 then 1 byte, if <=65536 then 2 bytes, etc.).
+  //         == UNASSIGNED -> no conversion found. Output a default char.
+  //         <= SEQ_START  -> it's an index in encodeTableSeq, see below. The character starts a sequence.
+  this.encodeTable = []
 
-        // Add GB18030 decode tables.
-        var thirdByteNodeIdx = this.decodeTables.length;
-        var thirdByteNode = this.decodeTables[thirdByteNodeIdx] = UNASSIGNED_NODE.slice(0);
+  // `encodeTableSeq` is used when a sequence of unicode characters is encoded as a single code. We use a tree of
+  // objects where keys correspond to characters in sequence and leafs are the encoded dbcs values. A special DEF_CHAR key
+  // means end of sequence (needed when one sequence is a strict subsequence of another).
+  // Objects are kept separately from encodeTable to increase performance.
+  this.encodeTableSeq = []
 
-        var fourthByteNodeIdx = this.decodeTables.length;
-        var fourthByteNode = this.decodeTables[fourthByteNodeIdx] = UNASSIGNED_NODE.slice(0);
+  // Some chars can be decoded, but need not be encoded.
+  var skipEncodeChars = {}
+  if (codecOptions.encodeSkipVals) {
+    for (var i = 0; i < codecOptions.encodeSkipVals.length; i++) {
+      var val = codecOptions.encodeSkipVals[i]
+      if (typeof val === "number") { skipEncodeChars[val] = true } else {
+        for (var j = val.from; j <= val.to; j++) { skipEncodeChars[j] = true }
+      }
+    }
+  }
 
-        for (var i = 0x81; i <= 0xFE; i++) {
-            var secondByteNodeIdx = NODE_START - this.decodeTables[0][i];
-            var secondByteNode = this.decodeTables[secondByteNodeIdx];
-            for (var j = 0x30; j <= 0x39; j++)
-                secondByteNode[j] = NODE_START - thirdByteNodeIdx;
-        }
-        for (var i = 0x81; i <= 0xFE; i++)
-            thirdByteNode[i] = NODE_START - fourthByteNodeIdx;
-        for (var i = 0x30; i <= 0x39; i++)
-            fourthByteNode[i] = GB18030_CODE
-    }        
+  // Use decode trie to recursively fill out encode tables.
+  this._fillEncodeTable(0, 0, skipEncodeChars)
+
+  // Add more encoding pairs when needed.
+  if (codecOptions.encodeAdd) {
+    for (var uChar in codecOptions.encodeAdd) {
+      if (Object.prototype.hasOwnProperty.call(codecOptions.encodeAdd, uChar)) { this._setEncodeChar(uChar.charCodeAt(0), codecOptions.encodeAdd[uChar]) }
+    }
+  }
+
+  this.defCharSB = this.encodeTable[0][iconv.defaultCharSingleByte.charCodeAt(0)]
+  if (this.defCharSB === UNASSIGNED) this.defCharSB = this.encodeTable[0]["?"]
+  if (this.defCharSB === UNASSIGNED) this.defCharSB = "?".charCodeAt(0)
 }
 
-DBCSCodec.prototype.encoder = DBCSEncoder;
-DBCSCodec.prototype.decoder = DBCSDecoder;
+DBCSCodec.prototype.encoder = DBCSEncoder
+DBCSCodec.prototype.decoder = DBCSDecoder
 
 // Decoder helpers
-DBCSCodec.prototype._getDecodeTrieNode = function(addr) {
-    var bytes = [];
-    for (; addr > 0; addr >>= 8)
-        bytes.push(addr & 0xFF);
-    if (bytes.length == 0)
-        bytes.push(0);
+DBCSCodec.prototype._getDecodeTrieNode = function (addr) {
+  var bytes = []
+  for (; addr > 0; addr >>>= 8) { bytes.push(addr & 0xFF) }
+  if (bytes.length == 0) { bytes.push(0) }
 
-    var node = this.decodeTables[0];
-    for (var i = bytes.length-1; i > 0; i--) { // Traverse nodes deeper into the trie.
-        var val = node[bytes[i]];
+  var node = this.decodeTables[0]
+  for (var i = bytes.length - 1; i > 0; i--) { // Traverse nodes deeper into the trie.
+    var val = node[bytes[i]]
 
-        if (val == UNASSIGNED) { // Create new node.
-            node[bytes[i]] = NODE_START - this.decodeTables.length;
-            this.decodeTables.push(node = UNASSIGNED_NODE.slice(0));
-        }
-        else if (val <= NODE_START) { // Existing node.
-            node = this.decodeTables[NODE_START - val];
-        }
-        else
-            throw new Error("Overwrite byte in " + this.encodingName + ", addr: " + addr.toString(16));
-    }
-    return node;
+    if (val == UNASSIGNED) { // Create new node.
+      node[bytes[i]] = NODE_START - this.decodeTables.length
+      this.decodeTables.push(node = UNASSIGNED_NODE.slice(0))
+    } else if (val <= NODE_START) { // Existing node.
+      node = this.decodeTables[NODE_START - val]
+    } else { throw new Error("Overwrite byte in " + this.encodingName + ", addr: " + addr.toString(16)) }
+  }
+  return node
 }
 
+DBCSCodec.prototype._addDecodeChunk = function (chunk) {
+  // First element of chunk is the hex mbcs code where we start.
+  var curAddr = parseInt(chunk[0], 16)
 
-DBCSCodec.prototype._addDecodeChunk = function(chunk) {
-    // First element of chunk is the hex mbcs code where we start.
-    var curAddr = parseInt(chunk[0], 16);
+  // Choose the decoding node where we'll write our chars.
+  var writeTable = this._getDecodeTrieNode(curAddr)
+  curAddr = curAddr & 0xFF
 
-    // Choose the decoding node where we'll write our chars.
-    var writeTable = this._getDecodeTrieNode(curAddr);
-    curAddr = curAddr & 0xFF;
+  // Write all other elements of the chunk to the table.
+  for (var k = 1; k < chunk.length; k++) {
+    var part = chunk[k]
+    if (typeof part === "string") { // String, write as-is.
+      for (var l = 0; l < part.length;) {
+        var code = part.charCodeAt(l++)
+        if (code >= 0xD800 && code < 0xDC00) { // Decode surrogate
+          var codeTrail = part.charCodeAt(l++)
+          if (codeTrail >= 0xDC00 && codeTrail < 0xE000) { writeTable[curAddr++] = 0x10000 + (code - 0xD800) * 0x400 + (codeTrail - 0xDC00) } else { throw new Error("Incorrect surrogate pair in " + this.encodingName + " at chunk " + chunk[0]) }
+        } else if (code > 0x0FF0 && code <= 0x0FFF) { // Character sequence (our own encoding used)
+          var len = 0xFFF - code + 2
+          var seq = []
+          for (var m = 0; m < len; m++) { seq.push(part.charCodeAt(l++)) } // Simple variation: don't support surrogates or subsequences in seq.
 
-    // Write all other elements of the chunk to the table.
-    for (var k = 1; k < chunk.length; k++) {
-        var part = chunk[k];
-        if (typeof part === "string") { // String, write as-is.
-            for (var l = 0; l < part.length;) {
-                var code = part.charCodeAt(l++);
-                if (0xD800 <= code && code < 0xDC00) { // Decode surrogate
-                    var codeTrail = part.charCodeAt(l++);
-                    if (0xDC00 <= codeTrail && codeTrail < 0xE000)
-                        writeTable[curAddr++] = 0x10000 + (code - 0xD800) * 0x400 + (codeTrail - 0xDC00);
-                    else
-                        throw new Error("Incorrect surrogate pair in "  + this.encodingName + " at chunk " + chunk[0]);
-                }
-                else if (0x0FF0 < code && code <= 0x0FFF) { // Character sequence (our own encoding used)
-                    var len = 0xFFF - code + 2;
-                    var seq = [];
-                    for (var m = 0; m < len; m++)
-                        seq.push(part.charCodeAt(l++)); // Simple variation: don't support surrogates or subsequences in seq.
-
-                    writeTable[curAddr++] = SEQ_START - this.decodeTableSeq.length;
-                    this.decodeTableSeq.push(seq);
-                }
-                else
-                    writeTable[curAddr++] = code; // Basic char
-            }
-        } 
-        else if (typeof part === "number") { // Integer, meaning increasing sequence starting with prev character.
-            var charCode = writeTable[curAddr - 1] + 1;
-            for (var l = 0; l < part; l++)
-                writeTable[curAddr++] = charCode++;
-        }
-        else
-            throw new Error("Incorrect type '" + typeof part + "' given in "  + this.encodingName + " at chunk " + chunk[0]);
-    }
-    if (curAddr > 0xFF)
-        throw new Error("Incorrect chunk in "  + this.encodingName + " at addr " + chunk[0] + ": too long" + curAddr);
+          writeTable[curAddr++] = SEQ_START - this.decodeTableSeq.length
+          this.decodeTableSeq.push(seq)
+        } else { writeTable[curAddr++] = code } // Basic char
+      }
+    } else if (typeof part === "number") { // Integer, meaning increasing sequence starting with prev character.
+      var charCode = writeTable[curAddr - 1] + 1
+      for (var l = 0; l < part; l++) { writeTable[curAddr++] = charCode++ }
+    } else { throw new Error("Incorrect type '" + typeof part + "' given in " + this.encodingName + " at chunk " + chunk[0]) }
+  }
+  if (curAddr > 0xFF) { throw new Error("Incorrect chunk in " + this.encodingName + " at addr " + chunk[0] + ": too long" + curAddr) }
 }
 
 // Encoder helpers
-DBCSCodec.prototype._getEncodeBucket = function(uCode) {
-    var high = uCode >> 8; // This could be > 0xFF because of astral characters.
-    if (this.encodeTable[high] === undefined)
-        this.encodeTable[high] = UNASSIGNED_NODE.slice(0); // Create bucket on demand.
-    return this.encodeTable[high];
+DBCSCodec.prototype._getEncodeBucket = function (uCode) {
+  var high = uCode >> 8 // This could be > 0xFF because of astral characters.
+  if (this.encodeTable[high] === undefined) {
+    this.encodeTable[high] = UNASSIGNED_NODE.slice(0)
+  } // Create bucket on demand.
+  return this.encodeTable[high]
 }
 
-DBCSCodec.prototype._setEncodeChar = function(uCode, dbcsCode) {
-    var bucket = this._getEncodeBucket(uCode);
-    var low = uCode & 0xFF;
-    if (bucket[low] <= SEQ_START)
-        this.encodeTableSeq[SEQ_START-bucket[low]][DEF_CHAR] = dbcsCode; // There's already a sequence, set a single-char subsequence of it.
-    else if (bucket[low] == UNASSIGNED)
-        bucket[low] = dbcsCode;
+DBCSCodec.prototype._setEncodeChar = function (uCode, dbcsCode) {
+  var bucket = this._getEncodeBucket(uCode)
+  var low = uCode & 0xFF
+  if (bucket[low] <= SEQ_START) { this.encodeTableSeq[SEQ_START - bucket[low]][DEF_CHAR] = dbcsCode } // There's already a sequence, set a single-char subsequence of it.
+  else if (bucket[low] == UNASSIGNED) { bucket[low] = dbcsCode }
 }
 
-DBCSCodec.prototype._setEncodeSequence = function(seq, dbcsCode) {
-    
-    // Get the root of character tree according to first character of the sequence.
-    var uCode = seq[0];
-    var bucket = this._getEncodeBucket(uCode);
-    var low = uCode & 0xFF;
+DBCSCodec.prototype._setEncodeSequence = function (seq, dbcsCode) {
+  // Get the root of character tree according to first character of the sequence.
+  var uCode = seq[0]
+  var bucket = this._getEncodeBucket(uCode)
+  var low = uCode & 0xFF
 
-    var node;
-    if (bucket[low] <= SEQ_START) {
-        // There's already a sequence with  - use it.
-        node = this.encodeTableSeq[SEQ_START-bucket[low]];
-    }
-    else {
-        // There was no sequence object - allocate a new one.
-        node = {};
-        if (bucket[low] !== UNASSIGNED) node[DEF_CHAR] = bucket[low]; // If a char was set before - make it a single-char subsequence.
-        bucket[low] = SEQ_START - this.encodeTableSeq.length;
-        this.encodeTableSeq.push(node);
-    }
+  var node
+  if (bucket[low] <= SEQ_START) {
+    // There's already a sequence with  - use it.
+    node = this.encodeTableSeq[SEQ_START - bucket[low]]
+  } else {
+    // There was no sequence object - allocate a new one.
+    node = {}
+    if (bucket[low] !== UNASSIGNED) node[DEF_CHAR] = bucket[low] // If a char was set before - make it a single-char subsequence.
+    bucket[low] = SEQ_START - this.encodeTableSeq.length
+    this.encodeTableSeq.push(node)
+  }
 
-    // Traverse the character tree, allocating new nodes as needed.
-    for (var j = 1; j < seq.length-1; j++) {
-        var oldVal = node[uCode];
-        if (typeof oldVal === 'object')
-            node = oldVal;
-        else {
-            node = node[uCode] = {}
-            if (oldVal !== undefined)
-                node[DEF_CHAR] = oldVal
-        }
+  // Traverse the character tree, allocating new nodes as needed.
+  for (var j = 1; j < seq.length - 1; j++) {
+    var oldVal = node[uCode]
+    if (typeof oldVal === "object") { node = oldVal } else {
+      node = node[uCode] = {}
+      if (oldVal !== undefined) { node[DEF_CHAR] = oldVal }
     }
+  }
 
-    // Set the leaf to given dbcsCode.
-    uCode = seq[seq.length-1];
-    node[uCode] = dbcsCode;
+  // Set the leaf to given dbcsCode.
+  uCode = seq[seq.length - 1]
+  node[uCode] = dbcsCode
 }
 
-DBCSCodec.prototype._fillEncodeTable = function(nodeIdx, prefix, skipEncodeChars) {
-    var node = this.decodeTables[nodeIdx];
-    for (var i = 0; i < 0x100; i++) {
-        var uCode = node[i];
-        var mbCode = prefix + i;
-        if (skipEncodeChars[mbCode])
-            continue;
+DBCSCodec.prototype._fillEncodeTable = function (nodeIdx, prefix, skipEncodeChars) {
+  var node = this.decodeTables[nodeIdx]
+  var hasValues = false
+  var subNodeEmpty = {}
+  for (var i = 0; i < 0x100; i++) {
+    var uCode = node[i]
+    var mbCode = prefix + i
+    if (skipEncodeChars[mbCode]) { continue }
 
-        if (uCode >= 0)
-            this._setEncodeChar(uCode, mbCode);
-        else if (uCode <= NODE_START)
-            this._fillEncodeTable(NODE_START - uCode, mbCode << 8, skipEncodeChars);
-        else if (uCode <= SEQ_START)
-            this._setEncodeSequence(this.decodeTableSeq[SEQ_START - uCode], mbCode);
+    if (uCode >= 0) {
+      this._setEncodeChar(uCode, mbCode)
+      hasValues = true
+    } else if (uCode <= NODE_START) {
+      var subNodeIdx = NODE_START - uCode
+      if (!subNodeEmpty[subNodeIdx]) {  // Skip empty subtrees (they are too large in gb18030).
+        var newPrefix = (mbCode << 8) >>> 0  // NOTE: '>>> 0' keeps 32-bit num positive.
+        if (this._fillEncodeTable(subNodeIdx, newPrefix, skipEncodeChars)) { hasValues = true } else { subNodeEmpty[subNodeIdx] = true }
+      }
+    } else if (uCode <= SEQ_START) {
+      this._setEncodeSequence(this.decodeTableSeq[SEQ_START - uCode], mbCode)
+      hasValues = true
     }
+  }
+  return hasValues
 }
-
-
 
 // == Encoder ==================================================================
 
-function DBCSEncoder(options, codec) {
-    // Encoder state
-    this.leadSurrogate = -1;
-    this.seqObj = undefined;
-    
-    // Static data
-    this.encodeTable = codec.encodeTable;
-    this.encodeTableSeq = codec.encodeTableSeq;
-    this.defaultCharSingleByte = codec.defCharSB;
-    this.gb18030 = codec.gb18030;
+function DBCSEncoder (options, codec) {
+  // Encoder state
+  this.leadSurrogate = -1
+  this.seqObj = undefined
+
+  // Static data
+  this.encodeTable = codec.encodeTable
+  this.encodeTableSeq = codec.encodeTableSeq
+  this.defaultCharSingleByte = codec.defCharSB
+  this.gb18030 = codec.gb18030
 }
 
-DBCSEncoder.prototype.write = function(str) {
-    var newBuf = Buffer.alloc(str.length * (this.gb18030 ? 4 : 3)),
-        leadSurrogate = this.leadSurrogate,
-        seqObj = this.seqObj, nextChar = -1,
-        i = 0, j = 0;
+DBCSEncoder.prototype.write = function (str) {
+  var newBuf = Buffer.alloc(str.length * (this.gb18030 ? 4 : 3))
+  var leadSurrogate = this.leadSurrogate
+  var seqObj = this.seqObj
+  var nextChar = -1
+  var i = 0; var j = 0
 
-    while (true) {
-        // 0. Get next character.
-        if (nextChar === -1) {
-            if (i == str.length) break;
-            var uCode = str.charCodeAt(i++);
-        }
-        else {
-            var uCode = nextChar;
-            nextChar = -1;    
-        }
-
-        // 1. Handle surrogates.
-        if (0xD800 <= uCode && uCode < 0xE000) { // Char is one of surrogates.
-            if (uCode < 0xDC00) { // We've got lead surrogate.
-                if (leadSurrogate === -1) {
-                    leadSurrogate = uCode;
-                    continue;
-                } else {
-                    leadSurrogate = uCode;
-                    // Double lead surrogate found.
-                    uCode = UNASSIGNED;
-                }
-            } else { // We've got trail surrogate.
-                if (leadSurrogate !== -1) {
-                    uCode = 0x10000 + (leadSurrogate - 0xD800) * 0x400 + (uCode - 0xDC00);
-                    leadSurrogate = -1;
-                } else {
-                    // Incomplete surrogate pair - only trail surrogate found.
-                    uCode = UNASSIGNED;
-                }
-                
-            }
-        }
-        else if (leadSurrogate !== -1) {
-            // Incomplete surrogate pair - only lead surrogate found.
-            nextChar = uCode; uCode = UNASSIGNED; // Write an error, then current char.
-            leadSurrogate = -1;
-        }
-
-        // 2. Convert uCode character.
-        var dbcsCode = UNASSIGNED;
-        if (seqObj !== undefined && uCode != UNASSIGNED) { // We are in the middle of the sequence
-            var resCode = seqObj[uCode];
-            if (typeof resCode === 'object') { // Sequence continues.
-                seqObj = resCode;
-                continue;
-
-            } else if (typeof resCode == 'number') { // Sequence finished. Write it.
-                dbcsCode = resCode;
-
-            } else if (resCode == undefined) { // Current character is not part of the sequence.
-
-                // Try default character for this sequence
-                resCode = seqObj[DEF_CHAR];
-                if (resCode !== undefined) {
-                    dbcsCode = resCode; // Found. Write it.
-                    nextChar = uCode; // Current character will be written too in the next iteration.
-
-                } else {
-                    // TODO: What if we have no default? (resCode == undefined)
-                    // Then, we should write first char of the sequence as-is and try the rest recursively.
-                    // Didn't do it for now because no encoding has this situation yet.
-                    // Currently, just skip the sequence and write current char.
-                }
-            }
-            seqObj = undefined;
-        }
-        else if (uCode >= 0) {  // Regular character
-            var subtable = this.encodeTable[uCode >> 8];
-            if (subtable !== undefined)
-                dbcsCode = subtable[uCode & 0xFF];
-            
-            if (dbcsCode <= SEQ_START) { // Sequence start
-                seqObj = this.encodeTableSeq[SEQ_START-dbcsCode];
-                continue;
-            }
-
-            if (dbcsCode == UNASSIGNED && this.gb18030) {
-                // Use GB18030 algorithm to find character(s) to write.
-                var idx = findIdx(this.gb18030.uChars, uCode);
-                if (idx != -1) {
-                    var dbcsCode = this.gb18030.gbChars[idx] + (uCode - this.gb18030.uChars[idx]);
-                    newBuf[j++] = 0x81 + Math.floor(dbcsCode / 12600); dbcsCode = dbcsCode % 12600;
-                    newBuf[j++] = 0x30 + Math.floor(dbcsCode / 1260); dbcsCode = dbcsCode % 1260;
-                    newBuf[j++] = 0x81 + Math.floor(dbcsCode / 10); dbcsCode = dbcsCode % 10;
-                    newBuf[j++] = 0x30 + dbcsCode;
-                    continue;
-                }
-            }
-        }
-
-        // 3. Write dbcsCode character.
-        if (dbcsCode === UNASSIGNED)
-            dbcsCode = this.defaultCharSingleByte;
-        
-        if (dbcsCode < 0x100) {
-            newBuf[j++] = dbcsCode;
-        }
-        else if (dbcsCode < 0x10000) {
-            newBuf[j++] = dbcsCode >> 8;   // high byte
-            newBuf[j++] = dbcsCode & 0xFF; // low byte
-        }
-        else {
-            newBuf[j++] = dbcsCode >> 16;
-            newBuf[j++] = (dbcsCode >> 8) & 0xFF;
-            newBuf[j++] = dbcsCode & 0xFF;
-        }
+  while (true) {
+    // 0. Get next character.
+    if (nextChar === -1) {
+      if (i == str.length) break
+      var uCode = str.charCodeAt(i++)
+    } else {
+      var uCode = nextChar
+      nextChar = -1
     }
 
-    this.seqObj = seqObj;
-    this.leadSurrogate = leadSurrogate;
-    return newBuf.slice(0, j);
-}
-
-DBCSEncoder.prototype.end = function() {
-    if (this.leadSurrogate === -1 && this.seqObj === undefined)
-        return; // All clean. Most often case.
-
-    var newBuf = Buffer.alloc(10), j = 0;
-
-    if (this.seqObj) { // We're in the sequence.
-        var dbcsCode = this.seqObj[DEF_CHAR];
-        if (dbcsCode !== undefined) { // Write beginning of the sequence.
-            if (dbcsCode < 0x100) {
-                newBuf[j++] = dbcsCode;
-            }
-            else {
-                newBuf[j++] = dbcsCode >> 8;   // high byte
-                newBuf[j++] = dbcsCode & 0xFF; // low byte
-            }
+    // 1. Handle surrogates.
+    if (uCode >= 0xD800 && uCode < 0xE000) { // Char is one of surrogates.
+      if (uCode < 0xDC00) { // We've got lead surrogate.
+        if (leadSurrogate === -1) {
+          leadSurrogate = uCode
+          continue
         } else {
-            // See todo above.
+          leadSurrogate = uCode
+          // Double lead surrogate found.
+          uCode = UNASSIGNED
         }
-        this.seqObj = undefined;
+      } else { // We've got trail surrogate.
+        if (leadSurrogate !== -1) {
+          uCode = 0x10000 + (leadSurrogate - 0xD800) * 0x400 + (uCode - 0xDC00)
+          leadSurrogate = -1
+        } else {
+          // Incomplete surrogate pair - only trail surrogate found.
+          uCode = UNASSIGNED
+        }
+      }
+    } else if (leadSurrogate !== -1) {
+      // Incomplete surrogate pair - only lead surrogate found.
+      nextChar = uCode; uCode = UNASSIGNED // Write an error, then current char.
+      leadSurrogate = -1
     }
 
-    if (this.leadSurrogate !== -1) {
-        // Incomplete surrogate pair - only lead surrogate found.
-        newBuf[j++] = this.defaultCharSingleByte;
-        this.leadSurrogate = -1;
+    // 2. Convert uCode character.
+    var dbcsCode = UNASSIGNED
+    if (seqObj !== undefined && uCode != UNASSIGNED) { // We are in the middle of the sequence
+      var resCode = seqObj[uCode]
+      if (typeof resCode === "object") { // Sequence continues.
+        seqObj = resCode
+        continue
+      } else if (typeof resCode === "number") { // Sequence finished. Write it.
+        dbcsCode = resCode
+      } else if (resCode == undefined) { // Current character is not part of the sequence.
+        // Try default character for this sequence
+        resCode = seqObj[DEF_CHAR]
+        if (resCode !== undefined) {
+          dbcsCode = resCode // Found. Write it.
+          nextChar = uCode // Current character will be written too in the next iteration.
+        } else {
+          // TODO: What if we have no default? (resCode == undefined)
+          // Then, we should write first char of the sequence as-is and try the rest recursively.
+          // Didn't do it for now because no encoding has this situation yet.
+          // Currently, just skip the sequence and write current char.
+        }
+      }
+      seqObj = undefined
+    } else if (uCode >= 0) {  // Regular character
+      var subtable = this.encodeTable[uCode >> 8]
+      if (subtable !== undefined) { dbcsCode = subtable[uCode & 0xFF] }
+
+      if (dbcsCode <= SEQ_START) { // Sequence start
+        seqObj = this.encodeTableSeq[SEQ_START - dbcsCode]
+        continue
+      }
+
+      if (dbcsCode == UNASSIGNED && this.gb18030) {
+        // Use GB18030 algorithm to find character(s) to write.
+        var idx = findIdx(this.gb18030.uChars, uCode)
+        if (idx != -1) {
+          var dbcsCode = this.gb18030.gbChars[idx] + (uCode - this.gb18030.uChars[idx])
+          newBuf[j++] = 0x81 + Math.floor(dbcsCode / 12600); dbcsCode = dbcsCode % 12600
+          newBuf[j++] = 0x30 + Math.floor(dbcsCode / 1260); dbcsCode = dbcsCode % 1260
+          newBuf[j++] = 0x81 + Math.floor(dbcsCode / 10); dbcsCode = dbcsCode % 10
+          newBuf[j++] = 0x30 + dbcsCode
+          continue
+        }
+      }
     }
-    
-    return newBuf.slice(0, j);
+
+    // 3. Write dbcsCode character.
+    if (dbcsCode === UNASSIGNED) { dbcsCode = this.defaultCharSingleByte }
+
+    if (dbcsCode < 0x100) {
+      newBuf[j++] = dbcsCode
+    } else if (dbcsCode < 0x10000) {
+      newBuf[j++] = dbcsCode >> 8   // high byte
+      newBuf[j++] = dbcsCode & 0xFF // low byte
+    } else if (dbcsCode < 0x1000000) {
+      newBuf[j++] = dbcsCode >> 16
+      newBuf[j++] = (dbcsCode >> 8) & 0xFF
+      newBuf[j++] = dbcsCode & 0xFF
+    } else {
+      newBuf[j++] = dbcsCode >>> 24
+      newBuf[j++] = (dbcsCode >>> 16) & 0xFF
+      newBuf[j++] = (dbcsCode >>> 8) & 0xFF
+      newBuf[j++] = dbcsCode & 0xFF
+    }
+  }
+
+  this.seqObj = seqObj
+  this.leadSurrogate = leadSurrogate
+  return newBuf.slice(0, j)
+}
+
+DBCSEncoder.prototype.end = function () {
+  if (this.leadSurrogate === -1 && this.seqObj === undefined) { return } // All clean. Most often case.
+
+  var newBuf = Buffer.alloc(10); var j = 0
+
+  if (this.seqObj) { // We're in the sequence.
+    var dbcsCode = this.seqObj[DEF_CHAR]
+    if (dbcsCode !== undefined) { // Write beginning of the sequence.
+      if (dbcsCode < 0x100) {
+        newBuf[j++] = dbcsCode
+      } else {
+        newBuf[j++] = dbcsCode >> 8   // high byte
+        newBuf[j++] = dbcsCode & 0xFF // low byte
+      }
+    } else {
+      // See todo above.
+    }
+    this.seqObj = undefined
+  }
+
+  if (this.leadSurrogate !== -1) {
+    // Incomplete surrogate pair - only lead surrogate found.
+    newBuf[j++] = this.defaultCharSingleByte
+    this.leadSurrogate = -1
+  }
+
+  return newBuf.slice(0, j)
 }
 
 // Export for testing
-DBCSEncoder.prototype.findIdx = findIdx;
-
+DBCSEncoder.prototype.findIdx = findIdx
 
 // == Decoder ==================================================================
 
-function DBCSDecoder(options, codec) {
-    // Decoder state
-    this.nodeIdx = 0;
-    this.prevBuf = Buffer.alloc(0);
+function DBCSDecoder (options, codec) {
+  // Decoder state
+  this.nodeIdx = 0
+  this.prevBytes = []
 
-    // Static data
-    this.decodeTables = codec.decodeTables;
-    this.decodeTableSeq = codec.decodeTableSeq;
-    this.defaultCharUnicode = codec.defaultCharUnicode;
-    this.gb18030 = codec.gb18030;
+  // Static data
+  this.decodeTables = codec.decodeTables
+  this.decodeTableSeq = codec.decodeTableSeq
+  this.defaultCharUnicode = codec.defaultCharUnicode
+  this.gb18030 = codec.gb18030
 }
 
-DBCSDecoder.prototype.write = function(buf) {
-    var newBuf = Buffer.alloc(buf.length*2),
-        nodeIdx = this.nodeIdx, 
-        prevBuf = this.prevBuf, prevBufOffset = this.prevBuf.length,
-        seqStart = -this.prevBuf.length, // idx of the start of current parsed sequence.
-        uCode;
+DBCSDecoder.prototype.write = function (buf) {
+  var newBuf = Buffer.alloc(buf.length * 2)
+  var nodeIdx = this.nodeIdx
+  var prevBytes = this.prevBytes; var prevOffset = this.prevBytes.length
+  var seqStart = -this.prevBytes.length // idx of the start of current parsed sequence.
+  var uCode
 
-    if (prevBufOffset > 0) // Make prev buf overlap a little to make it easier to slice later.
-        prevBuf = Buffer.concat([prevBuf, buf.slice(0, 10)]);
-    
-    for (var i = 0, j = 0; i < buf.length; i++) {
-        var curByte = (i >= 0) ? buf[i] : prevBuf[i + prevBufOffset];
+  for (var i = 0, j = 0; i < buf.length; i++) {
+    var curByte = (i >= 0) ? buf[i] : prevBytes[i + prevOffset]
 
-        // Lookup in current trie node.
-        var uCode = this.decodeTables[nodeIdx][curByte];
+    // Lookup in current trie node.
+    var uCode = this.decodeTables[nodeIdx][curByte]
 
-        if (uCode >= 0) { 
-            // Normal character, just use it.
-        }
-        else if (uCode === UNASSIGNED) { // Unknown char.
-            // TODO: Callback with seq.
-            //var curSeq = (seqStart >= 0) ? buf.slice(seqStart, i+1) : prevBuf.slice(seqStart + prevBufOffset, i+1 + prevBufOffset);
-            i = seqStart; // Try to parse again, after skipping first byte of the sequence ('i' will be incremented by 'for' cycle).
-            uCode = this.defaultCharUnicode.charCodeAt(0);
-        }
-        else if (uCode === GB18030_CODE) {
-            var curSeq = (seqStart >= 0) ? buf.slice(seqStart, i+1) : prevBuf.slice(seqStart + prevBufOffset, i+1 + prevBufOffset);
-            var ptr = (curSeq[0]-0x81)*12600 + (curSeq[1]-0x30)*1260 + (curSeq[2]-0x81)*10 + (curSeq[3]-0x30);
-            var idx = findIdx(this.gb18030.gbChars, ptr);
-            uCode = this.gb18030.uChars[idx] + ptr - this.gb18030.gbChars[idx];
-        }
-        else if (uCode <= NODE_START) { // Go to next trie node.
-            nodeIdx = NODE_START - uCode;
-            continue;
-        }
-        else if (uCode <= SEQ_START) { // Output a sequence of chars.
-            var seq = this.decodeTableSeq[SEQ_START - uCode];
-            for (var k = 0; k < seq.length - 1; k++) {
-                uCode = seq[k];
-                newBuf[j++] = uCode & 0xFF;
-                newBuf[j++] = uCode >> 8;
-            }
-            uCode = seq[seq.length-1];
-        }
-        else
-            throw new Error("iconv-lite internal error: invalid decoding table value " + uCode + " at " + nodeIdx + "/" + curByte);
+    if (uCode >= 0) {
+      // Normal character, just use it.
+    } else if (uCode === UNASSIGNED) { // Unknown char.
+      // TODO: Callback with seq.
+      uCode = this.defaultCharUnicode.charCodeAt(0)
+      i = seqStart // Skip one byte ('i' will be incremented by the for loop) and try to parse again.
+    } else if (uCode === GB18030_CODE) {
+      if (i >= 3) {
+        var ptr = (buf[i - 3] - 0x81) * 12600 + (buf[i - 2] - 0x30) * 1260 + (buf[i - 1] - 0x81) * 10 + (curByte - 0x30)
+      } else {
+        var ptr = (prevBytes[i - 3 + prevOffset] - 0x81) * 12600 +
+                          (((i - 2 >= 0) ? buf[i - 2] : prevBytes[i - 2 + prevOffset]) - 0x30) * 1260 +
+                          (((i - 1 >= 0) ? buf[i - 1] : prevBytes[i - 1 + prevOffset]) - 0x81) * 10 +
+                          (curByte - 0x30)
+      }
+      var idx = findIdx(this.gb18030.gbChars, ptr)
+      uCode = this.gb18030.uChars[idx] + ptr - this.gb18030.gbChars[idx]
+    } else if (uCode <= NODE_START) { // Go to next trie node.
+      nodeIdx = NODE_START - uCode
+      continue
+    } else if (uCode <= SEQ_START) { // Output a sequence of chars.
+      var seq = this.decodeTableSeq[SEQ_START - uCode]
+      for (var k = 0; k < seq.length - 1; k++) {
+        uCode = seq[k]
+        newBuf[j++] = uCode & 0xFF
+        newBuf[j++] = uCode >> 8
+      }
+      uCode = seq[seq.length - 1]
+    } else { throw new Error("iconv-lite internal error: invalid decoding table value " + uCode + " at " + nodeIdx + "/" + curByte) }
 
-        // Write the character to buffer, handling higher planes using surrogate pair.
-        if (uCode > 0xFFFF) { 
-            uCode -= 0x10000;
-            var uCodeLead = 0xD800 + Math.floor(uCode / 0x400);
-            newBuf[j++] = uCodeLead & 0xFF;
-            newBuf[j++] = uCodeLead >> 8;
+    // Write the character to buffer, handling higher planes using surrogate pair.
+    if (uCode >= 0x10000) {
+      uCode -= 0x10000
+      var uCodeLead = 0xD800 | (uCode >> 10)
+      newBuf[j++] = uCodeLead & 0xFF
+      newBuf[j++] = uCodeLead >> 8
 
-            uCode = 0xDC00 + uCode % 0x400;
-        }
-        newBuf[j++] = uCode & 0xFF;
-        newBuf[j++] = uCode >> 8;
-
-        // Reset trie node.
-        nodeIdx = 0; seqStart = i+1;
+      uCode = 0xDC00 | (uCode & 0x3FF)
     }
+    newBuf[j++] = uCode & 0xFF
+    newBuf[j++] = uCode >> 8
 
-    this.nodeIdx = nodeIdx;
-    this.prevBuf = (seqStart >= 0) ? buf.slice(seqStart) : prevBuf.slice(seqStart + prevBufOffset);
-    return newBuf.slice(0, j).toString('ucs2');
+    // Reset trie node.
+    nodeIdx = 0; seqStart = i + 1
+  }
+
+  this.nodeIdx = nodeIdx
+  this.prevBytes = (seqStart >= 0)
+    ? Array.prototype.slice.call(buf, seqStart)
+    : prevBytes.slice(seqStart + prevOffset).concat(Array.prototype.slice.call(buf))
+
+  return newBuf.slice(0, j).toString("ucs2")
 }
 
-DBCSDecoder.prototype.end = function() {
-    var ret = '';
+DBCSDecoder.prototype.end = function () {
+  var ret = ""
 
-    // Try to parse all remaining chars.
-    while (this.prevBuf.length > 0) {
-        // Skip 1 character in the buffer.
-        ret += this.defaultCharUnicode;
-        var buf = this.prevBuf.slice(1);
+  // Try to parse all remaining chars.
+  while (this.prevBytes.length > 0) {
+    // Skip 1 character in the buffer.
+    ret += this.defaultCharUnicode
+    var bytesArr = this.prevBytes.slice(1)
 
-        // Parse remaining as usual.
-        this.prevBuf = Buffer.alloc(0);
-        this.nodeIdx = 0;
-        if (buf.length > 0)
-            ret += this.write(buf);
-    }
+    // Parse remaining as usual.
+    this.prevBytes = []
+    this.nodeIdx = 0
+    if (bytesArr.length > 0) { ret += this.write(bytesArr) }
+  }
 
-    this.nodeIdx = 0;
-    return ret;
+  this.prevBytes = []
+  this.nodeIdx = 0
+  return ret
 }
 
 // Binary search for GB18030. Returns largest i such that table[i] <= val.
-function findIdx(table, val) {
-    if (table[0] > val)
-        return -1;
+function findIdx (table, val) {
+  if (table[0] > val) { return -1 }
 
-    var l = 0, r = table.length;
-    while (l < r-1) { // always table[l] <= val < table[r]
-        var mid = l + Math.floor((r-l+1)/2);
-        if (table[mid] <= val)
-            l = mid;
-        else
-            r = mid;
-    }
-    return l;
+  var l = 0; var r = table.length
+  while (l < r - 1) { // always table[l] <= val < table[r]
+    var mid = l + ((r - l + 1) >> 1)
+    if (table[mid] <= val) { l = mid } else { r = mid }
+  }
+  return l
 }
-
 
 
 /***/ }),
@@ -18681,175 +14267,184 @@ function findIdx(table, val) {
 // require()-s are direct to support Browserify.
 
 module.exports = {
-    
-    // == Japanese/ShiftJIS ====================================================
-    // All japanese encodings are based on JIS X set of standards:
-    // JIS X 0201 - Single-byte encoding of ASCII + ¥ + Kana chars at 0xA1-0xDF.
-    // JIS X 0208 - Main set of 6879 characters, placed in 94x94 plane, to be encoded by 2 bytes. 
-    //              Has several variations in 1978, 1983, 1990 and 1997.
-    // JIS X 0212 - Supplementary plane of 6067 chars in 94x94 plane. 1990. Effectively dead.
-    // JIS X 0213 - Extension and modern replacement of 0208 and 0212. Total chars: 11233.
-    //              2 planes, first is superset of 0208, second - revised 0212.
-    //              Introduced in 2000, revised 2004. Some characters are in Unicode Plane 2 (0x2xxxx)
 
-    // Byte encodings are:
-    //  * Shift_JIS: Compatible with 0201, uses not defined chars in top half as lead bytes for double-byte
-    //               encoding of 0208. Lead byte ranges: 0x81-0x9F, 0xE0-0xEF; Trail byte ranges: 0x40-0x7E, 0x80-0x9E, 0x9F-0xFC.
-    //               Windows CP932 is a superset of Shift_JIS. Some companies added more chars, notably KDDI.
-    //  * EUC-JP:    Up to 3 bytes per character. Used mostly on *nixes.
-    //               0x00-0x7F       - lower part of 0201
-    //               0x8E, 0xA1-0xDF - upper part of 0201
-    //               (0xA1-0xFE)x2   - 0208 plane (94x94).
-    //               0x8F, (0xA1-0xFE)x2 - 0212 plane (94x94).
-    //  * JIS X 208: 7-bit, direct encoding of 0208. Byte ranges: 0x21-0x7E (94 values). Uncommon.
-    //               Used as-is in ISO2022 family.
-    //  * ISO2022-JP: Stateful encoding, with escape sequences to switch between ASCII, 
-    //                0201-1976 Roman, 0208-1978, 0208-1983.
-    //  * ISO2022-JP-1: Adds esc seq for 0212-1990.
-    //  * ISO2022-JP-2: Adds esc seq for GB2313-1980, KSX1001-1992, ISO8859-1, ISO8859-7.
-    //  * ISO2022-JP-3: Adds esc seq for 0201-1976 Kana set, 0213-2000 Planes 1, 2.
-    //  * ISO2022-JP-2004: Adds 0213-2004 Plane 1.
-    //
-    // After JIS X 0213 appeared, Shift_JIS-2004, EUC-JISX0213 and ISO2022-JP-2004 followed, with just changing the planes.
-    //
-    // Overall, it seems that it's a mess :( http://www8.plala.or.jp/tkubota1/unicode-symbols-map2.html
+  // == Japanese/ShiftJIS ====================================================
+  // All japanese encodings are based on JIS X set of standards:
+  // JIS X 0201 - Single-byte encoding of ASCII + ¥ + Kana chars at 0xA1-0xDF.
+  // JIS X 0208 - Main set of 6879 characters, placed in 94x94 plane, to be encoded by 2 bytes.
+  //              Has several variations in 1978, 1983, 1990 and 1997.
+  // JIS X 0212 - Supplementary plane of 6067 chars in 94x94 plane. 1990. Effectively dead.
+  // JIS X 0213 - Extension and modern replacement of 0208 and 0212. Total chars: 11233.
+  //              2 planes, first is superset of 0208, second - revised 0212.
+  //              Introduced in 2000, revised 2004. Some characters are in Unicode Plane 2 (0x2xxxx)
 
-    'shiftjis': {
-        type: '_dbcs',
-        table: function() { return __nccwpck_require__(679) },
-        encodeAdd: {'\u00a5': 0x5C, '\u203E': 0x7E},
-        encodeSkipVals: [{from: 0xED40, to: 0xF940}],
-    },
-    'csshiftjis': 'shiftjis',
-    'mskanji': 'shiftjis',
-    'sjis': 'shiftjis',
-    'windows31j': 'shiftjis',
-    'ms31j': 'shiftjis',
-    'xsjis': 'shiftjis',
-    'windows932': 'shiftjis',
-    'ms932': 'shiftjis',
-    '932': 'shiftjis',
-    'cp932': 'shiftjis',
+  // Byte encodings are:
+  //  * Shift_JIS: Compatible with 0201, uses not defined chars in top half as lead bytes for double-byte
+  //               encoding of 0208. Lead byte ranges: 0x81-0x9F, 0xE0-0xEF; Trail byte ranges: 0x40-0x7E, 0x80-0x9E, 0x9F-0xFC.
+  //               Windows CP932 is a superset of Shift_JIS. Some companies added more chars, notably KDDI.
+  //  * EUC-JP:    Up to 3 bytes per character. Used mostly on *nixes.
+  //               0x00-0x7F       - lower part of 0201
+  //               0x8E, 0xA1-0xDF - upper part of 0201
+  //               (0xA1-0xFE)x2   - 0208 plane (94x94).
+  //               0x8F, (0xA1-0xFE)x2 - 0212 plane (94x94).
+  //  * JIS X 208: 7-bit, direct encoding of 0208. Byte ranges: 0x21-0x7E (94 values). Uncommon.
+  //               Used as-is in ISO2022 family.
+  //  * ISO2022-JP: Stateful encoding, with escape sequences to switch between ASCII,
+  //                0201-1976 Roman, 0208-1978, 0208-1983.
+  //  * ISO2022-JP-1: Adds esc seq for 0212-1990.
+  //  * ISO2022-JP-2: Adds esc seq for GB2313-1980, KSX1001-1992, ISO8859-1, ISO8859-7.
+  //  * ISO2022-JP-3: Adds esc seq for 0201-1976 Kana set, 0213-2000 Planes 1, 2.
+  //  * ISO2022-JP-2004: Adds 0213-2004 Plane 1.
+  //
+  // After JIS X 0213 appeared, Shift_JIS-2004, EUC-JISX0213 and ISO2022-JP-2004 followed, with just changing the planes.
+  //
+  // Overall, it seems that it's a mess :( http://www8.plala.or.jp/tkubota1/unicode-symbols-map2.html
 
-    'eucjp': {
-        type: '_dbcs',
-        table: function() { return __nccwpck_require__(6406) },
-        encodeAdd: {'\u00a5': 0x5C, '\u203E': 0x7E},
-    },
+  shiftjis: {
+    type: "_dbcs",
+    table: function () { return __nccwpck_require__(679) },
+    encodeAdd: { "\u00a5": 0x5C, "\u203E": 0x7E },
+    encodeSkipVals: [{ from: 0xED40, to: 0xF940 }]
+  },
+  csshiftjis: "shiftjis",
+  mskanji: "shiftjis",
+  sjis: "shiftjis",
+  windows31j: "shiftjis",
+  ms31j: "shiftjis",
+  xsjis: "shiftjis",
+  windows932: "shiftjis",
+  ms932: "shiftjis",
+  932: "shiftjis",
+  cp932: "shiftjis",
 
-    // TODO: KDDI extension to Shift_JIS
-    // TODO: IBM CCSID 942 = CP932, but F0-F9 custom chars and other char changes.
-    // TODO: IBM CCSID 943 = Shift_JIS = CP932 with original Shift_JIS lower 128 chars.
+  eucjp: {
+    type: "_dbcs",
+    table: function () { return __nccwpck_require__(6406) },
+    encodeAdd: { "\u00a5": 0x5C, "\u203E": 0x7E }
+  },
 
+  // TODO: KDDI extension to Shift_JIS
+  // TODO: IBM CCSID 942 = CP932, but F0-F9 custom chars and other char changes.
+  // TODO: IBM CCSID 943 = Shift_JIS = CP932 with original Shift_JIS lower 128 chars.
 
-    // == Chinese/GBK ==========================================================
-    // http://en.wikipedia.org/wiki/GBK
-    // We mostly implement W3C recommendation: https://www.w3.org/TR/encoding/#gbk-encoder
+  // == Chinese/GBK ==========================================================
+  // http://en.wikipedia.org/wiki/GBK
+  // We mostly implement W3C recommendation: https://www.w3.org/TR/encoding/#gbk-encoder
 
-    // Oldest GB2312 (1981, ~7600 chars) is a subset of CP936
-    'gb2312': 'cp936',
-    'gb231280': 'cp936',
-    'gb23121980': 'cp936',
-    'csgb2312': 'cp936',
-    'csiso58gb231280': 'cp936',
-    'euccn': 'cp936',
+  // Oldest GB2312 (1981, ~7600 chars) is a subset of CP936
+  gb2312: "cp936",
+  gb231280: "cp936",
+  gb23121980: "cp936",
+  csgb2312: "cp936",
+  csiso58gb231280: "cp936",
+  euccn: "cp936",
 
-    // Microsoft's CP936 is a subset and approximation of GBK.
-    'windows936': 'cp936',
-    'ms936': 'cp936',
-    '936': 'cp936',
-    'cp936': {
-        type: '_dbcs',
-        table: function() { return __nccwpck_require__(4488) },
-    },
+  // Microsoft's CP936 is a subset and approximation of GBK.
+  windows936: "cp936",
+  ms936: "cp936",
+  936: "cp936",
+  cp936: {
+    type: "_dbcs",
+    table: function () { return __nccwpck_require__(4488) }
+  },
 
-    // GBK (~22000 chars) is an extension of CP936 that added user-mapped chars and some other.
-    'gbk': {
-        type: '_dbcs',
-        table: function() { return (__nccwpck_require__(4488).concat)(__nccwpck_require__(5914)) },
-    },
-    'xgbk': 'gbk',
-    'isoir58': 'gbk',
+  // GBK (~22000 chars) is an extension of CP936 that added user-mapped chars and some other.
+  gbk: {
+    type: "_dbcs",
+    table: function () { return (__nccwpck_require__(4488).concat)(__nccwpck_require__(5914)) }
+  },
+  xgbk: "gbk",
+  isoir58: "gbk",
 
-    // GB18030 is an algorithmic extension of GBK.
-    // Main source: https://www.w3.org/TR/encoding/#gbk-encoder
-    // http://icu-project.org/docs/papers/gb18030.html
-    // http://source.icu-project.org/repos/icu/data/trunk/charset/data/xml/gb-18030-2000.xml
-    // http://www.khngai.com/chinese/charmap/tblgbk.php?page=0
-    'gb18030': {
-        type: '_dbcs',
-        table: function() { return (__nccwpck_require__(4488).concat)(__nccwpck_require__(5914)) },
-        gb18030: function() { return __nccwpck_require__(9129) },
-        encodeSkipVals: [0x80],
-        encodeAdd: {'€': 0xA2E3},
-    },
+  // GB18030 is an algorithmic extension of GBK.
+  // Main source: https://www.w3.org/TR/encoding/#gbk-encoder
+  // http://icu-project.org/docs/papers/gb18030.html
+  // http://source.icu-project.org/repos/icu/data/trunk/charset/data/xml/gb-18030-2000.xml
+  // http://www.khngai.com/chinese/charmap/tblgbk.php?page=0
+  gb18030: {
+    type: "_dbcs",
+    table: function () { return (__nccwpck_require__(4488).concat)(__nccwpck_require__(5914)) },
+    gb18030: function () { return __nccwpck_require__(9129) },
+    encodeSkipVals: [0x80],
+    encodeAdd: { "€": 0xA2E3 }
+  },
 
-    'chinese': 'gb18030',
+  chinese: "gb18030",
 
+  // == Korean ===============================================================
+  // EUC-KR, KS_C_5601 and KS X 1001 are exactly the same.
+  windows949: "cp949",
+  ms949: "cp949",
+  949: "cp949",
+  cp949: {
+    type: "_dbcs",
+    table: function () { return __nccwpck_require__(1166) }
+  },
 
-    // == Korean ===============================================================
-    // EUC-KR, KS_C_5601 and KS X 1001 are exactly the same.
-    'windows949': 'cp949',
-    'ms949': 'cp949',
-    '949': 'cp949',
-    'cp949': {
-        type: '_dbcs',
-        table: function() { return __nccwpck_require__(1166) },
-    },
+  cseuckr: "cp949",
+  csksc56011987: "cp949",
+  euckr: "cp949",
+  isoir149: "cp949",
+  korean: "cp949",
+  ksc56011987: "cp949",
+  ksc56011989: "cp949",
+  ksc5601: "cp949",
 
-    'cseuckr': 'cp949',
-    'csksc56011987': 'cp949',
-    'euckr': 'cp949',
-    'isoir149': 'cp949',
-    'korean': 'cp949',
-    'ksc56011987': 'cp949',
-    'ksc56011989': 'cp949',
-    'ksc5601': 'cp949',
+  // == Big5/Taiwan/Hong Kong ================================================
+  // There are lots of tables for Big5 and cp950. Please see the following links for history:
+  // http://moztw.org/docs/big5/  http://www.haible.de/bruno/charsets/conversion-tables/Big5.html
+  // Variations, in roughly number of defined chars:
+  //  * Windows CP 950: Microsoft variant of Big5. Canonical: http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP950.TXT
+  //  * Windows CP 951: Microsoft variant of Big5-HKSCS-2001. Seems to be never public. http://me.abelcheung.org/articles/research/what-is-cp951/
+  //  * Big5-2003 (Taiwan standard) almost superset of cp950.
+  //  * Unicode-at-on (UAO) / Mozilla 1.8. Falling out of use on the Web. Not supported by other browsers.
+  //  * Big5-HKSCS (-2001, -2004, -2008). Hong Kong standard.
+  //    many unicode code points moved from PUA to Supplementary plane (U+2XXXX) over the years.
+  //    Plus, it has 4 combining sequences.
+  //    Seems that Mozilla refused to support it for 10 yrs. https://bugzilla.mozilla.org/show_bug.cgi?id=162431 https://bugzilla.mozilla.org/show_bug.cgi?id=310299
+  //    because big5-hkscs is the only encoding to include astral characters in non-algorithmic way.
+  //    Implementations are not consistent within browsers; sometimes labeled as just big5.
+  //    MS Internet Explorer switches from big5 to big5-hkscs when a patch applied.
+  //    Great discussion & recap of what's going on https://bugzilla.mozilla.org/show_bug.cgi?id=912470#c31
+  //    In the encoder, it might make sense to support encoding old PUA mappings to Big5 bytes seq-s.
+  //    Official spec: http://www.ogcio.gov.hk/en/business/tech_promotion/ccli/terms/doc/2003cmp_2008.txt
+  //                   http://www.ogcio.gov.hk/tc/business/tech_promotion/ccli/terms/doc/hkscs-2008-big5-iso.txt
+  //
+  // Current understanding of how to deal with Big5(-HKSCS) is in the Encoding Standard, http://encoding.spec.whatwg.org/#big5-encoder
+  // Unicode mapping (http://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/OTHER/BIG5.TXT) is said to be wrong.
 
+  windows950: "cp950",
+  ms950: "cp950",
+  950: "cp950",
+  cp950: {
+    type: "_dbcs",
+    table: function () { return __nccwpck_require__(2324) }
+  },
 
-    // == Big5/Taiwan/Hong Kong ================================================
-    // There are lots of tables for Big5 and cp950. Please see the following links for history:
-    // http://moztw.org/docs/big5/  http://www.haible.de/bruno/charsets/conversion-tables/Big5.html
-    // Variations, in roughly number of defined chars:
-    //  * Windows CP 950: Microsoft variant of Big5. Canonical: http://www.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP950.TXT
-    //  * Windows CP 951: Microsoft variant of Big5-HKSCS-2001. Seems to be never public. http://me.abelcheung.org/articles/research/what-is-cp951/
-    //  * Big5-2003 (Taiwan standard) almost superset of cp950.
-    //  * Unicode-at-on (UAO) / Mozilla 1.8. Falling out of use on the Web. Not supported by other browsers.
-    //  * Big5-HKSCS (-2001, -2004, -2008). Hong Kong standard. 
-    //    many unicode code points moved from PUA to Supplementary plane (U+2XXXX) over the years.
-    //    Plus, it has 4 combining sequences.
-    //    Seems that Mozilla refused to support it for 10 yrs. https://bugzilla.mozilla.org/show_bug.cgi?id=162431 https://bugzilla.mozilla.org/show_bug.cgi?id=310299
-    //    because big5-hkscs is the only encoding to include astral characters in non-algorithmic way.
-    //    Implementations are not consistent within browsers; sometimes labeled as just big5.
-    //    MS Internet Explorer switches from big5 to big5-hkscs when a patch applied.
-    //    Great discussion & recap of what's going on https://bugzilla.mozilla.org/show_bug.cgi?id=912470#c31
-    //    In the encoder, it might make sense to support encoding old PUA mappings to Big5 bytes seq-s.
-    //    Official spec: http://www.ogcio.gov.hk/en/business/tech_promotion/ccli/terms/doc/2003cmp_2008.txt
-    //                   http://www.ogcio.gov.hk/tc/business/tech_promotion/ccli/terms/doc/hkscs-2008-big5-iso.txt
-    // 
-    // Current understanding of how to deal with Big5(-HKSCS) is in the Encoding Standard, http://encoding.spec.whatwg.org/#big5-encoder
-    // Unicode mapping (http://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/OTHER/BIG5.TXT) is said to be wrong.
+  // Big5 has many variations and is an extension of cp950. We use Encoding Standard's as a consensus.
+  big5: "big5hkscs",
+  big5hkscs: {
+    type: "_dbcs",
+    table: function () { return (__nccwpck_require__(2324).concat)(__nccwpck_require__(3267)) },
+    encodeSkipVals: [
+      // Although Encoding Standard says we should avoid encoding to HKSCS area (See Step 1 of
+      // https://encoding.spec.whatwg.org/#index-big5-pointer), we still do it to increase compatibility with ICU.
+      // But if a single unicode point can be encoded both as HKSCS and regular Big5, we prefer the latter.
+      0x8e69, 0x8e6f, 0x8e7e, 0x8eab, 0x8eb4, 0x8ecd, 0x8ed0, 0x8f57, 0x8f69, 0x8f6e, 0x8fcb, 0x8ffe,
+      0x906d, 0x907a, 0x90c4, 0x90dc, 0x90f1, 0x91bf, 0x92af, 0x92b0, 0x92b1, 0x92b2, 0x92d1, 0x9447, 0x94ca,
+      0x95d9, 0x96fc, 0x9975, 0x9b76, 0x9b78, 0x9b7b, 0x9bc6, 0x9bde, 0x9bec, 0x9bf6, 0x9c42, 0x9c53, 0x9c62,
+      0x9c68, 0x9c6b, 0x9c77, 0x9cbc, 0x9cbd, 0x9cd0, 0x9d57, 0x9d5a, 0x9dc4, 0x9def, 0x9dfb, 0x9ea9, 0x9eef,
+      0x9efd, 0x9f60, 0x9fcb, 0xa077, 0xa0dc, 0xa0df, 0x8fcc, 0x92c8, 0x9644, 0x96ed,
 
-    'windows950': 'cp950',
-    'ms950': 'cp950',
-    '950': 'cp950',
-    'cp950': {
-        type: '_dbcs',
-        table: function() { return __nccwpck_require__(2324) },
-    },
+      // Step 2 of https://encoding.spec.whatwg.org/#index-big5-pointer: Use last pointer for U+2550, U+255E, U+2561, U+256A, U+5341, or U+5345
+      0xa2a4, 0xa2a5, 0xa2a7, 0xa2a6, 0xa2cc, 0xa2ce
+    ]
+  },
 
-    // Big5 has many variations and is an extension of cp950. We use Encoding Standard's as a consensus.
-    'big5': 'big5hkscs',
-    'big5hkscs': {
-        type: '_dbcs',
-        table: function() { return (__nccwpck_require__(2324).concat)(__nccwpck_require__(3267)) },
-        encodeSkipVals: [0xa2cc],
-    },
-
-    'cnbig5': 'big5hkscs',
-    'csbig5': 'big5hkscs',
-    'xxbig5': 'big5hkscs',
-};
+  cnbig5: "big5hkscs",
+  csbig5: "big5hkscs",
+  xxbig5: "big5hkscs"
+}
 
 
 /***/ }),
@@ -18860,25 +14455,26 @@ module.exports = {
 "use strict";
 
 
+var mergeModules = __nccwpck_require__(5336)
+
 // Update this array if you add/rename/remove files in this directory.
 // We support Browserify by skipping automatic module discovery and requiring modules directly.
 var modules = [
-    __nccwpck_require__(2356),
-    __nccwpck_require__(8771),
-    __nccwpck_require__(8231),
-    __nccwpck_require__(2473),
-    __nccwpck_require__(7083),
-    __nccwpck_require__(9487),
-    __nccwpck_require__(7978),
-    __nccwpck_require__(1802),
-];
+  __nccwpck_require__(2356),
+  __nccwpck_require__(2021),
+  __nccwpck_require__(8771),
+  __nccwpck_require__(8231),
+  __nccwpck_require__(2473),
+  __nccwpck_require__(7083),
+  __nccwpck_require__(9487),
+  __nccwpck_require__(7978),
+  __nccwpck_require__(1802)
+]
 
-// Put all encoding/alias/codec definitions to single object and export it. 
+// Put all encoding/alias/codec definitions to single object and export it.
 for (var i = 0; i < modules.length; i++) {
-    var module = modules[i];
-    for (var enc in module)
-        if (Object.prototype.hasOwnProperty.call(module, enc))
-            exports[enc] = module[enc];
+  var module = modules[i]
+  mergeModules(exports, module)
 }
 
 
@@ -18889,192 +14485,222 @@ for (var i = 0; i < modules.length; i++) {
 
 "use strict";
 
-var Buffer = (__nccwpck_require__(2803).Buffer);
+var Buffer = (__nccwpck_require__(2803).Buffer)
 
 // Export Node.js internal encodings.
 
 module.exports = {
-    // Encodings
-    utf8:   { type: "_internal", bomAware: true},
-    cesu8:  { type: "_internal", bomAware: true},
-    unicode11utf8: "utf8",
+  // Encodings
+  utf8: { type: "_internal", bomAware: true },
+  cesu8: { type: "_internal", bomAware: true },
+  unicode11utf8: "utf8",
 
-    ucs2:   { type: "_internal", bomAware: true},
-    utf16le: "ucs2",
+  ucs2: { type: "_internal", bomAware: true },
+  utf16le: "ucs2",
 
-    binary: { type: "_internal" },
-    base64: { type: "_internal" },
-    hex:    { type: "_internal" },
+  binary: { type: "_internal" },
+  base64: { type: "_internal" },
+  hex: { type: "_internal" },
 
-    // Codec.
-    _internal: InternalCodec,
-};
-
-//------------------------------------------------------------------------------
-
-function InternalCodec(codecOptions, iconv) {
-    this.enc = codecOptions.encodingName;
-    this.bomAware = codecOptions.bomAware;
-
-    if (this.enc === "base64")
-        this.encoder = InternalEncoderBase64;
-    else if (this.enc === "cesu8") {
-        this.enc = "utf8"; // Use utf8 for decoding.
-        this.encoder = InternalEncoderCesu8;
-
-        // Add decoder for versions of Node not supporting CESU-8
-        if (Buffer.from('eda0bdedb2a9', 'hex').toString() !== '💩') {
-            this.decoder = InternalDecoderCesu8;
-            this.defaultCharUnicode = iconv.defaultCharUnicode;
-        }
-    }
+  // Codec.
+  _internal: InternalCodec
 }
 
-InternalCodec.prototype.encoder = InternalEncoder;
-InternalCodec.prototype.decoder = InternalDecoder;
+// ------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
+function InternalCodec (codecOptions, iconv) {
+  this.enc = codecOptions.encodingName
+  this.bomAware = codecOptions.bomAware
+
+  if (this.enc === "base64") { this.encoder = InternalEncoderBase64 } else if (this.enc === "utf8") { this.encoder = InternalEncoderUtf8 } else if (this.enc === "cesu8") {
+    this.enc = "utf8" // Use utf8 for decoding.
+    this.encoder = InternalEncoderCesu8
+
+    // Add decoder for versions of Node not supporting CESU-8
+    if (Buffer.from("eda0bdedb2a9", "hex").toString() !== "💩") {
+      this.decoder = InternalDecoderCesu8
+      this.defaultCharUnicode = iconv.defaultCharUnicode
+    }
+  }
+}
+
+InternalCodec.prototype.encoder = InternalEncoder
+InternalCodec.prototype.decoder = InternalDecoder
+
+// ------------------------------------------------------------------------------
 
 // We use node.js internal decoder. Its signature is the same as ours.
-var StringDecoder = (__nccwpck_require__(3193).StringDecoder);
+var StringDecoder = (__nccwpck_require__(3193).StringDecoder)
 
-if (!StringDecoder.prototype.end) // Node v0.8 doesn't have this method.
-    StringDecoder.prototype.end = function() {};
-
-
-function InternalDecoder(options, codec) {
-    StringDecoder.call(this, codec.enc);
+function InternalDecoder (options, codec) {
+  this.decoder = new StringDecoder(codec.enc)
 }
 
-InternalDecoder.prototype = StringDecoder.prototype;
+InternalDecoder.prototype.write = function (buf) {
+  if (!Buffer.isBuffer(buf)) {
+    buf = Buffer.from(buf)
+  }
 
+  return this.decoder.write(buf)
+}
 
-//------------------------------------------------------------------------------
+InternalDecoder.prototype.end = function () {
+  return this.decoder.end()
+}
+
+// ------------------------------------------------------------------------------
 // Encoder is mostly trivial
 
-function InternalEncoder(options, codec) {
-    this.enc = codec.enc;
+function InternalEncoder (options, codec) {
+  this.enc = codec.enc
 }
 
-InternalEncoder.prototype.write = function(str) {
-    return Buffer.from(str, this.enc);
+InternalEncoder.prototype.write = function (str) {
+  return Buffer.from(str, this.enc)
 }
 
-InternalEncoder.prototype.end = function() {
+InternalEncoder.prototype.end = function () {
 }
 
-
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // Except base64 encoder, which must keep its state.
 
-function InternalEncoderBase64(options, codec) {
-    this.prevStr = '';
+function InternalEncoderBase64 (options, codec) {
+  this.prevStr = ""
 }
 
-InternalEncoderBase64.prototype.write = function(str) {
-    str = this.prevStr + str;
-    var completeQuads = str.length - (str.length % 4);
-    this.prevStr = str.slice(completeQuads);
-    str = str.slice(0, completeQuads);
+InternalEncoderBase64.prototype.write = function (str) {
+  str = this.prevStr + str
+  var completeQuads = str.length - (str.length % 4)
+  this.prevStr = str.slice(completeQuads)
+  str = str.slice(0, completeQuads)
 
-    return Buffer.from(str, "base64");
+  return Buffer.from(str, "base64")
 }
 
-InternalEncoderBase64.prototype.end = function() {
-    return Buffer.from(this.prevStr, "base64");
+InternalEncoderBase64.prototype.end = function () {
+  return Buffer.from(this.prevStr, "base64")
 }
 
-
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // CESU-8 encoder is also special.
 
-function InternalEncoderCesu8(options, codec) {
+function InternalEncoderCesu8 (options, codec) {
 }
 
-InternalEncoderCesu8.prototype.write = function(str) {
-    var buf = Buffer.alloc(str.length * 3), bufIdx = 0;
-    for (var i = 0; i < str.length; i++) {
-        var charCode = str.charCodeAt(i);
-        // Naive implementation, but it works because CESU-8 is especially easy
-        // to convert from UTF-16 (which all JS strings are encoded in).
-        if (charCode < 0x80)
-            buf[bufIdx++] = charCode;
-        else if (charCode < 0x800) {
-            buf[bufIdx++] = 0xC0 + (charCode >>> 6);
-            buf[bufIdx++] = 0x80 + (charCode & 0x3f);
-        }
-        else { // charCode will always be < 0x10000 in javascript.
-            buf[bufIdx++] = 0xE0 + (charCode >>> 12);
-            buf[bufIdx++] = 0x80 + ((charCode >>> 6) & 0x3f);
-            buf[bufIdx++] = 0x80 + (charCode & 0x3f);
-        }
+InternalEncoderCesu8.prototype.write = function (str) {
+  var buf = Buffer.alloc(str.length * 3); var bufIdx = 0
+  for (var i = 0; i < str.length; i++) {
+    var charCode = str.charCodeAt(i)
+    // Naive implementation, but it works because CESU-8 is especially easy
+    // to convert from UTF-16 (which all JS strings are encoded in).
+    if (charCode < 0x80) { buf[bufIdx++] = charCode } else if (charCode < 0x800) {
+      buf[bufIdx++] = 0xC0 + (charCode >>> 6)
+      buf[bufIdx++] = 0x80 + (charCode & 0x3f)
+    } else { // charCode will always be < 0x10000 in javascript.
+      buf[bufIdx++] = 0xE0 + (charCode >>> 12)
+      buf[bufIdx++] = 0x80 + ((charCode >>> 6) & 0x3f)
+      buf[bufIdx++] = 0x80 + (charCode & 0x3f)
     }
-    return buf.slice(0, bufIdx);
+  }
+  return buf.slice(0, bufIdx)
 }
 
-InternalEncoderCesu8.prototype.end = function() {
+InternalEncoderCesu8.prototype.end = function () {
 }
 
-//------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // CESU-8 decoder is not implemented in Node v4.0+
 
-function InternalDecoderCesu8(options, codec) {
-    this.acc = 0;
-    this.contBytes = 0;
-    this.accBytes = 0;
-    this.defaultCharUnicode = codec.defaultCharUnicode;
+function InternalDecoderCesu8 (options, codec) {
+  this.acc = 0
+  this.contBytes = 0
+  this.accBytes = 0
+  this.defaultCharUnicode = codec.defaultCharUnicode
 }
 
-InternalDecoderCesu8.prototype.write = function(buf) {
-    var acc = this.acc, contBytes = this.contBytes, accBytes = this.accBytes, 
-        res = '';
-    for (var i = 0; i < buf.length; i++) {
-        var curByte = buf[i];
-        if ((curByte & 0xC0) !== 0x80) { // Leading byte
-            if (contBytes > 0) { // Previous code is invalid
-                res += this.defaultCharUnicode;
-                contBytes = 0;
-            }
+InternalDecoderCesu8.prototype.write = function (buf) {
+  var acc = this.acc; var contBytes = this.contBytes; var accBytes = this.accBytes
+  var res = ""
+  for (var i = 0; i < buf.length; i++) {
+    var curByte = buf[i]
+    if ((curByte & 0xC0) !== 0x80) { // Leading byte
+      if (contBytes > 0) { // Previous code is invalid
+        res += this.defaultCharUnicode
+        contBytes = 0
+      }
 
-            if (curByte < 0x80) { // Single-byte code
-                res += String.fromCharCode(curByte);
-            } else if (curByte < 0xE0) { // Two-byte code
-                acc = curByte & 0x1F;
-                contBytes = 1; accBytes = 1;
-            } else if (curByte < 0xF0) { // Three-byte code
-                acc = curByte & 0x0F;
-                contBytes = 2; accBytes = 1;
-            } else { // Four or more are not supported for CESU-8.
-                res += this.defaultCharUnicode;
-            }
-        } else { // Continuation byte
-            if (contBytes > 0) { // We're waiting for it.
-                acc = (acc << 6) | (curByte & 0x3f);
-                contBytes--; accBytes++;
-                if (contBytes === 0) {
-                    // Check for overlong encoding, but support Modified UTF-8 (encoding NULL as C0 80)
-                    if (accBytes === 2 && acc < 0x80 && acc > 0)
-                        res += this.defaultCharUnicode;
-                    else if (accBytes === 3 && acc < 0x800)
-                        res += this.defaultCharUnicode;
-                    else
-                        // Actually add character.
-                        res += String.fromCharCode(acc);
-                }
-            } else { // Unexpected continuation byte
-                res += this.defaultCharUnicode;
-            }
+      if (curByte < 0x80) { // Single-byte code
+        res += String.fromCharCode(curByte)
+      } else if (curByte < 0xE0) { // Two-byte code
+        acc = curByte & 0x1F
+        contBytes = 1; accBytes = 1
+      } else if (curByte < 0xF0) { // Three-byte code
+        acc = curByte & 0x0F
+        contBytes = 2; accBytes = 1
+      } else { // Four or more are not supported for CESU-8.
+        res += this.defaultCharUnicode
+      }
+    } else { // Continuation byte
+      if (contBytes > 0) { // We're waiting for it.
+        acc = (acc << 6) | (curByte & 0x3f)
+        contBytes--; accBytes++
+        if (contBytes === 0) {
+          // Check for overlong encoding, but support Modified UTF-8 (encoding NULL as C0 80)
+          if (accBytes === 2 && acc < 0x80 && acc > 0) {
+            res += this.defaultCharUnicode
+          } else if (accBytes === 3 && acc < 0x800) {
+            res += this.defaultCharUnicode
+          } else {
+            // Actually add character.
+            res += String.fromCharCode(acc)
+          }
         }
+      } else { // Unexpected continuation byte
+        res += this.defaultCharUnicode
+      }
     }
-    this.acc = acc; this.contBytes = contBytes; this.accBytes = accBytes;
-    return res;
+  }
+  this.acc = acc; this.contBytes = contBytes; this.accBytes = accBytes
+  return res
 }
 
-InternalDecoderCesu8.prototype.end = function() {
-    var res = 0;
-    if (this.contBytes > 0)
-        res += this.defaultCharUnicode;
-    return res;
+InternalDecoderCesu8.prototype.end = function () {
+  var res = 0
+  if (this.contBytes > 0) { res += this.defaultCharUnicode }
+  return res
+}
+
+// ------------------------------------------------------------------------------
+// check the chunk boundaries for surrogate pair
+
+function InternalEncoderUtf8 (options, codec) {
+  this.highSurrogate = ""
+}
+
+InternalEncoderUtf8.prototype.write = function (str) {
+  if (this.highSurrogate) {
+    str = this.highSurrogate + str
+    this.highSurrogate = ""
+  }
+
+  if (str.length > 0) {
+    var charCode = str.charCodeAt(str.length - 1)
+    if (charCode >= 0xd800 && charCode < 0xdc00) {
+      this.highSurrogate = str[str.length - 1]
+      str = str.slice(0, str.length - 1)
+    }
+  }
+
+  return Buffer.from(str, this.enc)
+}
+
+InternalEncoderUtf8.prototype.end = function () {
+  if (this.highSurrogate) {
+    var str = this.highSurrogate
+    this.highSurrogate = ""
+    return Buffer.from(str, this.enc)
+  }
 }
 
 
@@ -19085,76 +14711,79 @@ InternalDecoderCesu8.prototype.end = function() {
 
 "use strict";
 
-var Buffer = (__nccwpck_require__(2803).Buffer);
+var Buffer = (__nccwpck_require__(2803).Buffer)
 
 // Single-byte codec. Needs a 'chars' string parameter that contains 256 or 128 chars that
-// correspond to encoded bytes (if 128 - then lower half is ASCII). 
+// correspond to encoded bytes (if 128 - then lower half is ASCII).
 
-exports._sbcs = SBCSCodec;
-function SBCSCodec(codecOptions, iconv) {
-    if (!codecOptions)
-        throw new Error("SBCS codec is called without the data.")
-    
-    // Prepare char buffer for decoding.
-    if (!codecOptions.chars || (codecOptions.chars.length !== 128 && codecOptions.chars.length !== 256))
-        throw new Error("Encoding '"+codecOptions.type+"' has incorrect 'chars' (must be of len 128 or 256)");
-    
-    if (codecOptions.chars.length === 128) {
-        var asciiString = "";
-        for (var i = 0; i < 128; i++)
-            asciiString += String.fromCharCode(i);
-        codecOptions.chars = asciiString + codecOptions.chars;
+exports._sbcs = SBCSCodec
+function SBCSCodec (codecOptions, iconv) {
+  if (!codecOptions) {
+    throw new Error("SBCS codec is called without the data.")
+  }
+
+  // Prepare char buffer for decoding.
+  if (!codecOptions.chars || (codecOptions.chars.length !== 128 && codecOptions.chars.length !== 256)) {
+    throw new Error("Encoding '" + codecOptions.type + "' has incorrect 'chars' (must be of len 128 or 256)")
+  }
+
+  if (codecOptions.chars.length === 128) {
+    var asciiString = ""
+    for (var i = 0; i < 128; i++) {
+      asciiString += String.fromCharCode(i)
     }
+    codecOptions.chars = asciiString + codecOptions.chars
+  }
 
-    this.decodeBuf = Buffer.from(codecOptions.chars, 'ucs2');
-    
-    // Encoding buffer.
-    var encodeBuf = Buffer.alloc(65536, iconv.defaultCharSingleByte.charCodeAt(0));
+  this.decodeBuf = Buffer.from(codecOptions.chars, "ucs2")
 
-    for (var i = 0; i < codecOptions.chars.length; i++)
-        encodeBuf[codecOptions.chars.charCodeAt(i)] = i;
+  // Encoding buffer.
+  var encodeBuf = Buffer.alloc(65536, iconv.defaultCharSingleByte.charCodeAt(0))
 
-    this.encodeBuf = encodeBuf;
+  for (var i = 0; i < codecOptions.chars.length; i++) {
+    encodeBuf[codecOptions.chars.charCodeAt(i)] = i
+  }
+
+  this.encodeBuf = encodeBuf
 }
 
-SBCSCodec.prototype.encoder = SBCSEncoder;
-SBCSCodec.prototype.decoder = SBCSDecoder;
+SBCSCodec.prototype.encoder = SBCSEncoder
+SBCSCodec.prototype.decoder = SBCSDecoder
 
-
-function SBCSEncoder(options, codec) {
-    this.encodeBuf = codec.encodeBuf;
+function SBCSEncoder (options, codec) {
+  this.encodeBuf = codec.encodeBuf
 }
 
-SBCSEncoder.prototype.write = function(str) {
-    var buf = Buffer.alloc(str.length);
-    for (var i = 0; i < str.length; i++)
-        buf[i] = this.encodeBuf[str.charCodeAt(i)];
-    
-    return buf;
+SBCSEncoder.prototype.write = function (str) {
+  var buf = Buffer.alloc(str.length)
+  for (var i = 0; i < str.length; i++) {
+    buf[i] = this.encodeBuf[str.charCodeAt(i)]
+  }
+
+  return buf
 }
 
-SBCSEncoder.prototype.end = function() {
+SBCSEncoder.prototype.end = function () {
 }
 
-
-function SBCSDecoder(options, codec) {
-    this.decodeBuf = codec.decodeBuf;
+function SBCSDecoder (options, codec) {
+  this.decodeBuf = codec.decodeBuf
 }
 
-SBCSDecoder.prototype.write = function(buf) {
-    // Strings are immutable in JS -> we use ucs2 buffer to speed up computations.
-    var decodeBuf = this.decodeBuf;
-    var newBuf = Buffer.alloc(buf.length*2);
-    var idx1 = 0, idx2 = 0;
-    for (var i = 0; i < buf.length; i++) {
-        idx1 = buf[i]*2; idx2 = i*2;
-        newBuf[idx2] = decodeBuf[idx1];
-        newBuf[idx2+1] = decodeBuf[idx1+1];
-    }
-    return newBuf.toString('ucs2');
+SBCSDecoder.prototype.write = function (buf) {
+  // Strings are immutable in JS -> we use ucs2 buffer to speed up computations.
+  var decodeBuf = this.decodeBuf
+  var newBuf = Buffer.alloc(buf.length * 2)
+  var idx1 = 0; var idx2 = 0
+  for (var i = 0; i < buf.length; i++) {
+    idx1 = buf[i] * 2; idx2 = i * 2
+    newBuf[idx2] = decodeBuf[idx1]
+    newBuf[idx2 + 1] = decodeBuf[idx1 + 1]
+  }
+  return newBuf.toString("ucs2")
 }
 
-SBCSDecoder.prototype.end = function() {
+SBCSDecoder.prototype.end = function () {
 }
 
 
@@ -19627,175 +15256,179 @@ module.exports = {
 // Manually added data to be used by sbcs codec in addition to generated one.
 
 module.exports = {
-    // Not supported by iconv, not sure why.
-    "10029": "maccenteuro",
-    "maccenteuro": {
-        "type": "_sbcs",
-        "chars": "ÄĀāÉĄÖÜáąČäčĆćéŹźĎíďĒēĖóėôöõúĚěü†°Ę£§•¶ß®©™ę¨≠ģĮįĪ≤≥īĶ∂∑łĻļĽľĹĺŅņŃ¬√ńŇ∆«»… ňŐÕőŌ–—“”‘’÷◊ōŔŕŘ‹›řŖŗŠ‚„šŚśÁŤťÍŽžŪÓÔūŮÚůŰűŲųÝýķŻŁżĢˇ"
-    },
+  // Not supported by iconv, not sure why.
+  10029: "maccenteuro",
+  maccenteuro: {
+    type: "_sbcs",
+    chars: "ÄĀāÉĄÖÜáąČäčĆćéŹźĎíďĒēĖóėôöõúĚěü†°Ę£§•¶ß®©™ę¨≠ģĮįĪ≤≥īĶ∂∑łĻļĽľĹĺŅņŃ¬√ńŇ∆«»… ňŐÕőŌ–—“”‘’÷◊ōŔŕŘ‹›řŖŗŠ‚„šŚśÁŤťÍŽžŪÓÔūŮÚůŰűŲųÝýķŻŁżĢˇ"
+  },
 
-    "808": "cp808",
-    "ibm808": "cp808",
-    "cp808": {
-        "type": "_sbcs",
-        "chars": "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмноп░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀рстуфхцчшщъыьэюяЁёЄєЇїЎў°∙·√№€■ "
-    },
+  808: "cp808",
+  ibm808: "cp808",
+  cp808: {
+    type: "_sbcs",
+    chars: "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмноп░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀рстуфхцчшщъыьэюяЁёЄєЇїЎў°∙·√№€■ "
+  },
 
-    "mik": {
-        "type": "_sbcs",
-        "chars": "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя└┴┬├─┼╣║╚╔╩╦╠═╬┐░▒▓│┤№§╗╝┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ "
-    },
+  mik: {
+    type: "_sbcs",
+    chars: "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюя└┴┬├─┼╣║╚╔╩╦╠═╬┐░▒▓│┤№§╗╝┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ "
+  },
 
-    // Aliases of generated encodings.
-    "ascii8bit": "ascii",
-    "usascii": "ascii",
-    "ansix34": "ascii",
-    "ansix341968": "ascii",
-    "ansix341986": "ascii",
-    "csascii": "ascii",
-    "cp367": "ascii",
-    "ibm367": "ascii",
-    "isoir6": "ascii",
-    "iso646us": "ascii",
-    "iso646irv": "ascii",
-    "us": "ascii",
+  cp720: {
+    type: "_sbcs",
+    chars: "\x80\x81éâ\x84à\x86çêëèïî\x8d\x8e\x8f\x90\u0651\u0652ô¤ـûùءآأؤ£إئابةتثجحخدذرزسشص«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀ضطظعغفµقكلمنهوىي≡\u064b\u064c\u064d\u064e\u064f\u0650≈°∙·√ⁿ²■\u00a0"
+  },
 
-    "latin1": "iso88591",
-    "latin2": "iso88592",
-    "latin3": "iso88593",
-    "latin4": "iso88594",
-    "latin5": "iso88599",
-    "latin6": "iso885910",
-    "latin7": "iso885913",
-    "latin8": "iso885914",
-    "latin9": "iso885915",
-    "latin10": "iso885916",
+  // Aliases of generated encodings.
+  ascii8bit: "ascii",
+  usascii: "ascii",
+  ansix34: "ascii",
+  ansix341968: "ascii",
+  ansix341986: "ascii",
+  csascii: "ascii",
+  cp367: "ascii",
+  ibm367: "ascii",
+  isoir6: "ascii",
+  iso646us: "ascii",
+  iso646irv: "ascii",
+  us: "ascii",
 
-    "csisolatin1": "iso88591",
-    "csisolatin2": "iso88592",
-    "csisolatin3": "iso88593",
-    "csisolatin4": "iso88594",
-    "csisolatincyrillic": "iso88595",
-    "csisolatinarabic": "iso88596",
-    "csisolatingreek" : "iso88597",
-    "csisolatinhebrew": "iso88598",
-    "csisolatin5": "iso88599",
-    "csisolatin6": "iso885910",
+  latin1: "iso88591",
+  latin2: "iso88592",
+  latin3: "iso88593",
+  latin4: "iso88594",
+  latin5: "iso88599",
+  latin6: "iso885910",
+  latin7: "iso885913",
+  latin8: "iso885914",
+  latin9: "iso885915",
+  latin10: "iso885916",
 
-    "l1": "iso88591",
-    "l2": "iso88592",
-    "l3": "iso88593",
-    "l4": "iso88594",
-    "l5": "iso88599",
-    "l6": "iso885910",
-    "l7": "iso885913",
-    "l8": "iso885914",
-    "l9": "iso885915",
-    "l10": "iso885916",
+  csisolatin1: "iso88591",
+  csisolatin2: "iso88592",
+  csisolatin3: "iso88593",
+  csisolatin4: "iso88594",
+  csisolatincyrillic: "iso88595",
+  csisolatinarabic: "iso88596",
+  csisolatingreek: "iso88597",
+  csisolatinhebrew: "iso88598",
+  csisolatin5: "iso88599",
+  csisolatin6: "iso885910",
 
-    "isoir14": "iso646jp",
-    "isoir57": "iso646cn",
-    "isoir100": "iso88591",
-    "isoir101": "iso88592",
-    "isoir109": "iso88593",
-    "isoir110": "iso88594",
-    "isoir144": "iso88595",
-    "isoir127": "iso88596",
-    "isoir126": "iso88597",
-    "isoir138": "iso88598",
-    "isoir148": "iso88599",
-    "isoir157": "iso885910",
-    "isoir166": "tis620",
-    "isoir179": "iso885913",
-    "isoir199": "iso885914",
-    "isoir203": "iso885915",
-    "isoir226": "iso885916",
+  l1: "iso88591",
+  l2: "iso88592",
+  l3: "iso88593",
+  l4: "iso88594",
+  l5: "iso88599",
+  l6: "iso885910",
+  l7: "iso885913",
+  l8: "iso885914",
+  l9: "iso885915",
+  l10: "iso885916",
 
-    "cp819": "iso88591",
-    "ibm819": "iso88591",
+  isoir14: "iso646jp",
+  isoir57: "iso646cn",
+  isoir100: "iso88591",
+  isoir101: "iso88592",
+  isoir109: "iso88593",
+  isoir110: "iso88594",
+  isoir144: "iso88595",
+  isoir127: "iso88596",
+  isoir126: "iso88597",
+  isoir138: "iso88598",
+  isoir148: "iso88599",
+  isoir157: "iso885910",
+  isoir166: "tis620",
+  isoir179: "iso885913",
+  isoir199: "iso885914",
+  isoir203: "iso885915",
+  isoir226: "iso885916",
 
-    "cyrillic": "iso88595",
+  cp819: "iso88591",
+  ibm819: "iso88591",
 
-    "arabic": "iso88596",
-    "arabic8": "iso88596",
-    "ecma114": "iso88596",
-    "asmo708": "iso88596",
+  cyrillic: "iso88595",
 
-    "greek" : "iso88597",
-    "greek8" : "iso88597",
-    "ecma118" : "iso88597",
-    "elot928" : "iso88597",
+  arabic: "iso88596",
+  arabic8: "iso88596",
+  ecma114: "iso88596",
+  asmo708: "iso88596",
 
-    "hebrew": "iso88598",
-    "hebrew8": "iso88598",
+  greek: "iso88597",
+  greek8: "iso88597",
+  ecma118: "iso88597",
+  elot928: "iso88597",
 
-    "turkish": "iso88599",
-    "turkish8": "iso88599",
+  hebrew: "iso88598",
+  hebrew8: "iso88598",
 
-    "thai": "iso885911",
-    "thai8": "iso885911",
+  turkish: "iso88599",
+  turkish8: "iso88599",
 
-    "celtic": "iso885914",
-    "celtic8": "iso885914",
-    "isoceltic": "iso885914",
+  thai: "iso885911",
+  thai8: "iso885911",
 
-    "tis6200": "tis620",
-    "tis62025291": "tis620",
-    "tis62025330": "tis620",
+  celtic: "iso885914",
+  celtic8: "iso885914",
+  isoceltic: "iso885914",
 
-    "10000": "macroman",
-    "10006": "macgreek",
-    "10007": "maccyrillic",
-    "10079": "maciceland",
-    "10081": "macturkish",
+  tis6200: "tis620",
+  tis62025291: "tis620",
+  tis62025330: "tis620",
 
-    "cspc8codepage437": "cp437",
-    "cspc775baltic": "cp775",
-    "cspc850multilingual": "cp850",
-    "cspcp852": "cp852",
-    "cspc862latinhebrew": "cp862",
-    "cpgr": "cp869",
+  10000: "macroman",
+  10006: "macgreek",
+  10007: "maccyrillic",
+  10079: "maciceland",
+  10081: "macturkish",
 
-    "msee": "cp1250",
-    "mscyrl": "cp1251",
-    "msansi": "cp1252",
-    "msgreek": "cp1253",
-    "msturk": "cp1254",
-    "mshebr": "cp1255",
-    "msarab": "cp1256",
-    "winbaltrim": "cp1257",
+  cspc8codepage437: "cp437",
+  cspc775baltic: "cp775",
+  cspc850multilingual: "cp850",
+  cspcp852: "cp852",
+  cspc862latinhebrew: "cp862",
+  cpgr: "cp869",
 
-    "cp20866": "koi8r",
-    "20866": "koi8r",
-    "ibm878": "koi8r",
-    "cskoi8r": "koi8r",
+  msee: "cp1250",
+  mscyrl: "cp1251",
+  msansi: "cp1252",
+  msgreek: "cp1253",
+  msturk: "cp1254",
+  mshebr: "cp1255",
+  msarab: "cp1256",
+  winbaltrim: "cp1257",
 
-    "cp21866": "koi8u",
-    "21866": "koi8u",
-    "ibm1168": "koi8u",
+  cp20866: "koi8r",
+  20866: "koi8r",
+  ibm878: "koi8r",
+  cskoi8r: "koi8r",
 
-    "strk10482002": "rk1048",
+  cp21866: "koi8u",
+  21866: "koi8u",
+  ibm1168: "koi8u",
 
-    "tcvn5712": "tcvn",
-    "tcvn57121": "tcvn",
+  strk10482002: "rk1048",
 
-    "gb198880": "iso646cn",
-    "cn": "iso646cn",
+  tcvn5712: "tcvn",
+  tcvn57121: "tcvn",
 
-    "csiso14jisc6220ro": "iso646jp",
-    "jisc62201969ro": "iso646jp",
-    "jp": "iso646jp",
+  gb198880: "iso646cn",
+  cn: "iso646cn",
 
-    "cshproman8": "hproman8",
-    "r8": "hproman8",
-    "roman8": "hproman8",
-    "xroman8": "hproman8",
-    "ibm1051": "hproman8",
+  csiso14jisc6220ro: "iso646jp",
+  jisc62201969ro: "iso646jp",
+  jp: "iso646jp",
 
-    "mac": "macintosh",
-    "csmacintosh": "macintosh",
-};
+  cshproman8: "hproman8",
+  r8: "hproman8",
+  roman8: "hproman8",
+  xroman8: "hproman8",
+  ibm1051: "hproman8",
 
+  mac: "macintosh",
+  csmacintosh: "macintosh"
+}
 
 
 /***/ }),
@@ -19805,70 +15438,67 @@ module.exports = {
 
 "use strict";
 
-var Buffer = (__nccwpck_require__(2803).Buffer);
+var Buffer = (__nccwpck_require__(2803).Buffer)
 
 // Note: UTF16-LE (or UCS2) codec is Node.js native. See encodings/internal.js
 
 // == UTF16-BE codec. ==========================================================
 
-exports.utf16be = Utf16BECodec;
-function Utf16BECodec() {
+exports.utf16be = Utf16BECodec
+function Utf16BECodec () {
 }
 
-Utf16BECodec.prototype.encoder = Utf16BEEncoder;
-Utf16BECodec.prototype.decoder = Utf16BEDecoder;
-Utf16BECodec.prototype.bomAware = true;
-
+Utf16BECodec.prototype.encoder = Utf16BEEncoder
+Utf16BECodec.prototype.decoder = Utf16BEDecoder
+Utf16BECodec.prototype.bomAware = true
 
 // -- Encoding
 
-function Utf16BEEncoder() {
+function Utf16BEEncoder () {
 }
 
-Utf16BEEncoder.prototype.write = function(str) {
-    var buf = Buffer.from(str, 'ucs2');
-    for (var i = 0; i < buf.length; i += 2) {
-        var tmp = buf[i]; buf[i] = buf[i+1]; buf[i+1] = tmp;
-    }
-    return buf;
+Utf16BEEncoder.prototype.write = function (str) {
+  var buf = Buffer.from(str, "ucs2")
+  for (var i = 0; i < buf.length; i += 2) {
+    var tmp = buf[i]; buf[i] = buf[i + 1]; buf[i + 1] = tmp
+  }
+  return buf
 }
 
-Utf16BEEncoder.prototype.end = function() {
+Utf16BEEncoder.prototype.end = function () {
 }
-
 
 // -- Decoding
 
-function Utf16BEDecoder() {
-    this.overflowByte = -1;
+function Utf16BEDecoder () {
+  this.overflowByte = -1
 }
 
-Utf16BEDecoder.prototype.write = function(buf) {
-    if (buf.length == 0)
-        return '';
+Utf16BEDecoder.prototype.write = function (buf) {
+  if (buf.length == 0) { return "" }
 
-    var buf2 = Buffer.alloc(buf.length + 1),
-        i = 0, j = 0;
+  var buf2 = Buffer.alloc(buf.length + 1)
+  var i = 0; var j = 0
 
-    if (this.overflowByte !== -1) {
-        buf2[0] = buf[0];
-        buf2[1] = this.overflowByte;
-        i = 1; j = 2;
-    }
+  if (this.overflowByte !== -1) {
+    buf2[0] = buf[0]
+    buf2[1] = this.overflowByte
+    i = 1; j = 2
+  }
 
-    for (; i < buf.length-1; i += 2, j+= 2) {
-        buf2[j] = buf[i+1];
-        buf2[j+1] = buf[i];
-    }
+  for (; i < buf.length - 1; i += 2, j += 2) {
+    buf2[j] = buf[i + 1]
+    buf2[j + 1] = buf[i]
+  }
 
-    this.overflowByte = (i == buf.length-1) ? buf[buf.length-1] : -1;
+  this.overflowByte = (i == buf.length - 1) ? buf[buf.length - 1] : -1
 
-    return buf2.slice(0, j).toString('ucs2');
+  return buf2.slice(0, j).toString("ucs2")
 }
 
-Utf16BEDecoder.prototype.end = function() {
+Utf16BEDecoder.prototype.end = function () {
+  this.overflowByte = -1
 }
-
 
 // == UTF-16 codec =============================================================
 // Decoder chooses automatically from UTF-16LE and UTF-16BE using BOM and space-based heuristic.
@@ -19878,109 +15508,437 @@ Utf16BEDecoder.prototype.end = function() {
 
 // Encoder uses UTF-16LE and prepends BOM (which can be overridden with addBOM: false).
 
-exports.utf16 = Utf16Codec;
-function Utf16Codec(codecOptions, iconv) {
-    this.iconv = iconv;
+exports.utf16 = Utf16Codec
+function Utf16Codec (codecOptions, iconv) {
+  this.iconv = iconv
 }
 
-Utf16Codec.prototype.encoder = Utf16Encoder;
-Utf16Codec.prototype.decoder = Utf16Decoder;
-
+Utf16Codec.prototype.encoder = Utf16Encoder
+Utf16Codec.prototype.decoder = Utf16Decoder
 
 // -- Encoding (pass-through)
 
-function Utf16Encoder(options, codec) {
-    options = options || {};
-    if (options.addBOM === undefined)
-        options.addBOM = true;
-    this.encoder = codec.iconv.getEncoder('utf-16le', options);
+function Utf16Encoder (options, codec) {
+  options = options || {}
+  if (options.addBOM === undefined) { options.addBOM = true }
+  this.encoder = codec.iconv.getEncoder("utf-16le", options)
 }
 
-Utf16Encoder.prototype.write = function(str) {
-    return this.encoder.write(str);
+Utf16Encoder.prototype.write = function (str) {
+  return this.encoder.write(str)
 }
 
-Utf16Encoder.prototype.end = function() {
-    return this.encoder.end();
+Utf16Encoder.prototype.end = function () {
+  return this.encoder.end()
 }
-
 
 // -- Decoding
 
-function Utf16Decoder(options, codec) {
-    this.decoder = null;
-    this.initialBytes = [];
-    this.initialBytesLen = 0;
+function Utf16Decoder (options, codec) {
+  this.decoder = null
+  this.initialBufs = []
+  this.initialBufsLen = 0
 
-    this.options = options || {};
-    this.iconv = codec.iconv;
+  this.options = options || {}
+  this.iconv = codec.iconv
 }
 
-Utf16Decoder.prototype.write = function(buf) {
-    if (!this.decoder) {
-        // Codec is not chosen yet. Accumulate initial bytes.
-        this.initialBytes.push(buf);
-        this.initialBytesLen += buf.length;
-        
-        if (this.initialBytesLen < 16) // We need more bytes to use space heuristic (see below)
-            return '';
+Utf16Decoder.prototype.write = function (buf) {
+  if (!this.decoder) {
+    // Codec is not chosen yet. Accumulate initial bytes.
+    this.initialBufs.push(buf)
+    this.initialBufsLen += buf.length
 
-        // We have enough bytes -> detect endianness.
-        var buf = Buffer.concat(this.initialBytes),
-            encoding = detectEncoding(buf, this.options.defaultEncoding);
-        this.decoder = this.iconv.getDecoder(encoding, this.options);
-        this.initialBytes.length = this.initialBytesLen = 0;
-    }
+    if (this.initialBufsLen < 16) // We need more bytes to use space heuristic (see below)
+    { return "" }
 
-    return this.decoder.write(buf);
+    // We have enough bytes -> detect endianness.
+    var encoding = detectEncoding(this.initialBufs, this.options.defaultEncoding)
+    this.decoder = this.iconv.getDecoder(encoding, this.options)
+
+    var resStr = ""
+    for (var i = 0; i < this.initialBufs.length; i++) { resStr += this.decoder.write(this.initialBufs[i]) }
+
+    this.initialBufs.length = this.initialBufsLen = 0
+    return resStr
+  }
+
+  return this.decoder.write(buf)
 }
 
-Utf16Decoder.prototype.end = function() {
-    if (!this.decoder) {
-        var buf = Buffer.concat(this.initialBytes),
-            encoding = detectEncoding(buf, this.options.defaultEncoding);
-        this.decoder = this.iconv.getDecoder(encoding, this.options);
+Utf16Decoder.prototype.end = function () {
+  if (!this.decoder) {
+    var encoding = detectEncoding(this.initialBufs, this.options.defaultEncoding)
+    this.decoder = this.iconv.getDecoder(encoding, this.options)
 
-        var res = this.decoder.write(buf),
-            trail = this.decoder.end();
+    var resStr = ""
+    for (var i = 0; i < this.initialBufs.length; i++) { resStr += this.decoder.write(this.initialBufs[i]) }
 
-        return trail ? (res + trail) : res;
-    }
-    return this.decoder.end();
+    var trail = this.decoder.end()
+    if (trail) { resStr += trail }
+
+    this.initialBufs.length = this.initialBufsLen = 0
+    return resStr
+  }
+  return this.decoder.end()
 }
 
-function detectEncoding(buf, defaultEncoding) {
-    var enc = defaultEncoding || 'utf-16le';
+function detectEncoding (bufs, defaultEncoding) {
+  var b = []
+  var charsProcessed = 0
+  // Number of ASCII chars when decoded as LE or BE.
+  var asciiCharsLE = 0
+  var asciiCharsBE = 0
 
-    if (buf.length >= 2) {
-        // Check BOM.
-        if (buf[0] == 0xFE && buf[1] == 0xFF) // UTF-16BE BOM
-            enc = 'utf-16be';
-        else if (buf[0] == 0xFF && buf[1] == 0xFE) // UTF-16LE BOM
-            enc = 'utf-16le';
-        else {
-            // No BOM found. Try to deduce encoding from initial content.
-            // Most of the time, the content has ASCII chars (U+00**), but the opposite (U+**00) is uncommon.
-            // So, we count ASCII as if it was LE or BE, and decide from that.
-            var asciiCharsLE = 0, asciiCharsBE = 0, // Counts of chars in both positions
-                _len = Math.min(buf.length - (buf.length % 2), 64); // Len is always even.
-
-            for (var i = 0; i < _len; i += 2) {
-                if (buf[i] === 0 && buf[i+1] !== 0) asciiCharsBE++;
-                if (buf[i] !== 0 && buf[i+1] === 0) asciiCharsLE++;
-            }
-
-            if (asciiCharsBE > asciiCharsLE)
-                enc = 'utf-16be';
-            else if (asciiCharsBE < asciiCharsLE)
-                enc = 'utf-16le';
+  outerLoop:
+  for (var i = 0; i < bufs.length; i++) {
+    var buf = bufs[i]
+    for (var j = 0; j < buf.length; j++) {
+      b.push(buf[j])
+      if (b.length === 2) {
+        if (charsProcessed === 0) {
+          // Check BOM first.
+          if (b[0] === 0xFF && b[1] === 0xFE) return "utf-16le"
+          if (b[0] === 0xFE && b[1] === 0xFF) return "utf-16be"
         }
-    }
 
-    return enc;
+        if (b[0] === 0 && b[1] !== 0) asciiCharsBE++
+        if (b[0] !== 0 && b[1] === 0) asciiCharsLE++
+
+        b.length = 0
+        charsProcessed++
+
+        if (charsProcessed >= 100) {
+          break outerLoop
+        }
+      }
+    }
+  }
+
+  // Make decisions.
+  // Most of the time, the content has ASCII chars (U+00**), but the opposite (U+**00) is uncommon.
+  // So, we count ASCII as if it was LE or BE, and decide from that.
+  if (asciiCharsBE > asciiCharsLE) return "utf-16be"
+  if (asciiCharsBE < asciiCharsLE) return "utf-16le"
+
+  // Couldn't decide (likely all zeros or not enough data).
+  return defaultEncoding || "utf-16le"
 }
 
 
+/***/ }),
+
+/***/ 2021:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+var Buffer = (__nccwpck_require__(2803).Buffer)
+
+// == UTF32-LE/BE codec. ==========================================================
+
+exports._utf32 = Utf32Codec
+
+function Utf32Codec (codecOptions, iconv) {
+  this.iconv = iconv
+  this.bomAware = true
+  this.isLE = codecOptions.isLE
+}
+
+exports.utf32le = { type: "_utf32", isLE: true }
+exports.utf32be = { type: "_utf32", isLE: false }
+
+// Aliases
+exports.ucs4le = "utf32le"
+exports.ucs4be = "utf32be"
+
+Utf32Codec.prototype.encoder = Utf32Encoder
+Utf32Codec.prototype.decoder = Utf32Decoder
+
+// -- Encoding
+
+function Utf32Encoder (options, codec) {
+  this.isLE = codec.isLE
+  this.highSurrogate = 0
+}
+
+Utf32Encoder.prototype.write = function (str) {
+  var src = Buffer.from(str, "ucs2")
+  var dst = Buffer.alloc(src.length * 2)
+  var write32 = this.isLE ? dst.writeUInt32LE : dst.writeUInt32BE
+  var offset = 0
+
+  for (var i = 0; i < src.length; i += 2) {
+    var code = src.readUInt16LE(i)
+    var isHighSurrogate = (code >= 0xD800 && code < 0xDC00)
+    var isLowSurrogate = (code >= 0xDC00 && code < 0xE000)
+
+    if (this.highSurrogate) {
+      if (isHighSurrogate || !isLowSurrogate) {
+        // There shouldn't be two high surrogates in a row, nor a high surrogate which isn't followed by a low
+        // surrogate. If this happens, keep the pending high surrogate as a stand-alone semi-invalid character
+        // (technically wrong, but expected by some applications, like Windows file names).
+        write32.call(dst, this.highSurrogate, offset)
+        offset += 4
+      } else {
+        // Create 32-bit value from high and low surrogates;
+        var codepoint = (((this.highSurrogate - 0xD800) << 10) | (code - 0xDC00)) + 0x10000
+
+        write32.call(dst, codepoint, offset)
+        offset += 4
+        this.highSurrogate = 0
+
+        continue
+      }
+    }
+
+    if (isHighSurrogate) { this.highSurrogate = code } else {
+      // Even if the current character is a low surrogate, with no previous high surrogate, we'll
+      // encode it as a semi-invalid stand-alone character for the same reasons expressed above for
+      // unpaired high surrogates.
+      write32.call(dst, code, offset)
+      offset += 4
+      this.highSurrogate = 0
+    }
+  }
+
+  if (offset < dst.length) { dst = dst.slice(0, offset) }
+
+  return dst
+}
+
+Utf32Encoder.prototype.end = function () {
+  // Treat any leftover high surrogate as a semi-valid independent character.
+  if (!this.highSurrogate) { return }
+
+  var buf = Buffer.alloc(4)
+
+  if (this.isLE) { buf.writeUInt32LE(this.highSurrogate, 0) } else { buf.writeUInt32BE(this.highSurrogate, 0) }
+
+  this.highSurrogate = 0
+
+  return buf
+}
+
+// -- Decoding
+
+function Utf32Decoder (options, codec) {
+  this.isLE = codec.isLE
+  this.badChar = codec.iconv.defaultCharUnicode.charCodeAt(0)
+  this.overflow = []
+}
+
+Utf32Decoder.prototype.write = function (src) {
+  if (src.length === 0) { return "" }
+
+  var i = 0
+  var codepoint = 0
+  var dst = Buffer.alloc(src.length + 4)
+  var offset = 0
+  var isLE = this.isLE
+  var overflow = this.overflow
+  var badChar = this.badChar
+
+  if (overflow.length > 0) {
+    for (; i < src.length && overflow.length < 4; i++) { overflow.push(src[i]) }
+
+    if (overflow.length === 4) {
+      // NOTE: codepoint is a signed int32 and can be negative.
+      // NOTE: We copied this block from below to help V8 optimize it (it works with array, not buffer).
+      if (isLE) {
+        codepoint = overflow[i] | (overflow[i + 1] << 8) | (overflow[i + 2] << 16) | (overflow[i + 3] << 24)
+      } else {
+        codepoint = overflow[i + 3] | (overflow[i + 2] << 8) | (overflow[i + 1] << 16) | (overflow[i] << 24)
+      }
+      overflow.length = 0
+
+      offset = _writeCodepoint(dst, offset, codepoint, badChar)
+    }
+  }
+
+  // Main loop. Should be as optimized as possible.
+  for (; i < src.length - 3; i += 4) {
+    // NOTE: codepoint is a signed int32 and can be negative.
+    if (isLE) {
+      codepoint = src[i] | (src[i + 1] << 8) | (src[i + 2] << 16) | (src[i + 3] << 24)
+    } else {
+      codepoint = src[i + 3] | (src[i + 2] << 8) | (src[i + 1] << 16) | (src[i] << 24)
+    }
+    offset = _writeCodepoint(dst, offset, codepoint, badChar)
+  }
+
+  // Keep overflowing bytes.
+  for (; i < src.length; i++) {
+    overflow.push(src[i])
+  }
+
+  return dst.slice(0, offset).toString("ucs2")
+}
+
+function _writeCodepoint (dst, offset, codepoint, badChar) {
+  // NOTE: codepoint is signed int32 and can be negative. We keep it that way to help V8 with optimizations.
+  if (codepoint < 0 || codepoint > 0x10FFFF) {
+    // Not a valid Unicode codepoint
+    codepoint = badChar
+  }
+
+  // Ephemeral Planes: Write high surrogate.
+  if (codepoint >= 0x10000) {
+    codepoint -= 0x10000
+
+    var high = 0xD800 | (codepoint >> 10)
+    dst[offset++] = high & 0xff
+    dst[offset++] = high >> 8
+
+    // Low surrogate is written below.
+    var codepoint = 0xDC00 | (codepoint & 0x3FF)
+  }
+
+  // Write BMP char or low surrogate.
+  dst[offset++] = codepoint & 0xff
+  dst[offset++] = codepoint >> 8
+
+  return offset
+};
+
+Utf32Decoder.prototype.end = function () {
+  this.overflow.length = 0
+}
+
+// == UTF-32 Auto codec =============================================================
+// Decoder chooses automatically from UTF-32LE and UTF-32BE using BOM and space-based heuristic.
+// Defaults to UTF-32LE. http://en.wikipedia.org/wiki/UTF-32
+// Encoder/decoder default can be changed: iconv.decode(buf, 'utf32', {defaultEncoding: 'utf-32be'});
+
+// Encoder prepends BOM (which can be overridden with (addBOM: false}).
+
+exports.utf32 = Utf32AutoCodec
+exports.ucs4 = "utf32"
+
+function Utf32AutoCodec (options, iconv) {
+  this.iconv = iconv
+}
+
+Utf32AutoCodec.prototype.encoder = Utf32AutoEncoder
+Utf32AutoCodec.prototype.decoder = Utf32AutoDecoder
+
+// -- Encoding
+
+function Utf32AutoEncoder (options, codec) {
+  options = options || {}
+
+  if (options.addBOM === undefined) {
+    options.addBOM = true
+  }
+
+  this.encoder = codec.iconv.getEncoder(options.defaultEncoding || "utf-32le", options)
+}
+
+Utf32AutoEncoder.prototype.write = function (str) {
+  return this.encoder.write(str)
+}
+
+Utf32AutoEncoder.prototype.end = function () {
+  return this.encoder.end()
+}
+
+// -- Decoding
+
+function Utf32AutoDecoder (options, codec) {
+  this.decoder = null
+  this.initialBufs = []
+  this.initialBufsLen = 0
+  this.options = options || {}
+  this.iconv = codec.iconv
+}
+
+Utf32AutoDecoder.prototype.write = function (buf) {
+  if (!this.decoder) {
+    // Codec is not chosen yet. Accumulate initial bytes.
+    this.initialBufs.push(buf)
+    this.initialBufsLen += buf.length
+
+    if (this.initialBufsLen < 32) // We need more bytes to use space heuristic (see below)
+    { return "" }
+
+    // We have enough bytes -> detect endianness.
+    var encoding = detectEncoding(this.initialBufs, this.options.defaultEncoding)
+    this.decoder = this.iconv.getDecoder(encoding, this.options)
+
+    var resStr = ""
+    for (var i = 0; i < this.initialBufs.length; i++) { resStr += this.decoder.write(this.initialBufs[i]) }
+
+    this.initialBufs.length = this.initialBufsLen = 0
+    return resStr
+  }
+
+  return this.decoder.write(buf)
+}
+
+Utf32AutoDecoder.prototype.end = function () {
+  if (!this.decoder) {
+    var encoding = detectEncoding(this.initialBufs, this.options.defaultEncoding)
+    this.decoder = this.iconv.getDecoder(encoding, this.options)
+
+    var resStr = ""
+    for (var i = 0; i < this.initialBufs.length; i++) { resStr += this.decoder.write(this.initialBufs[i]) }
+
+    var trail = this.decoder.end()
+    if (trail) { resStr += trail }
+
+    this.initialBufs.length = this.initialBufsLen = 0
+    return resStr
+  }
+
+  return this.decoder.end()
+}
+
+function detectEncoding (bufs, defaultEncoding) {
+  var b = []
+  var charsProcessed = 0
+  var invalidLE = 0; var invalidBE = 0   // Number of invalid chars when decoded as LE or BE.
+  var bmpCharsLE = 0; var bmpCharsBE = 0 // Number of BMP chars when decoded as LE or BE.
+
+  outerLoop:
+  for (var i = 0; i < bufs.length; i++) {
+    var buf = bufs[i]
+    for (var j = 0; j < buf.length; j++) {
+      b.push(buf[j])
+      if (b.length === 4) {
+        if (charsProcessed === 0) {
+          // Check BOM first.
+          if (b[0] === 0xFF && b[1] === 0xFE && b[2] === 0 && b[3] === 0) {
+            return "utf-32le"
+          }
+          if (b[0] === 0 && b[1] === 0 && b[2] === 0xFE && b[3] === 0xFF) {
+            return "utf-32be"
+          }
+        }
+
+        if (b[0] !== 0 || b[1] > 0x10) invalidBE++
+        if (b[3] !== 0 || b[2] > 0x10) invalidLE++
+
+        if (b[0] === 0 && b[1] === 0 && (b[2] !== 0 || b[3] !== 0)) bmpCharsBE++
+        if ((b[0] !== 0 || b[1] !== 0) && b[2] === 0 && b[3] === 0) bmpCharsLE++
+
+        b.length = 0
+        charsProcessed++
+
+        if (charsProcessed >= 100) {
+          break outerLoop
+        }
+      }
+    }
+  }
+
+  // Make decisions.
+  if (bmpCharsBE - invalidBE > bmpCharsLE - invalidLE) return "utf-32be"
+  if (bmpCharsBE - invalidBE < bmpCharsLE - invalidLE) return "utf-32le"
+
+  // Couldn't decide (likely all zeros or not enough data).
+  return defaultEncoding || "utf-32le"
+}
 
 
 /***/ }),
@@ -19990,123 +15948,123 @@ function detectEncoding(buf, defaultEncoding) {
 
 "use strict";
 
-var Buffer = (__nccwpck_require__(2803).Buffer);
+var Buffer = (__nccwpck_require__(2803).Buffer)
 
 // UTF-7 codec, according to https://tools.ietf.org/html/rfc2152
 // See also below a UTF-7-IMAP codec, according to http://tools.ietf.org/html/rfc3501#section-5.1.3
 
-exports.utf7 = Utf7Codec;
-exports.unicode11utf7 = 'utf7'; // Alias UNICODE-1-1-UTF-7
-function Utf7Codec(codecOptions, iconv) {
-    this.iconv = iconv;
+exports.utf7 = Utf7Codec
+exports.unicode11utf7 = "utf7" // Alias UNICODE-1-1-UTF-7
+function Utf7Codec (codecOptions, iconv) {
+  this.iconv = iconv
 };
 
-Utf7Codec.prototype.encoder = Utf7Encoder;
-Utf7Codec.prototype.decoder = Utf7Decoder;
-Utf7Codec.prototype.bomAware = true;
-
+Utf7Codec.prototype.encoder = Utf7Encoder
+Utf7Codec.prototype.decoder = Utf7Decoder
+Utf7Codec.prototype.bomAware = true
 
 // -- Encoding
 
-var nonDirectChars = /[^A-Za-z0-9'\(\),-\.\/:\? \n\r\t]+/g;
+// Why scape ()?./?
+// eslint-disable-next-line no-useless-escape
+var nonDirectChars = /[^A-Za-z0-9'\(\),-\.\/:\? \n\r\t]+/g
 
-function Utf7Encoder(options, codec) {
-    this.iconv = codec.iconv;
+function Utf7Encoder (options, codec) {
+  this.iconv = codec.iconv
 }
 
-Utf7Encoder.prototype.write = function(str) {
-    // Naive implementation.
-    // Non-direct chars are encoded as "+<base64>-"; single "+" char is encoded as "+-".
-    return Buffer.from(str.replace(nonDirectChars, function(chunk) {
-        return "+" + (chunk === '+' ? '' : 
-            this.iconv.encode(chunk, 'utf16-be').toString('base64').replace(/=+$/, '')) 
-            + "-";
-    }.bind(this)));
+Utf7Encoder.prototype.write = function (str) {
+  // Naive implementation.
+  // Non-direct chars are encoded as "+<base64>-"; single "+" char is encoded as "+-".
+  return Buffer.from(str.replace(nonDirectChars, function (chunk) {
+    return "+" + (chunk === "+"
+      ? ""
+      : this.iconv.encode(chunk, "utf16-be").toString("base64").replace(/=+$/, "")) +
+            "-"
+  }.bind(this)))
 }
 
-Utf7Encoder.prototype.end = function() {
+Utf7Encoder.prototype.end = function () {
 }
-
 
 // -- Decoding
 
-function Utf7Decoder(options, codec) {
-    this.iconv = codec.iconv;
-    this.inBase64 = false;
-    this.base64Accum = '';
+function Utf7Decoder (options, codec) {
+  this.iconv = codec.iconv
+  this.inBase64 = false
+  this.base64Accum = ""
 }
 
-var base64Regex = /[A-Za-z0-9\/+]/;
-var base64Chars = [];
-for (var i = 0; i < 256; i++)
-    base64Chars[i] = base64Regex.test(String.fromCharCode(i));
+// Why scape /?
+// eslint-disable-next-line no-useless-escape
+var base64Regex = /[A-Za-z0-9\/+]/
+var base64Chars = []
+for (var i = 0; i < 256; i++) { base64Chars[i] = base64Regex.test(String.fromCharCode(i)) }
 
-var plusChar = '+'.charCodeAt(0), 
-    minusChar = '-'.charCodeAt(0),
-    andChar = '&'.charCodeAt(0);
+var plusChar = "+".charCodeAt(0)
+var minusChar = "-".charCodeAt(0)
+var andChar = "&".charCodeAt(0)
 
-Utf7Decoder.prototype.write = function(buf) {
-    var res = "", lastI = 0,
-        inBase64 = this.inBase64,
-        base64Accum = this.base64Accum;
+Utf7Decoder.prototype.write = function (buf) {
+  var res = ""; var lastI = 0
+  var inBase64 = this.inBase64
+  var base64Accum = this.base64Accum
 
-    // The decoder is more involved as we must handle chunks in stream.
+  // The decoder is more involved as we must handle chunks in stream.
 
-    for (var i = 0; i < buf.length; i++) {
-        if (!inBase64) { // We're in direct mode.
-            // Write direct chars until '+'
-            if (buf[i] == plusChar) {
-                res += this.iconv.decode(buf.slice(lastI, i), "ascii"); // Write direct chars.
-                lastI = i+1;
-                inBase64 = true;
-            }
-        } else { // We decode base64.
-            if (!base64Chars[buf[i]]) { // Base64 ended.
-                if (i == lastI && buf[i] == minusChar) {// "+-" -> "+"
-                    res += "+";
-                } else {
-                    var b64str = base64Accum + buf.slice(lastI, i).toString();
-                    res += this.iconv.decode(Buffer.from(b64str, 'base64'), "utf16-be");
-                }
-
-                if (buf[i] != minusChar) // Minus is absorbed after base64.
-                    i--;
-
-                lastI = i+1;
-                inBase64 = false;
-                base64Accum = '';
-            }
+  for (var i = 0; i < buf.length; i++) {
+    if (!inBase64) { // We're in direct mode.
+      // Write direct chars until '+'
+      if (buf[i] == plusChar) {
+        res += this.iconv.decode(buf.slice(lastI, i), "ascii") // Write direct chars.
+        lastI = i + 1
+        inBase64 = true
+      }
+    } else { // We decode base64.
+      if (!base64Chars[buf[i]]) { // Base64 ended.
+        if (i == lastI && buf[i] == minusChar) { // "+-" -> "+"
+          res += "+"
+        } else {
+          var b64str = base64Accum + this.iconv.decode(buf.slice(lastI, i), "ascii")
+          res += this.iconv.decode(Buffer.from(b64str, "base64"), "utf16-be")
         }
+
+        if (buf[i] != minusChar) // Minus is absorbed after base64.
+        { i-- }
+
+        lastI = i + 1
+        inBase64 = false
+        base64Accum = ""
+      }
     }
+  }
 
-    if (!inBase64) {
-        res += this.iconv.decode(buf.slice(lastI), "ascii"); // Write direct chars.
-    } else {
-        var b64str = base64Accum + buf.slice(lastI).toString();
+  if (!inBase64) {
+    res += this.iconv.decode(buf.slice(lastI), "ascii") // Write direct chars.
+  } else {
+    var b64str = base64Accum + this.iconv.decode(buf.slice(lastI), "ascii")
 
-        var canBeDecoded = b64str.length - (b64str.length % 8); // Minimal chunk: 2 quads -> 2x3 bytes -> 3 chars.
-        base64Accum = b64str.slice(canBeDecoded); // The rest will be decoded in future.
-        b64str = b64str.slice(0, canBeDecoded);
+    var canBeDecoded = b64str.length - (b64str.length % 8) // Minimal chunk: 2 quads -> 2x3 bytes -> 3 chars.
+    base64Accum = b64str.slice(canBeDecoded) // The rest will be decoded in future.
+    b64str = b64str.slice(0, canBeDecoded)
 
-        res += this.iconv.decode(Buffer.from(b64str, 'base64'), "utf16-be");
-    }
+    res += this.iconv.decode(Buffer.from(b64str, "base64"), "utf16-be")
+  }
 
-    this.inBase64 = inBase64;
-    this.base64Accum = base64Accum;
+  this.inBase64 = inBase64
+  this.base64Accum = base64Accum
 
-    return res;
+  return res
 }
 
-Utf7Decoder.prototype.end = function() {
-    var res = "";
-    if (this.inBase64 && this.base64Accum.length > 0)
-        res = this.iconv.decode(Buffer.from(this.base64Accum, 'base64'), "utf16-be");
+Utf7Decoder.prototype.end = function () {
+  var res = ""
+  if (this.inBase64 && this.base64Accum.length > 0) { res = this.iconv.decode(Buffer.from(this.base64Accum, "base64"), "utf16-be") }
 
-    this.inBase64 = false;
-    this.base64Accum = '';
-    return res;
+  this.inBase64 = false
+  this.base64Accum = ""
+  return res
 }
-
 
 // UTF-7-IMAP codec.
 // RFC3501 Sec. 5.1.3 Modified UTF-7 (http://tools.ietf.org/html/rfc3501#section-5.1.3)
@@ -20119,166 +16077,159 @@ Utf7Decoder.prototype.end = function() {
 //  * String must end in non-shifted position.
 //  * "-&" while in base64 is not allowed.
 
-
-exports.utf7imap = Utf7IMAPCodec;
-function Utf7IMAPCodec(codecOptions, iconv) {
-    this.iconv = iconv;
+exports.utf7imap = Utf7IMAPCodec
+function Utf7IMAPCodec (codecOptions, iconv) {
+  this.iconv = iconv
 };
 
-Utf7IMAPCodec.prototype.encoder = Utf7IMAPEncoder;
-Utf7IMAPCodec.prototype.decoder = Utf7IMAPDecoder;
-Utf7IMAPCodec.prototype.bomAware = true;
-
+Utf7IMAPCodec.prototype.encoder = Utf7IMAPEncoder
+Utf7IMAPCodec.prototype.decoder = Utf7IMAPDecoder
+Utf7IMAPCodec.prototype.bomAware = true
 
 // -- Encoding
 
-function Utf7IMAPEncoder(options, codec) {
-    this.iconv = codec.iconv;
-    this.inBase64 = false;
-    this.base64Accum = Buffer.alloc(6);
-    this.base64AccumIdx = 0;
+function Utf7IMAPEncoder (options, codec) {
+  this.iconv = codec.iconv
+  this.inBase64 = false
+  this.base64Accum = Buffer.alloc(6)
+  this.base64AccumIdx = 0
 }
 
-Utf7IMAPEncoder.prototype.write = function(str) {
-    var inBase64 = this.inBase64,
-        base64Accum = this.base64Accum,
-        base64AccumIdx = this.base64AccumIdx,
-        buf = Buffer.alloc(str.length*5 + 10), bufIdx = 0;
+Utf7IMAPEncoder.prototype.write = function (str) {
+  var inBase64 = this.inBase64
+  var base64Accum = this.base64Accum
+  var base64AccumIdx = this.base64AccumIdx
+  var buf = Buffer.alloc(str.length * 5 + 10); var bufIdx = 0
 
-    for (var i = 0; i < str.length; i++) {
-        var uChar = str.charCodeAt(i);
-        if (0x20 <= uChar && uChar <= 0x7E) { // Direct character or '&'.
-            if (inBase64) {
-                if (base64AccumIdx > 0) {
-                    bufIdx += buf.write(base64Accum.slice(0, base64AccumIdx).toString('base64').replace(/\//g, ',').replace(/=+$/, ''), bufIdx);
-                    base64AccumIdx = 0;
-                }
-
-                buf[bufIdx++] = minusChar; // Write '-', then go to direct mode.
-                inBase64 = false;
-            }
-
-            if (!inBase64) {
-                buf[bufIdx++] = uChar; // Write direct character
-
-                if (uChar === andChar)  // Ampersand -> '&-'
-                    buf[bufIdx++] = minusChar;
-            }
-
-        } else { // Non-direct character
-            if (!inBase64) {
-                buf[bufIdx++] = andChar; // Write '&', then go to base64 mode.
-                inBase64 = true;
-            }
-            if (inBase64) {
-                base64Accum[base64AccumIdx++] = uChar >> 8;
-                base64Accum[base64AccumIdx++] = uChar & 0xFF;
-
-                if (base64AccumIdx == base64Accum.length) {
-                    bufIdx += buf.write(base64Accum.toString('base64').replace(/\//g, ','), bufIdx);
-                    base64AccumIdx = 0;
-                }
-            }
-        }
-    }
-
-    this.inBase64 = inBase64;
-    this.base64AccumIdx = base64AccumIdx;
-
-    return buf.slice(0, bufIdx);
-}
-
-Utf7IMAPEncoder.prototype.end = function() {
-    var buf = Buffer.alloc(10), bufIdx = 0;
-    if (this.inBase64) {
-        if (this.base64AccumIdx > 0) {
-            bufIdx += buf.write(this.base64Accum.slice(0, this.base64AccumIdx).toString('base64').replace(/\//g, ',').replace(/=+$/, ''), bufIdx);
-            this.base64AccumIdx = 0;
+  for (var i = 0; i < str.length; i++) {
+    var uChar = str.charCodeAt(i)
+    if (uChar >= 0x20 && uChar <= 0x7E) { // Direct character or '&'.
+      if (inBase64) {
+        if (base64AccumIdx > 0) {
+          bufIdx += buf.write(base64Accum.slice(0, base64AccumIdx).toString("base64").replace(/\//g, ",").replace(/=+$/, ""), bufIdx)
+          base64AccumIdx = 0
         }
 
-        buf[bufIdx++] = minusChar; // Write '-', then go to direct mode.
-        this.inBase64 = false;
-    }
+        buf[bufIdx++] = minusChar // Write '-', then go to direct mode.
+        inBase64 = false
+      }
 
-    return buf.slice(0, bufIdx);
+      if (!inBase64) {
+        buf[bufIdx++] = uChar // Write direct character
+
+        if (uChar === andChar)  // Ampersand -> '&-'
+        { buf[bufIdx++] = minusChar }
+      }
+    } else { // Non-direct character
+      if (!inBase64) {
+        buf[bufIdx++] = andChar // Write '&', then go to base64 mode.
+        inBase64 = true
+      }
+      if (inBase64) {
+        base64Accum[base64AccumIdx++] = uChar >> 8
+        base64Accum[base64AccumIdx++] = uChar & 0xFF
+
+        if (base64AccumIdx == base64Accum.length) {
+          bufIdx += buf.write(base64Accum.toString("base64").replace(/\//g, ","), bufIdx)
+          base64AccumIdx = 0
+        }
+      }
+    }
+  }
+
+  this.inBase64 = inBase64
+  this.base64AccumIdx = base64AccumIdx
+
+  return buf.slice(0, bufIdx)
 }
 
+Utf7IMAPEncoder.prototype.end = function () {
+  var buf = Buffer.alloc(10); var bufIdx = 0
+  if (this.inBase64) {
+    if (this.base64AccumIdx > 0) {
+      bufIdx += buf.write(this.base64Accum.slice(0, this.base64AccumIdx).toString("base64").replace(/\//g, ",").replace(/=+$/, ""), bufIdx)
+      this.base64AccumIdx = 0
+    }
+
+    buf[bufIdx++] = minusChar // Write '-', then go to direct mode.
+    this.inBase64 = false
+  }
+
+  return buf.slice(0, bufIdx)
+}
 
 // -- Decoding
 
-function Utf7IMAPDecoder(options, codec) {
-    this.iconv = codec.iconv;
-    this.inBase64 = false;
-    this.base64Accum = '';
+function Utf7IMAPDecoder (options, codec) {
+  this.iconv = codec.iconv
+  this.inBase64 = false
+  this.base64Accum = ""
 }
 
-var base64IMAPChars = base64Chars.slice();
-base64IMAPChars[','.charCodeAt(0)] = true;
+var base64IMAPChars = base64Chars.slice()
+base64IMAPChars[",".charCodeAt(0)] = true
 
-Utf7IMAPDecoder.prototype.write = function(buf) {
-    var res = "", lastI = 0,
-        inBase64 = this.inBase64,
-        base64Accum = this.base64Accum;
+Utf7IMAPDecoder.prototype.write = function (buf) {
+  var res = ""; var lastI = 0
+  var inBase64 = this.inBase64
+  var base64Accum = this.base64Accum
 
-    // The decoder is more involved as we must handle chunks in stream.
-    // It is forgiving, closer to standard UTF-7 (for example, '-' is optional at the end).
+  // The decoder is more involved as we must handle chunks in stream.
+  // It is forgiving, closer to standard UTF-7 (for example, '-' is optional at the end).
 
-    for (var i = 0; i < buf.length; i++) {
-        if (!inBase64) { // We're in direct mode.
-            // Write direct chars until '&'
-            if (buf[i] == andChar) {
-                res += this.iconv.decode(buf.slice(lastI, i), "ascii"); // Write direct chars.
-                lastI = i+1;
-                inBase64 = true;
-            }
-        } else { // We decode base64.
-            if (!base64IMAPChars[buf[i]]) { // Base64 ended.
-                if (i == lastI && buf[i] == minusChar) { // "&-" -> "&"
-                    res += "&";
-                } else {
-                    var b64str = base64Accum + buf.slice(lastI, i).toString().replace(/,/g, '/');
-                    res += this.iconv.decode(Buffer.from(b64str, 'base64'), "utf16-be");
-                }
-
-                if (buf[i] != minusChar) // Minus may be absorbed after base64.
-                    i--;
-
-                lastI = i+1;
-                inBase64 = false;
-                base64Accum = '';
-            }
+  for (var i = 0; i < buf.length; i++) {
+    if (!inBase64) { // We're in direct mode.
+      // Write direct chars until '&'
+      if (buf[i] == andChar) {
+        res += this.iconv.decode(buf.slice(lastI, i), "ascii") // Write direct chars.
+        lastI = i + 1
+        inBase64 = true
+      }
+    } else { // We decode base64.
+      if (!base64IMAPChars[buf[i]]) { // Base64 ended.
+        if (i == lastI && buf[i] == minusChar) { // "&-" -> "&"
+          res += "&"
+        } else {
+          var b64str = base64Accum + this.iconv.decode(buf.slice(lastI, i), "ascii").replace(/,/g, "/")
+          res += this.iconv.decode(Buffer.from(b64str, "base64"), "utf16-be")
         }
+
+        if (buf[i] != minusChar) // Minus may be absorbed after base64.
+        { i-- }
+
+        lastI = i + 1
+        inBase64 = false
+        base64Accum = ""
+      }
     }
+  }
 
-    if (!inBase64) {
-        res += this.iconv.decode(buf.slice(lastI), "ascii"); // Write direct chars.
-    } else {
-        var b64str = base64Accum + buf.slice(lastI).toString().replace(/,/g, '/');
+  if (!inBase64) {
+    res += this.iconv.decode(buf.slice(lastI), "ascii") // Write direct chars.
+  } else {
+    var b64str = base64Accum + this.iconv.decode(buf.slice(lastI), "ascii").replace(/,/g, "/")
 
-        var canBeDecoded = b64str.length - (b64str.length % 8); // Minimal chunk: 2 quads -> 2x3 bytes -> 3 chars.
-        base64Accum = b64str.slice(canBeDecoded); // The rest will be decoded in future.
-        b64str = b64str.slice(0, canBeDecoded);
+    var canBeDecoded = b64str.length - (b64str.length % 8) // Minimal chunk: 2 quads -> 2x3 bytes -> 3 chars.
+    base64Accum = b64str.slice(canBeDecoded) // The rest will be decoded in future.
+    b64str = b64str.slice(0, canBeDecoded)
 
-        res += this.iconv.decode(Buffer.from(b64str, 'base64'), "utf16-be");
-    }
+    res += this.iconv.decode(Buffer.from(b64str, "base64"), "utf16-be")
+  }
 
-    this.inBase64 = inBase64;
-    this.base64Accum = base64Accum;
+  this.inBase64 = inBase64
+  this.base64Accum = base64Accum
 
-    return res;
+  return res
 }
 
-Utf7IMAPDecoder.prototype.end = function() {
-    var res = "";
-    if (this.inBase64 && this.base64Accum.length > 0)
-        res = this.iconv.decode(Buffer.from(this.base64Accum, 'base64'), "utf16-be");
+Utf7IMAPDecoder.prototype.end = function () {
+  var res = ""
+  if (this.inBase64 && this.base64Accum.length > 0) { res = this.iconv.decode(Buffer.from(this.base64Accum, "base64"), "utf16-be") }
 
-    this.inBase64 = false;
-    this.base64Accum = '';
-    return res;
+  this.inBase64 = false
+  this.base64Accum = ""
+  return res
 }
-
-
 
 
 /***/ }),
@@ -20289,281 +16240,73 @@ Utf7IMAPDecoder.prototype.end = function() {
 "use strict";
 
 
-var BOMChar = '\uFEFF';
+var BOMChar = "\uFEFF"
 
 exports.PrependBOM = PrependBOMWrapper
-function PrependBOMWrapper(encoder, options) {
-    this.encoder = encoder;
-    this.addBOM = true;
+function PrependBOMWrapper (encoder, options) {
+  this.encoder = encoder
+  this.addBOM = true
 }
 
-PrependBOMWrapper.prototype.write = function(str) {
-    if (this.addBOM) {
-        str = BOMChar + str;
-        this.addBOM = false;
-    }
+PrependBOMWrapper.prototype.write = function (str) {
+  if (this.addBOM) {
+    str = BOMChar + str
+    this.addBOM = false
+  }
 
-    return this.encoder.write(str);
+  return this.encoder.write(str)
 }
 
-PrependBOMWrapper.prototype.end = function() {
-    return this.encoder.end();
+PrependBOMWrapper.prototype.end = function () {
+  return this.encoder.end()
 }
 
+// ------------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-
-exports.StripBOM = StripBOMWrapper;
-function StripBOMWrapper(decoder, options) {
-    this.decoder = decoder;
-    this.pass = false;
-    this.options = options || {};
+exports.StripBOM = StripBOMWrapper
+function StripBOMWrapper (decoder, options) {
+  this.decoder = decoder
+  this.pass = false
+  this.options = options || {}
 }
 
-StripBOMWrapper.prototype.write = function(buf) {
-    var res = this.decoder.write(buf);
-    if (this.pass || !res)
-        return res;
+StripBOMWrapper.prototype.write = function (buf) {
+  var res = this.decoder.write(buf)
+  if (this.pass || !res) { return res }
 
-    if (res[0] === BOMChar) {
-        res = res.slice(1);
-        if (typeof this.options.stripBOM === 'function')
-            this.options.stripBOM();
-    }
+  if (res[0] === BOMChar) {
+    res = res.slice(1)
+    if (typeof this.options.stripBOM === "function") { this.options.stripBOM() }
+  }
 
-    this.pass = true;
-    return res;
+  this.pass = true
+  return res
 }
 
-StripBOMWrapper.prototype.end = function() {
-    return this.decoder.end();
+StripBOMWrapper.prototype.end = function () {
+  return this.decoder.end()
 }
-
 
 
 /***/ }),
 
-/***/ 4939:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ 5336:
+/***/ ((module) => {
 
 "use strict";
 
-var Buffer = (__nccwpck_require__(181).Buffer);
-// Note: not polyfilled with safer-buffer on a purpose, as overrides Buffer
 
-// == Extend Node primitives to use iconv-lite =================================
+var hasOwn = typeof Object.hasOwn === "undefined" ? Function.call.bind(Object.prototype.hasOwnProperty) : Object.hasOwn
 
-module.exports = function (iconv) {
-    var original = undefined; // Place to keep original methods.
-
-    // Node authors rewrote Buffer internals to make it compatible with
-    // Uint8Array and we cannot patch key functions since then.
-    // Note: this does use older Buffer API on a purpose
-    iconv.supportsNodeEncodingsExtension = !(Buffer.from || new Buffer(0) instanceof Uint8Array);
-
-    iconv.extendNodeEncodings = function extendNodeEncodings() {
-        if (original) return;
-        original = {};
-
-        if (!iconv.supportsNodeEncodingsExtension) {
-            console.error("ACTION NEEDED: require('iconv-lite').extendNodeEncodings() is not supported in your version of Node");
-            console.error("See more info at https://github.com/ashtuchkin/iconv-lite/wiki/Node-v4-compatibility");
-            return;
-        }
-
-        var nodeNativeEncodings = {
-            'hex': true, 'utf8': true, 'utf-8': true, 'ascii': true, 'binary': true, 
-            'base64': true, 'ucs2': true, 'ucs-2': true, 'utf16le': true, 'utf-16le': true,
-        };
-
-        Buffer.isNativeEncoding = function(enc) {
-            return enc && nodeNativeEncodings[enc.toLowerCase()];
-        }
-
-        // -- SlowBuffer -----------------------------------------------------------
-        var SlowBuffer = (__nccwpck_require__(181).SlowBuffer);
-
-        original.SlowBufferToString = SlowBuffer.prototype.toString;
-        SlowBuffer.prototype.toString = function(encoding, start, end) {
-            encoding = String(encoding || 'utf8').toLowerCase();
-
-            // Use native conversion when possible
-            if (Buffer.isNativeEncoding(encoding))
-                return original.SlowBufferToString.call(this, encoding, start, end);
-
-            // Otherwise, use our decoding method.
-            if (typeof start == 'undefined') start = 0;
-            if (typeof end == 'undefined') end = this.length;
-            return iconv.decode(this.slice(start, end), encoding);
-        }
-
-        original.SlowBufferWrite = SlowBuffer.prototype.write;
-        SlowBuffer.prototype.write = function(string, offset, length, encoding) {
-            // Support both (string, offset, length, encoding)
-            // and the legacy (string, encoding, offset, length)
-            if (isFinite(offset)) {
-                if (!isFinite(length)) {
-                    encoding = length;
-                    length = undefined;
-                }
-            } else {  // legacy
-                var swap = encoding;
-                encoding = offset;
-                offset = length;
-                length = swap;
-            }
-
-            offset = +offset || 0;
-            var remaining = this.length - offset;
-            if (!length) {
-                length = remaining;
-            } else {
-                length = +length;
-                if (length > remaining) {
-                    length = remaining;
-                }
-            }
-            encoding = String(encoding || 'utf8').toLowerCase();
-
-            // Use native conversion when possible
-            if (Buffer.isNativeEncoding(encoding))
-                return original.SlowBufferWrite.call(this, string, offset, length, encoding);
-
-            if (string.length > 0 && (length < 0 || offset < 0))
-                throw new RangeError('attempt to write beyond buffer bounds');
-
-            // Otherwise, use our encoding method.
-            var buf = iconv.encode(string, encoding);
-            if (buf.length < length) length = buf.length;
-            buf.copy(this, offset, 0, length);
-            return length;
-        }
-
-        // -- Buffer ---------------------------------------------------------------
-
-        original.BufferIsEncoding = Buffer.isEncoding;
-        Buffer.isEncoding = function(encoding) {
-            return Buffer.isNativeEncoding(encoding) || iconv.encodingExists(encoding);
-        }
-
-        original.BufferByteLength = Buffer.byteLength;
-        Buffer.byteLength = SlowBuffer.byteLength = function(str, encoding) {
-            encoding = String(encoding || 'utf8').toLowerCase();
-
-            // Use native conversion when possible
-            if (Buffer.isNativeEncoding(encoding))
-                return original.BufferByteLength.call(this, str, encoding);
-
-            // Slow, I know, but we don't have a better way yet.
-            return iconv.encode(str, encoding).length;
-        }
-
-        original.BufferToString = Buffer.prototype.toString;
-        Buffer.prototype.toString = function(encoding, start, end) {
-            encoding = String(encoding || 'utf8').toLowerCase();
-
-            // Use native conversion when possible
-            if (Buffer.isNativeEncoding(encoding))
-                return original.BufferToString.call(this, encoding, start, end);
-
-            // Otherwise, use our decoding method.
-            if (typeof start == 'undefined') start = 0;
-            if (typeof end == 'undefined') end = this.length;
-            return iconv.decode(this.slice(start, end), encoding);
-        }
-
-        original.BufferWrite = Buffer.prototype.write;
-        Buffer.prototype.write = function(string, offset, length, encoding) {
-            var _offset = offset, _length = length, _encoding = encoding;
-            // Support both (string, offset, length, encoding)
-            // and the legacy (string, encoding, offset, length)
-            if (isFinite(offset)) {
-                if (!isFinite(length)) {
-                    encoding = length;
-                    length = undefined;
-                }
-            } else {  // legacy
-                var swap = encoding;
-                encoding = offset;
-                offset = length;
-                length = swap;
-            }
-
-            encoding = String(encoding || 'utf8').toLowerCase();
-
-            // Use native conversion when possible
-            if (Buffer.isNativeEncoding(encoding))
-                return original.BufferWrite.call(this, string, _offset, _length, _encoding);
-
-            offset = +offset || 0;
-            var remaining = this.length - offset;
-            if (!length) {
-                length = remaining;
-            } else {
-                length = +length;
-                if (length > remaining) {
-                    length = remaining;
-                }
-            }
-
-            if (string.length > 0 && (length < 0 || offset < 0))
-                throw new RangeError('attempt to write beyond buffer bounds');
-
-            // Otherwise, use our encoding method.
-            var buf = iconv.encode(string, encoding);
-            if (buf.length < length) length = buf.length;
-            buf.copy(this, offset, 0, length);
-            return length;
-
-            // TODO: Set _charsWritten.
-        }
-
-
-        // -- Readable -------------------------------------------------------------
-        if (iconv.supportsStreams) {
-            var Readable = (__nccwpck_require__(2203).Readable);
-
-            original.ReadableSetEncoding = Readable.prototype.setEncoding;
-            Readable.prototype.setEncoding = function setEncoding(enc, options) {
-                // Use our own decoder, it has the same interface.
-                // We cannot use original function as it doesn't handle BOM-s.
-                this._readableState.decoder = iconv.getDecoder(enc, options);
-                this._readableState.encoding = enc;
-            }
-
-            Readable.prototype.collect = iconv._collect;
-        }
+function mergeModules (target, module) {
+  for (var key in module) {
+    if (hasOwn(module, key)) {
+      target[key] = module[key]
     }
-
-    // Remove iconv-lite Node primitive extensions.
-    iconv.undoExtendNodeEncodings = function undoExtendNodeEncodings() {
-        if (!iconv.supportsNodeEncodingsExtension)
-            return;
-        if (!original)
-            throw new Error("require('iconv-lite').undoExtendNodeEncodings(): Nothing to undo; extendNodeEncodings() is not called.")
-
-        delete Buffer.isNativeEncoding;
-
-        var SlowBuffer = (__nccwpck_require__(181).SlowBuffer);
-
-        SlowBuffer.prototype.toString = original.SlowBufferToString;
-        SlowBuffer.prototype.write = original.SlowBufferWrite;
-
-        Buffer.isEncoding = original.BufferIsEncoding;
-        Buffer.byteLength = original.BufferByteLength;
-        Buffer.prototype.toString = original.BufferToString;
-        Buffer.prototype.write = original.BufferWrite;
-
-        if (iconv.supportsStreams) {
-            var Readable = (__nccwpck_require__(2203).Readable);
-
-            Readable.prototype.setEncoding = original.ReadableSetEncoding;
-            delete Readable.prototype.collect;
-        }
-
-        original = undefined;
-    }
+  }
 }
+
+module.exports = mergeModules
 
 
 /***/ }),
@@ -20574,154 +16317,183 @@ module.exports = function (iconv) {
 "use strict";
 
 
-// Some environments don't have global Buffer (e.g. React Native).
-// Solution would be installing npm modules "buffer" and "stream" explicitly.
-var Buffer = (__nccwpck_require__(2803).Buffer);
+var Buffer = (__nccwpck_require__(2803).Buffer)
 
-var bomHandling = __nccwpck_require__(4250),
-    iconv = module.exports;
+var bomHandling = __nccwpck_require__(4250)
+var mergeModules = __nccwpck_require__(5336)
 
 // All codecs and aliases are kept here, keyed by encoding name/alias.
 // They are lazy loaded in `iconv.getCodec` from `encodings/index.js`.
-iconv.encodings = null;
+// Cannot initialize with { __proto__: null } because Boolean({ __proto__: null }) === true
+module.exports.encodings = null
 
 // Characters emitted in case of error.
-iconv.defaultCharUnicode = '�';
-iconv.defaultCharSingleByte = '?';
+module.exports.defaultCharUnicode = "�"
+module.exports.defaultCharSingleByte = "?"
 
 // Public API.
-iconv.encode = function encode(str, encoding, options) {
-    str = "" + (str || ""); // Ensure string.
+module.exports.encode = function encode (str, encoding, options) {
+  str = "" + (str || "") // Ensure string.
 
-    var encoder = iconv.getEncoder(encoding, options);
+  var encoder = module.exports.getEncoder(encoding, options)
 
-    var res = encoder.write(str);
-    var trail = encoder.end();
-    
-    return (trail && trail.length > 0) ? Buffer.concat([res, trail]) : res;
+  var res = encoder.write(str)
+  var trail = encoder.end()
+
+  return (trail && trail.length > 0) ? Buffer.concat([res, trail]) : res
 }
 
-iconv.decode = function decode(buf, encoding, options) {
-    if (typeof buf === 'string') {
-        if (!iconv.skipDecodeWarning) {
-            console.error('Iconv-lite warning: decode()-ing strings is deprecated. Refer to https://github.com/ashtuchkin/iconv-lite/wiki/Use-Buffers-when-decoding');
-            iconv.skipDecodeWarning = true;
-        }
-
-        buf = Buffer.from("" + (buf || ""), "binary"); // Ensure buffer.
+module.exports.decode = function decode (buf, encoding, options) {
+  if (typeof buf === "string") {
+    if (!module.exports.skipDecodeWarning) {
+      console.error("Iconv-lite warning: decode()-ing strings is deprecated. Refer to https://github.com/ashtuchkin/iconv-lite/wiki/Use-Buffers-when-decoding")
+      module.exports.skipDecodeWarning = true
     }
 
-    var decoder = iconv.getDecoder(encoding, options);
+    buf = Buffer.from("" + (buf || ""), "binary") // Ensure buffer.
+  }
 
-    var res = decoder.write(buf);
-    var trail = decoder.end();
+  var decoder = module.exports.getDecoder(encoding, options)
 
-    return trail ? (res + trail) : res;
+  var res = decoder.write(buf)
+  var trail = decoder.end()
+
+  return trail ? (res + trail) : res
 }
 
-iconv.encodingExists = function encodingExists(enc) {
-    try {
-        iconv.getCodec(enc);
-        return true;
-    } catch (e) {
-        return false;
-    }
+module.exports.encodingExists = function encodingExists (enc) {
+  try {
+    module.exports.getCodec(enc)
+    return true
+  } catch (e) {
+    return false
+  }
 }
 
 // Legacy aliases to convert functions
-iconv.toEncoding = iconv.encode;
-iconv.fromEncoding = iconv.decode;
+module.exports.toEncoding = module.exports.encode
+module.exports.fromEncoding = module.exports.decode
 
 // Search for a codec in iconv.encodings. Cache codec data in iconv._codecDataCache.
-iconv._codecDataCache = {};
-iconv.getCodec = function getCodec(encoding) {
-    if (!iconv.encodings)
-        iconv.encodings = __nccwpck_require__(7585); // Lazy load all encoding definitions.
-    
-    // Canonicalize encoding name: strip all non-alphanumeric chars and appended year.
-    var enc = iconv._canonicalizeEncoding(encoding);
+module.exports._codecDataCache = { __proto__: null }
 
-    // Traverse iconv.encodings to find actual codec.
-    var codecOptions = {};
-    while (true) {
-        var codec = iconv._codecDataCache[enc];
-        if (codec)
-            return codec;
+module.exports.getCodec = function getCodec (encoding) {
+  if (!module.exports.encodings) {
+    var raw = __nccwpck_require__(7585)
+    // TODO: In future versions when old nodejs support is removed can use object.assign
+    module.exports.encodings = { __proto__: null } // Initialize as empty object.
+    mergeModules(module.exports.encodings, raw)
+  }
 
-        var codecDef = iconv.encodings[enc];
+  // Canonicalize encoding name: strip all non-alphanumeric chars and appended year.
+  var enc = module.exports._canonicalizeEncoding(encoding)
 
-        switch (typeof codecDef) {
-            case "string": // Direct alias to other encoding.
-                enc = codecDef;
-                break;
+  // Traverse iconv.encodings to find actual codec.
+  var codecOptions = {}
+  while (true) {
+    var codec = module.exports._codecDataCache[enc]
 
-            case "object": // Alias with options. Can be layered.
-                for (var key in codecDef)
-                    codecOptions[key] = codecDef[key];
+    if (codec) { return codec }
 
-                if (!codecOptions.encodingName)
-                    codecOptions.encodingName = enc;
-                
-                enc = codecDef.type;
-                break;
+    var codecDef = module.exports.encodings[enc]
 
-            case "function": // Codec itself.
-                if (!codecOptions.encodingName)
-                    codecOptions.encodingName = enc;
+    switch (typeof codecDef) {
+      case "string": // Direct alias to other encoding.
+        enc = codecDef
+        break
 
-                // The codec function must load all tables and return object with .encoder and .decoder methods.
-                // It'll be called only once (for each different options object).
-                codec = new codecDef(codecOptions, iconv);
+      case "object": // Alias with options. Can be layered.
+        for (var key in codecDef) { codecOptions[key] = codecDef[key] }
 
-                iconv._codecDataCache[codecOptions.encodingName] = codec; // Save it to be reused later.
-                return codec;
+        if (!codecOptions.encodingName) { codecOptions.encodingName = enc }
 
-            default:
-                throw new Error("Encoding not recognized: '" + encoding + "' (searched as: '"+enc+"')");
-        }
+        enc = codecDef.type
+        break
+
+      case "function": // Codec itself.
+        if (!codecOptions.encodingName) { codecOptions.encodingName = enc }
+
+        // The codec function must load all tables and return object with .encoder and .decoder methods.
+        // It'll be called only once (for each different options object).
+        //
+        codec = new codecDef(codecOptions, module.exports)
+
+        module.exports._codecDataCache[codecOptions.encodingName] = codec // Save it to be reused later.
+        return codec
+
+      default:
+        throw new Error("Encoding not recognized: '" + encoding + "' (searched as: '" + enc + "')")
     }
+  }
 }
 
-iconv._canonicalizeEncoding = function(encoding) {
-    // Canonicalize encoding name: strip all non-alphanumeric chars and appended year.
-    return (''+encoding).toLowerCase().replace(/:\d{4}$|[^0-9a-z]/g, "");
+module.exports._canonicalizeEncoding = function (encoding) {
+  // Canonicalize encoding name: strip all non-alphanumeric chars and appended year.
+  return ("" + encoding).toLowerCase().replace(/:\d{4}$|[^0-9a-z]/g, "")
 }
 
-iconv.getEncoder = function getEncoder(encoding, options) {
-    var codec = iconv.getCodec(encoding),
-        encoder = new codec.encoder(options, codec);
+module.exports.getEncoder = function getEncoder (encoding, options) {
+  var codec = module.exports.getCodec(encoding)
+  var encoder = new codec.encoder(options, codec)
 
-    if (codec.bomAware && options && options.addBOM)
-        encoder = new bomHandling.PrependBOM(encoder, options);
+  if (codec.bomAware && options && options.addBOM) { encoder = new bomHandling.PrependBOM(encoder, options) }
 
-    return encoder;
+  return encoder
 }
 
-iconv.getDecoder = function getDecoder(encoding, options) {
-    var codec = iconv.getCodec(encoding),
-        decoder = new codec.decoder(options, codec);
+module.exports.getDecoder = function getDecoder (encoding, options) {
+  var codec = module.exports.getCodec(encoding)
+  var decoder = new codec.decoder(options, codec)
 
-    if (codec.bomAware && !(options && options.stripBOM === false))
-        decoder = new bomHandling.StripBOM(decoder, options);
+  if (codec.bomAware && !(options && options.stripBOM === false)) { decoder = new bomHandling.StripBOM(decoder, options) }
 
-    return decoder;
+  return decoder
 }
 
+// Streaming API
+// NOTE: Streaming API naturally depends on 'stream' module from Node.js. Unfortunately in browser environments this module can add
+// up to 100Kb to the output bundle. To avoid unnecessary code bloat, we don't enable Streaming API in browser by default.
+// If you would like to enable it explicitly, please add the following code to your app:
+// > iconv.enableStreamingAPI(require('stream'));
+module.exports.enableStreamingAPI = function enableStreamingAPI (streamModule) {
+  if (module.exports.supportsStreams) { return }
 
-// Load extensions in Node. All of them are omitted in Browserify build via 'browser' field in package.json.
-var nodeVer = typeof process !== 'undefined' && process.versions && process.versions.node;
-if (nodeVer) {
+  // Dependency-inject stream module to create IconvLite stream classes.
+  var streams = __nccwpck_require__(2281)(streamModule)
 
-    // Load streaming support in Node v0.10+
-    var nodeVerArr = nodeVer.split(".").map(Number);
-    if (nodeVerArr[0] > 0 || nodeVerArr[1] >= 10) {
-        __nccwpck_require__(2281)(iconv);
-    }
+  // Not public API yet, but expose the stream classes.
+  module.exports.IconvLiteEncoderStream = streams.IconvLiteEncoderStream
+  module.exports.IconvLiteDecoderStream = streams.IconvLiteDecoderStream
 
-    // Load Node primitive extensions.
-    __nccwpck_require__(4939)(iconv);
+  // Streaming API.
+  module.exports.encodeStream = function encodeStream (encoding, options) {
+    return new module.exports.IconvLiteEncoderStream(module.exports.getEncoder(encoding, options), options)
+  }
+
+  module.exports.decodeStream = function decodeStream (encoding, options) {
+    return new module.exports.IconvLiteDecoderStream(module.exports.getDecoder(encoding, options), options)
+  }
+
+  module.exports.supportsStreams = true
 }
 
+// Enable Streaming API automatically if 'stream' module is available and non-empty (the majority of environments).
+var streamModule
+try {
+  streamModule = __nccwpck_require__(2203)
+} catch (e) {}
+
+if (streamModule && streamModule.Transform) {
+  module.exports.enableStreamingAPI(streamModule)
+} else {
+  // In rare cases where 'stream' module is not available by default, throw a helpful exception.
+  module.exports.encodeStream = module.exports.decodeStream = function () {
+    throw new Error("iconv-lite Streaming API is not enabled. Use iconv.enableStreamingAPI(require('stream')); to enable it.")
+  }
+}
+
+// Some environments, such as browsers, may not load JavaScript files as UTF-8
+// eslint-disable-next-line no-constant-condition
 if (false) {}
 
 
@@ -20733,125 +16505,109 @@ if (false) {}
 "use strict";
 
 
-var Buffer = (__nccwpck_require__(181).Buffer),
-    Transform = (__nccwpck_require__(2203).Transform);
+var Buffer = (__nccwpck_require__(2803).Buffer)
 
+// NOTE: Due to 'stream' module being pretty large (~100Kb, significant in browser environments),
+// we opt to dependency-inject it instead of creating a hard dependency.
+module.exports = function (streamModule) {
+  var Transform = streamModule.Transform
 
-// == Exports ==================================================================
-module.exports = function(iconv) {
-    
-    // Additional Public API.
-    iconv.encodeStream = function encodeStream(encoding, options) {
-        return new IconvLiteEncoderStream(iconv.getEncoder(encoding, options), options);
-    }
+  // == Encoder stream =======================================================
 
-    iconv.decodeStream = function decodeStream(encoding, options) {
-        return new IconvLiteDecoderStream(iconv.getDecoder(encoding, options), options);
-    }
+  function IconvLiteEncoderStream (conv, options) {
+    this.conv = conv
+    options = options || {}
+    options.decodeStrings = false // We accept only strings, so we don't need to decode them.
+    Transform.call(this, options)
+  }
 
-    iconv.supportsStreams = true;
-
-
-    // Not published yet.
-    iconv.IconvLiteEncoderStream = IconvLiteEncoderStream;
-    iconv.IconvLiteDecoderStream = IconvLiteDecoderStream;
-    iconv._collect = IconvLiteDecoderStream.prototype.collect;
-};
-
-
-// == Encoder stream =======================================================
-function IconvLiteEncoderStream(conv, options) {
-    this.conv = conv;
-    options = options || {};
-    options.decodeStrings = false; // We accept only strings, so we don't need to decode them.
-    Transform.call(this, options);
-}
-
-IconvLiteEncoderStream.prototype = Object.create(Transform.prototype, {
+  IconvLiteEncoderStream.prototype = Object.create(Transform.prototype, {
     constructor: { value: IconvLiteEncoderStream }
-});
+  })
 
-IconvLiteEncoderStream.prototype._transform = function(chunk, encoding, done) {
-    if (typeof chunk != 'string')
-        return done(new Error("Iconv encoding stream needs strings as its input."));
+  IconvLiteEncoderStream.prototype._transform = function (chunk, encoding, done) {
+    if (typeof chunk !== "string") {
+      return done(new Error("Iconv encoding stream needs strings as its input."))
+    }
+
     try {
-        var res = this.conv.write(chunk);
-        if (res && res.length) this.push(res);
-        done();
+      var res = this.conv.write(chunk)
+      if (res && res.length) this.push(res)
+      done()
+    } catch (e) {
+      done(e)
     }
-    catch (e) {
-        done(e);
-    }
-}
+  }
 
-IconvLiteEncoderStream.prototype._flush = function(done) {
+  IconvLiteEncoderStream.prototype._flush = function (done) {
     try {
-        var res = this.conv.end();
-        if (res && res.length) this.push(res);
-        done();
+      var res = this.conv.end()
+      if (res && res.length) this.push(res)
+      done()
+    } catch (e) {
+      done(e)
     }
-    catch (e) {
-        done(e);
-    }
-}
+  }
 
-IconvLiteEncoderStream.prototype.collect = function(cb) {
-    var chunks = [];
-    this.on('error', cb);
-    this.on('data', function(chunk) { chunks.push(chunk); });
-    this.on('end', function() {
-        cb(null, Buffer.concat(chunks));
-    });
-    return this;
-}
+  IconvLiteEncoderStream.prototype.collect = function (cb) {
+    var chunks = []
+    this.on("error", cb)
+    this.on("data", function (chunk) { chunks.push(chunk) })
+    this.on("end", function () {
+      cb(null, Buffer.concat(chunks))
+    })
+    return this
+  }
 
+  // == Decoder stream =======================================================
 
-// == Decoder stream =======================================================
-function IconvLiteDecoderStream(conv, options) {
-    this.conv = conv;
-    options = options || {};
-    options.encoding = this.encoding = 'utf8'; // We output strings.
-    Transform.call(this, options);
-}
+  function IconvLiteDecoderStream (conv, options) {
+    this.conv = conv
+    options = options || {}
+    options.encoding = this.encoding = "utf8" // We output strings.
+    Transform.call(this, options)
+  }
 
-IconvLiteDecoderStream.prototype = Object.create(Transform.prototype, {
+  IconvLiteDecoderStream.prototype = Object.create(Transform.prototype, {
     constructor: { value: IconvLiteDecoderStream }
-});
+  })
 
-IconvLiteDecoderStream.prototype._transform = function(chunk, encoding, done) {
-    if (!Buffer.isBuffer(chunk))
-        return done(new Error("Iconv decoding stream needs buffers as its input."));
+  IconvLiteDecoderStream.prototype._transform = function (chunk, encoding, done) {
+    if (!Buffer.isBuffer(chunk) && !(chunk instanceof Uint8Array)) { return done(new Error("Iconv decoding stream needs buffers as its input.")) }
     try {
-        var res = this.conv.write(chunk);
-        if (res && res.length) this.push(res, this.encoding);
-        done();
+      var res = this.conv.write(chunk)
+      if (res && res.length) this.push(res, this.encoding)
+      done()
+    } catch (e) {
+      done(e)
     }
-    catch (e) {
-        done(e);
-    }
-}
+  }
 
-IconvLiteDecoderStream.prototype._flush = function(done) {
+  IconvLiteDecoderStream.prototype._flush = function (done) {
     try {
-        var res = this.conv.end();
-        if (res && res.length) this.push(res, this.encoding);                
-        done();
+      var res = this.conv.end()
+      if (res && res.length) this.push(res, this.encoding)
+      done()
+    } catch (e) {
+      done(e)
     }
-    catch (e) {
-        done(e);
-    }
-}
+  }
 
-IconvLiteDecoderStream.prototype.collect = function(cb) {
-    var res = '';
-    this.on('error', cb);
-    this.on('data', function(chunk) { res += chunk; });
-    this.on('end', function() {
-        cb(null, res);
-    });
-    return this;
-}
+  IconvLiteDecoderStream.prototype.collect = function (cb) {
+    var res = ""
+    this.on("error", cb)
+    this.on("data", function (chunk) { res += chunk })
+    this.on("end", function () {
+      cb(null, res)
+    })
+    return this
+  }
 
+  return {
+    IconvLiteEncoderStream: IconvLiteEncoderStream,
+    IconvLiteDecoderStream: IconvLiteDecoderStream
+  }
+}
 
 
 /***/ }),
@@ -21587,6 +17343,19 @@ if (typeof Object.create === 'function') {
 
 /***/ }),
 
+/***/ 6904:
+/***/ ((module) => {
+
+module.exports = isPromise;
+module.exports["default"] = isPromise;
+
+function isPromise(obj) {
+  return !!obj && (typeof obj === 'object' || typeof obj === 'function') && typeof obj.then === 'function';
+}
+
+
+/***/ }),
+
 /***/ 2064:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -21811,51 +17580,14 @@ module.exports = function sign(number) {
 /***/ 827:
 /***/ ((__unused_webpack_module, exports) => {
 
+"use strict";
 /*!
  * media-typer
- * Copyright(c) 2014 Douglas Christopher Wilson
+ * Copyright(c) 2014-2017 Douglas Christopher Wilson
  * MIT Licensed
  */
 
-/**
- * RegExp to match *( ";" parameter ) in RFC 2616 sec 3.7
- *
- * parameter     = token "=" ( token | quoted-string )
- * token         = 1*<any CHAR except CTLs or separators>
- * separators    = "(" | ")" | "<" | ">" | "@"
- *               | "," | ";" | ":" | "\" | <">
- *               | "/" | "[" | "]" | "?" | "="
- *               | "{" | "}" | SP | HT
- * quoted-string = ( <"> *(qdtext | quoted-pair ) <"> )
- * qdtext        = <any TEXT except <">>
- * quoted-pair   = "\" CHAR
- * CHAR          = <any US-ASCII character (octets 0 - 127)>
- * TEXT          = <any OCTET except CTLs, but including LWS>
- * LWS           = [CRLF] 1*( SP | HT )
- * CRLF          = CR LF
- * CR            = <US-ASCII CR, carriage return (13)>
- * LF            = <US-ASCII LF, linefeed (10)>
- * SP            = <US-ASCII SP, space (32)>
- * SHT           = <US-ASCII HT, horizontal-tab (9)>
- * CTL           = <any US-ASCII control character (octets 0 - 31) and DEL (127)>
- * OCTET         = <any 8-bit sequence of data>
- */
-var paramRegExp = /; *([!#$%&'\*\+\-\.0-9A-Z\^_`a-z\|~]+) *= *("(?:[ !\u0023-\u005b\u005d-\u007e\u0080-\u00ff]|\\[\u0020-\u007e])*"|[!#$%&'\*\+\-\.0-9A-Z\^_`a-z\|~]+) */g;
-var textRegExp = /^[\u0020-\u007e\u0080-\u00ff]+$/
-var tokenRegExp = /^[!#$%&'\*\+\-\.0-9A-Z\^_`a-z\|~]+$/
 
-/**
- * RegExp to match quoted-pair in RFC 2616
- *
- * quoted-pair = "\" CHAR
- * CHAR        = <any US-ASCII character (octets 0 - 127)>
- */
-var qescRegExp = /\\([\u0000-\u007f])/g;
-
-/**
- * RegExp to match chars that must be quoted-pair in RFC 2616
- */
-var quoteRegExp = /([\\"])/g;
 
 /**
  * RegExp to match type in RFC 6838
@@ -21873,9 +17605,9 @@ var quoteRegExp = /([\\"])/g;
  * ALPHA =  %x41-5A / %x61-7A   ; A-Z / a-z
  * DIGIT =  %x30-39             ; 0-9
  */
-var subtypeNameRegExp = /^[A-Za-z0-9][A-Za-z0-9!#$&^_.-]{0,126}$/
-var typeNameRegExp = /^[A-Za-z0-9][A-Za-z0-9!#$&^_-]{0,126}$/
-var typeRegExp = /^ *([A-Za-z0-9][A-Za-z0-9!#$&^_-]{0,126})\/([A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}) *$/;
+var SUBTYPE_NAME_REGEXP = /^[A-Za-z0-9][A-Za-z0-9!#$&^_.-]{0,126}$/
+var TYPE_NAME_REGEXP = /^[A-Za-z0-9][A-Za-z0-9!#$&^_-]{0,126}$/
+var TYPE_REGEXP = /^ *([A-Za-z0-9][A-Za-z0-9!#$&^_-]{0,126})\/([A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}) *$/
 
 /**
  * Module exports.
@@ -21883,30 +17615,30 @@ var typeRegExp = /^ *([A-Za-z0-9][A-Za-z0-9!#$&^_-]{0,126})\/([A-Za-z0-9][A-Za-z
 
 exports.format = format
 exports.parse = parse
+exports.test = test
 
 /**
  * Format object to media type.
  *
  * @param {object} obj
  * @return {string}
- * @api public
+ * @public
  */
 
-function format(obj) {
+function format (obj) {
   if (!obj || typeof obj !== 'object') {
     throw new TypeError('argument obj is required')
   }
 
-  var parameters = obj.parameters
   var subtype = obj.subtype
   var suffix = obj.suffix
   var type = obj.type
 
-  if (!type || !typeNameRegExp.test(type)) {
+  if (!type || !TYPE_NAME_REGEXP.test(type)) {
     throw new TypeError('invalid type')
   }
 
-  if (!subtype || !subtypeNameRegExp.test(subtype)) {
+  if (!subtype || !SUBTYPE_NAME_REGEXP.test(subtype)) {
     throw new TypeError('invalid subtype')
   }
 
@@ -21915,148 +17647,54 @@ function format(obj) {
 
   // append +suffix
   if (suffix) {
-    if (!typeNameRegExp.test(suffix)) {
+    if (!TYPE_NAME_REGEXP.test(suffix)) {
       throw new TypeError('invalid suffix')
     }
 
     string += '+' + suffix
   }
 
-  // append parameters
-  if (parameters && typeof parameters === 'object') {
-    var param
-    var params = Object.keys(parameters).sort()
-
-    for (var i = 0; i < params.length; i++) {
-      param = params[i]
-
-      if (!tokenRegExp.test(param)) {
-        throw new TypeError('invalid parameter name')
-      }
-
-      string += '; ' + param + '=' + qstring(parameters[param])
-    }
-  }
-
   return string
 }
 
 /**
- * Parse media type to object.
+ * Test media type.
  *
- * @param {string|object} string
- * @return {Object}
- * @api public
+ * @param {string} string
+ * @return {object}
+ * @public
  */
 
-function parse(string) {
+function test (string) {
   if (!string) {
     throw new TypeError('argument string is required')
-  }
-
-  // support req/res-like objects as argument
-  if (typeof string === 'object') {
-    string = getcontenttype(string)
   }
 
   if (typeof string !== 'string') {
     throw new TypeError('argument string is required to be a string')
   }
 
-  var index = string.indexOf(';')
-  var type = index !== -1
-    ? string.substr(0, index)
-    : string
-
-  var key
-  var match
-  var obj = splitType(type)
-  var params = {}
-  var value
-
-  paramRegExp.lastIndex = index
-
-  while (match = paramRegExp.exec(string)) {
-    if (match.index !== index) {
-      throw new TypeError('invalid parameter format')
-    }
-
-    index += match[0].length
-    key = match[1].toLowerCase()
-    value = match[2]
-
-    if (value[0] === '"') {
-      // remove quotes and escapes
-      value = value
-        .substr(1, value.length - 2)
-        .replace(qescRegExp, '$1')
-    }
-
-    params[key] = value
-  }
-
-  if (index !== -1 && index !== string.length) {
-    throw new TypeError('invalid parameter format')
-  }
-
-  obj.parameters = params
-
-  return obj
+  return TYPE_REGEXP.test(string.toLowerCase())
 }
 
 /**
- * Get content-type from req/res objects.
- *
- * @param {object}
- * @return {Object}
- * @api private
- */
-
-function getcontenttype(obj) {
-  if (typeof obj.getHeader === 'function') {
-    // res-like
-    return obj.getHeader('content-type')
-  }
-
-  if (typeof obj.headers === 'object') {
-    // req-like
-    return obj.headers && obj.headers['content-type']
-  }
-}
-
-/**
- * Quote a string if necessary.
- *
- * @param {string} val
- * @return {string}
- * @api private
- */
-
-function qstring(val) {
-  var str = String(val)
-
-  // no need to quote tokens
-  if (tokenRegExp.test(str)) {
-    return str
-  }
-
-  if (str.length > 0 && !textRegExp.test(str)) {
-    throw new TypeError('invalid parameter value')
-  }
-
-  return '"' + str.replace(quoteRegExp, '\\$1') + '"'
-}
-
-/**
- * Simply "type/subtype+siffx" into parts.
+ * Parse media type to object.
  *
  * @param {string} string
- * @return {Object}
- * @api private
+ * @return {object}
+ * @public
  */
 
-function splitType(string) {
-  var match = typeRegExp.exec(string.toLowerCase())
+function parse (string) {
+  if (!string) {
+    throw new TypeError('argument string is required')
+  }
+
+  if (typeof string !== 'string') {
+    throw new TypeError('argument string is required to be a string')
+  }
+
+  var match = TYPE_REGEXP.exec(string.toLowerCase())
 
   if (!match) {
     throw new TypeError('invalid media type')
@@ -22073,13 +17711,18 @@ function splitType(string) {
     subtype = subtype.substr(0, index)
   }
 
-  var obj = {
-    type: type,
-    subtype: subtype,
-    suffix: suffix
-  }
+  return new MediaType(type, subtype, suffix)
+}
 
-  return obj
+/**
+ * Class for MediaType object.
+ * @public
+ */
+
+function MediaType (type, subtype, suffix) {
+  this.type = type
+  this.subtype = subtype
+  this.suffix = suffix
 }
 
 
@@ -22089,143 +17732,32 @@ function splitType(string) {
 /***/ ((module) => {
 
 "use strict";
-/*!
- * merge-descriptors
- * Copyright(c) 2014 Jonathan Ong
- * Copyright(c) 2015 Douglas Christopher Wilson
- * MIT Licensed
- */
 
 
+function mergeDescriptors(destination, source, overwrite = true) {
+	if (!destination) {
+		throw new TypeError('The `destination` argument is required.');
+	}
 
-/**
- * Module exports.
- * @public
- */
+	if (!source) {
+		throw new TypeError('The `source` argument is required.');
+	}
 
-module.exports = merge
+	for (const name of Object.getOwnPropertyNames(source)) {
+		if (!overwrite && Object.hasOwn(destination, name)) {
+			// Skip descriptor
+			continue;
+		}
 
-/**
- * Module variables.
- * @private
- */
+		// Copy descriptor
+		const descriptor = Object.getOwnPropertyDescriptor(source, name);
+		Object.defineProperty(destination, name, descriptor);
+	}
 
-var hasOwnProperty = Object.prototype.hasOwnProperty
-
-/**
- * Merge the property descriptors of `src` into `dest`
- *
- * @param {object} dest Object to add descriptors to
- * @param {object} src Object to clone descriptors from
- * @param {boolean} [redefine=true] Redefine `dest` properties with `src` properties
- * @returns {object} Reference to dest
- * @public
- */
-
-function merge (dest, src, redefine) {
-  if (!dest) {
-    throw new TypeError('argument dest is required')
-  }
-
-  if (!src) {
-    throw new TypeError('argument src is required')
-  }
-
-  if (redefine === undefined) {
-    // Default to true
-    redefine = true
-  }
-
-  Object.getOwnPropertyNames(src).forEach(function forEachOwnPropertyName (name) {
-    if (!redefine && hasOwnProperty.call(dest, name)) {
-      // Skip descriptor
-      return
-    }
-
-    // Copy descriptor
-    var descriptor = Object.getOwnPropertyDescriptor(src, name)
-    Object.defineProperty(dest, name, descriptor)
-  })
-
-  return dest
+	return destination;
 }
 
-
-/***/ }),
-
-/***/ 806:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-/*!
- * methods
- * Copyright(c) 2013-2014 TJ Holowaychuk
- * Copyright(c) 2015-2016 Douglas Christopher Wilson
- * MIT Licensed
- */
-
-
-
-/**
- * Module dependencies.
- * @private
- */
-
-var http = __nccwpck_require__(8611);
-
-/**
- * Module exports.
- * @public
- */
-
-module.exports = getCurrentNodeMethods() || getBasicNodeMethods();
-
-/**
- * Get the current Node.js methods.
- * @private
- */
-
-function getCurrentNodeMethods() {
-  return http.METHODS && http.METHODS.map(function lowerCaseMethod(method) {
-    return method.toLowerCase();
-  });
-}
-
-/**
- * Get the "basic" Node.js methods, a snapshot from Node.js 0.10.
- * @private
- */
-
-function getBasicNodeMethods() {
-  return [
-    'get',
-    'post',
-    'put',
-    'head',
-    'delete',
-    'options',
-    'trace',
-    'copy',
-    'lock',
-    'mkcol',
-    'move',
-    'purge',
-    'propfind',
-    'proppatch',
-    'unlock',
-    'report',
-    'mkactivity',
-    'checkout',
-    'merge',
-    'm-search',
-    'notify',
-    'subscribe',
-    'unsubscribe',
-    'patch',
-    'search',
-    'connect'
-  ];
-}
+module.exports = mergeDescriptors;
 
 
 /***/ }),
@@ -22269,6 +17801,7 @@ module.exports = __nccwpck_require__(1813)
 
 var db = __nccwpck_require__(9829)
 var extname = (__nccwpck_require__(6928).extname)
+var mimeScore = __nccwpck_require__(4062)
 
 /**
  * Module variables.
@@ -22290,6 +17823,7 @@ exports.extension = extension
 exports.extensions = Object.create(null)
 exports.lookup = lookup
 exports.types = Object.create(null)
+exports._extensionConflicts = []
 
 // Populate the extensions/types maps
 populateMaps(exports.extensions, exports.types)
@@ -22298,7 +17832,7 @@ populateMaps(exports.extensions, exports.types)
  * Get the default charset for a MIME type.
  *
  * @param {string} type
- * @return {boolean|string}
+ * @return {false|string}
  */
 
 function charset (type) {
@@ -22326,7 +17860,7 @@ function charset (type) {
  * Create a full Content-Type header given a MIME type or extension.
  *
  * @param {string} str
- * @return {boolean|string}
+ * @return {false|string}
  */
 
 function contentType (str) {
@@ -22335,9 +17869,7 @@ function contentType (str) {
     return false
   }
 
-  var mime = str.indexOf('/') === -1
-    ? exports.lookup(str)
-    : str
+  var mime = str.indexOf('/') === -1 ? exports.lookup(str) : str
 
   if (!mime) {
     return false
@@ -22356,7 +17888,7 @@ function contentType (str) {
  * Get the default extension for a MIME type.
  *
  * @param {string} type
- * @return {boolean|string}
+ * @return {false|string}
  */
 
 function extension (type) {
@@ -22381,7 +17913,7 @@ function extension (type) {
  * Lookup the MIME type for a file path/extension.
  *
  * @param {string} path
- * @return {boolean|string}
+ * @return {false|string}
  */
 
 function lookup (path) {
@@ -22392,7 +17924,7 @@ function lookup (path) {
   // get the extension ("ext" or ".ext" or full path)
   var extension = extname('x.' + path)
     .toLowerCase()
-    .substr(1)
+    .slice(1)
 
   if (!extension) {
     return false
@@ -22407,9 +17939,6 @@ function lookup (path) {
  */
 
 function populateMaps (extensions, types) {
-  // source preference (least -> most)
-  var preference = ['nginx', 'apache', undefined, 'iana']
-
   Object.keys(db).forEach(function forEachMimeType (type) {
     var mime = db[type]
     var exts = mime.extensions
@@ -22424,138 +17953,113 @@ function populateMaps (extensions, types) {
     // extension -> mime
     for (var i = 0; i < exts.length; i++) {
       var extension = exts[i]
+      types[extension] = _preferredType(extension, types[extension], type)
 
-      if (types[extension]) {
-        var from = preference.indexOf(db[types[extension]].source)
-        var to = preference.indexOf(mime.source)
-
-        if (types[extension] !== 'application/octet-stream' &&
-          (from > to || (from === to && types[extension].substr(0, 12) === 'application/'))) {
-          // skip the remapping
-          continue
-        }
+      // DELETE (eventually): Capture extension->type maps that change as a
+      // result of switching to mime-score.  This is just to help make reviewing
+      // PR #119 easier, and can be removed once that PR is approved.
+      const legacyType = _preferredTypeLegacy(
+        extension,
+        types[extension],
+        type
+      )
+      if (legacyType !== types[extension]) {
+        exports._extensionConflicts.push([extension, legacyType, types[extension]])
       }
-
-      // set the extension -> mime
-      types[extension] = type
     }
   })
+}
+
+// Resolve type conflict using mime-score
+function _preferredType (ext, type0, type1) {
+  var score0 = type0 ? mimeScore(type0, db[type0].source) : 0
+  var score1 = type1 ? mimeScore(type1, db[type1].source) : 0
+
+  return score0 > score1 ? type0 : type1
+}
+
+// Resolve type conflict using pre-mime-score logic
+function _preferredTypeLegacy (ext, type0, type1) {
+  var SOURCE_RANK = ['nginx', 'apache', undefined, 'iana']
+
+  var score0 = type0 ? SOURCE_RANK.indexOf(db[type0].source) : 0
+  var score1 = type1 ? SOURCE_RANK.indexOf(db[type1].source) : 0
+
+  if (
+    exports.types[extension] !== 'application/octet-stream' &&
+    (score0 > score1 ||
+      (score0 === score1 &&
+        exports.types[extension]?.slice(0, 12) === 'application/'))
+  ) {
+    return type0
+  }
+
+  return score0 > score1 ? type0 : type1
 }
 
 
 /***/ }),
 
-/***/ 2322:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ 4062:
+/***/ ((module) => {
 
-var path = __nccwpck_require__(6928);
-var fs = __nccwpck_require__(9896);
+// 'mime-score' back-ported to CommonJS
 
-function Mime() {
-  // Map of extension -> mime type
-  this.types = Object.create(null);
+// Score RFC facets (see https://tools.ietf.org/html/rfc6838#section-3)
+var FACET_SCORES = {
+  'prs.': 100,
+  'x-': 200,
+  'x.': 300,
+  'vnd.': 400,
+  default: 900
+}
 
-  // Map of mime type -> extension
-  this.extensions = Object.create(null);
+// Score mime source (Logic originally from `jshttp/mime-types` module)
+var SOURCE_SCORES = {
+  nginx: 10,
+  apache: 20,
+  iana: 40,
+  default: 30 // definitions added by `jshttp/mime-db` project?
+}
+
+var TYPE_SCORES = {
+  // prefer application/xml over text/xml
+  // prefer application/rtf over text/rtf
+  application: 1,
+
+  // prefer font/woff over application/font-woff
+  font: 2,
+
+  // prefer video/mp4 over audio/mp4 over application/mp4
+  // See https://www.rfc-editor.org/rfc/rfc4337.html#section-2
+  audio: 2,
+  video: 3,
+
+  default: 0
 }
 
 /**
- * Define mimetype -> extension mappings.  Each key is a mime-type that maps
- * to an array of extensions associated with the type.  The first extension is
- * used as the default extension for the type.
- *
- * e.g. mime.define({'audio/ogg', ['oga', 'ogg', 'spx']});
- *
- * @param map (Object) type definitions
+ * Get each component of the score for a mime type.  The sum of these is the
+ * total score.  The higher the score, the more "official" the type.
  */
-Mime.prototype.define = function (map) {
-  for (var type in map) {
-    var exts = map[type];
-    for (var i = 0; i < exts.length; i++) {
-      if (process.env.DEBUG_MIME && this.types[exts[i]]) {
-        console.warn((this._loading || "define()").replace(/.*\//, ''), 'changes "' + exts[i] + '" extension type from ' +
-          this.types[exts[i]] + ' to ' + type);
-      }
-
-      this.types[exts[i]] = type;
-    }
-
-    // Default extension is the first one we encounter
-    if (!this.extensions[type]) {
-      this.extensions[type] = exts[0];
-    }
+module.exports = function mimeScore (mimeType, source = 'default') {
+  if (mimeType === 'application/octet-stream') {
+    return 0
   }
-};
 
-/**
- * Load an Apache2-style ".types" file
- *
- * This may be called multiple times (it's expected).  Where files declare
- * overlapping types/extensions, the last file wins.
- *
- * @param file (String) path of file to load.
- */
-Mime.prototype.load = function(file) {
-  this._loading = file;
-  // Read file and split into lines
-  var map = {},
-      content = fs.readFileSync(file, 'ascii'),
-      lines = content.split(/[\r\n]+/);
+  const [type, subtype] = mimeType.split('/')
 
-  lines.forEach(function(line) {
-    // Clean up whitespace/comments, and split into fields
-    var fields = line.replace(/\s*#.*|^\s*|\s*$/g, '').split(/\s+/);
-    map[fields.shift()] = fields;
-  });
+  const facet = subtype.replace(/(\.|x-).*/, '$1')
 
-  this.define(map);
+  const facetScore = FACET_SCORES[facet] || FACET_SCORES.default
+  const sourceScore = SOURCE_SCORES[source] || SOURCE_SCORES.default
+  const typeScore = TYPE_SCORES[type] || TYPE_SCORES.default
 
-  this._loading = null;
-};
+  // All else being equal prefer shorter types
+  const lengthScore = 1 - mimeType.length / 100
 
-/**
- * Lookup a mime type based on extension
- */
-Mime.prototype.lookup = function(path, fallback) {
-  var ext = path.replace(/^.*[\.\/\\]/, '').toLowerCase();
-
-  return this.types[ext] || fallback || this.default_type;
-};
-
-/**
- * Return file extension associated with a mime type
- */
-Mime.prototype.extension = function(mimeType) {
-  var type = mimeType.match(/^\s*([^;\s]*)(?:;|\s|$)/)[1].toLowerCase();
-  return this.extensions[type];
-};
-
-// Default instance
-var mime = new Mime();
-
-// Define built-in types
-mime.define(__nccwpck_require__(9415));
-
-// Default type
-mime.default_type = mime.lookup('bin');
-
-//
-// Additional API specific to the default instance
-//
-
-mime.Mime = Mime;
-
-/**
- * Lookup a charset based on mime type.
- */
-mime.charsets = {
-  lookup: function(mimeType, fallback) {
-    // Assume text types are utf8
-    return (/^text\/|^application\/(javascript|json)/).test(mimeType) ? 'UTF-8' : fallback;
-  }
-};
-
-module.exports = mime;
+  return facetScore + sourceScore + typeScore + lengthScore
+}
 
 
 /***/ }),
@@ -22779,13 +18283,14 @@ Negotiator.prototype.charsets = function charsets(available) {
   return preferredCharsets(this.request.headers['accept-charset'], available);
 };
 
-Negotiator.prototype.encoding = function encoding(available) {
-  var set = this.encodings(available);
+Negotiator.prototype.encoding = function encoding(available, opts) {
+  var set = this.encodings(available, opts);
   return set && set[0];
 };
 
-Negotiator.prototype.encodings = function encodings(available) {
-  return preferredEncodings(this.request.headers['accept-encoding'], available);
+Negotiator.prototype.encodings = function encodings(available, options) {
+  var opts = options || {};
+  return preferredEncodings(this.request.headers['accept-encoding'], available, opts.preferred);
 };
 
 Negotiator.prototype.language = function language(available) {
@@ -23098,7 +18603,7 @@ function parseEncoding(str, i) {
  */
 
 function getEncodingPriority(encoding, accepted, index) {
-  var priority = {o: -1, q: 0, s: 0};
+  var priority = {encoding: encoding, o: -1, q: 0, s: 0};
 
   for (var i = 0; i < accepted.length; i++) {
     var spec = specify(encoding, accepted[i], index);
@@ -23125,6 +18630,7 @@ function specify(encoding, spec, index) {
   }
 
   return {
+    encoding: encoding,
     i: index,
     o: spec.i,
     q: spec.q,
@@ -23137,14 +18643,34 @@ function specify(encoding, spec, index) {
  * @public
  */
 
-function preferredEncodings(accept, provided) {
+function preferredEncodings(accept, provided, preferred) {
   var accepts = parseAcceptEncoding(accept || '');
+
+  var comparator = preferred ? function comparator (a, b) {
+    if (a.q !== b.q) {
+      return b.q - a.q // higher quality first
+    }
+
+    var aPreferred = preferred.indexOf(a.encoding)
+    var bPreferred = preferred.indexOf(b.encoding)
+
+    if (aPreferred === -1 && bPreferred === -1) {
+      // consider the original specifity/order
+      return (b.s - a.s) || (a.o - b.o) || (a.i - b.i)
+    }
+
+    if (aPreferred !== -1 && bPreferred !== -1) {
+      return aPreferred - bPreferred // consider the preferred order
+    }
+
+    return aPreferred === -1 ? 1 : -1 // preferred first
+  } : compareSpecs;
 
   if (!provided) {
     // sorted list of all encodings
     return accepts
       .filter(isQuality)
-      .sort(compareSpecs)
+      .sort(comparator)
       .map(getFullEncoding);
   }
 
@@ -23153,7 +18679,7 @@ function preferredEncodings(accept, provided) {
   });
 
   // sorted list of accepted encodings
-  return priorities.filter(isQuality).sort(compareSpecs).map(function getEncoding(priority) {
+  return priorities.filter(isQuality).sort(comparator).map(function getEncoding(priority) {
     return provided[priorities.indexOf(priority)];
   });
 }
@@ -23164,7 +18690,7 @@ function preferredEncodings(accept, provided) {
  */
 
 function compareSpecs(a, b) {
-  return (b.q - a.q) || (b.s - a.s) || (a.o - b.o) || (a.i - b.i) || 0;
+  return (b.q - a.q) || (b.s - a.s) || (a.o - b.o) || (a.i - b.i);
 }
 
 /**
@@ -23450,7 +18976,7 @@ function parseMediaType(str, i) {
 
       // get the value, unwrapping quotes
       var value = val && val[0] === '"' && val[val.length - 1] === '"'
-        ? val.substr(1, val.length - 2)
+        ? val.slice(1, -1)
         : val;
 
       if (key === 'q') {
@@ -23619,8 +19145,8 @@ function splitKeyValuePair(str) {
   if (index === -1) {
     key = str;
   } else {
-    key = str.substr(0, index);
-    val = str.substr(index + 1);
+    key = str.slice(0, index);
+    val = str.slice(index + 1);
   }
 
   return [key, val];
@@ -25695,6 +21221,55 @@ function wrap (fn) {
 
 /***/ }),
 
+/***/ 5560:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var wrappy = __nccwpck_require__(8264)
+module.exports = wrappy(once)
+module.exports.strict = wrappy(onceStrict)
+
+once.proto = once(function () {
+  Object.defineProperty(Function.prototype, 'once', {
+    value: function () {
+      return once(this)
+    },
+    configurable: true
+  })
+
+  Object.defineProperty(Function.prototype, 'onceStrict', {
+    value: function () {
+      return onceStrict(this)
+    },
+    configurable: true
+  })
+})
+
+function once (fn) {
+  var f = function () {
+    if (f.called) return f.value
+    f.called = true
+    return f.value = fn.apply(this, arguments)
+  }
+  f.called = false
+  return f
+}
+
+function onceStrict (fn) {
+  var f = function () {
+    if (f.called)
+      throw new Error(f.onceError)
+    f.called = true
+    return f.value = fn.apply(this, arguments)
+  }
+  var name = fn.name || 'Function wrapped with `once`'
+  f.onceError = name + " shouldn't be called more than once"
+  f.called = false
+  return f
+}
+
+
+/***/ }),
+
 /***/ 3404:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -25861,166 +21436,464 @@ function fresh (url, parsedUrl) {
 
 /***/ }),
 
-/***/ 9455:
-/***/ ((module) => {
+/***/ 4868:
+/***/ ((__unused_webpack_module, exports) => {
 
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PathError = exports.TokenData = void 0;
+exports.parse = parse;
+exports.compile = compile;
+exports.match = match;
+exports.pathToRegexp = pathToRegexp;
+exports.stringify = stringify;
+const DEFAULT_DELIMITER = "/";
+const NOOP_VALUE = (value) => value;
+const ID_START = /^[$_\p{ID_Start}]$/u;
+const ID_CONTINUE = /^[$\u200c\u200d\p{ID_Continue}]$/u;
+const ID = /^[$_\p{ID_Start}][$\u200c\u200d\p{ID_Continue}]*$/u;
+const SIMPLE_TOKENS = "{}()[]+?!";
 /**
- * Expose `pathToRegexp`.
+ * Escape text for stringify to path.
  */
-
-module.exports = pathToRegexp;
-
+function escapeText(str) {
+    return str.replace(/[{}()\[\]+?!:*\\]/g, "\\$&");
+}
 /**
- * Match matching groups in a regular expression.
+ * Escape a regular expression string.
  */
-var MATCHING_GROUP_REGEXP = /\\.|\((?:\?<(.*?)>)?(?!\?)/g;
-
+function escape(str) {
+    return str.replace(/[.+*?^${}()[\]|/\\]/g, "\\$&");
+}
 /**
- * Normalize the given path string,
- * returning a regular expression.
- *
- * An empty array should be passed,
- * which will contain the placeholder
- * key names. For example "/user/:id" will
- * then contain ["id"].
- *
- * @param  {String|RegExp|Array} path
- * @param  {Array} keys
- * @param  {Object} options
- * @return {RegExp}
- * @api private
+ * Tokenized path instance.
  */
-
-function pathToRegexp(path, keys, options) {
-  options = options || {};
-  keys = keys || [];
-  var strict = options.strict;
-  var end = options.end !== false;
-  var flags = options.sensitive ? '' : 'i';
-  var lookahead = options.lookahead !== false;
-  var extraOffset = 0;
-  var keysOffset = keys.length;
-  var i = 0;
-  var name = 0;
-  var pos = 0;
-  var backtrack = '';
-  var m;
-
-  if (path instanceof RegExp) {
-    while (m = MATCHING_GROUP_REGEXP.exec(path.source)) {
-      if (m[0][0] === '\\') continue;
-
-      keys.push({
-        name: m[1] || name++,
-        optional: false,
-        offset: m.index
-      });
+class TokenData {
+    constructor(tokens, originalPath) {
+        this.tokens = tokens;
+        this.originalPath = originalPath;
     }
-
-    return path;
-  }
-
-  if (Array.isArray(path)) {
-    // Map array parts into regexps and return their source. We also pass
-    // the same keys and options instance into every generation to get
-    // consistent matching groups before we join the sources together.
-    path = path.map(function (value) {
-      return pathToRegexp(value, keys, options).source;
-    });
-
-    return new RegExp(path.join('|'), flags);
-  }
-
-  if (typeof path !== 'string') {
-    throw new TypeError('path must be a string, array of strings, or regular expression');
-  }
-
-  path = path.replace(
-    /\\.|(\/)?(\.)?:(\w+)(\(.*?\))?(\*)?(\?)?|[.*]|\/\(/g,
-    function (match, slash, format, key, capture, star, optional, offset) {
-      if (match[0] === '\\') {
-        backtrack += match;
-        pos += 2;
-        return match;
-      }
-
-      if (match === '.') {
-        backtrack += '\\.';
-        extraOffset += 1;
-        pos += 1;
-        return '\\.';
-      }
-
-      if (slash || format) {
-        backtrack = '';
-      } else {
-        backtrack += path.slice(pos, offset);
-      }
-
-      pos = offset + match.length;
-
-      if (match === '*') {
-        extraOffset += 3;
-        return '(.*)';
-      }
-
-      if (match === '/(') {
-        backtrack += '/';
-        extraOffset += 2;
-        return '/(?:';
-      }
-
-      slash = slash || '';
-      format = format ? '\\.' : '';
-      optional = optional || '';
-      capture = capture ?
-        capture.replace(/\\.|\*/, function (m) { return m === '*' ? '(.*)' : m; }) :
-        (backtrack ? '((?:(?!/|' + backtrack + ').)+?)' : '([^/' + format + ']+?)');
-
-      keys.push({
-        name: key,
-        optional: !!optional,
-        offset: offset + extraOffset
-      });
-
-      var result = '(?:'
-        + format + slash + capture
-        + (star ? '((?:[/' + format + '].+?)?)' : '')
-        + ')'
-        + optional;
-
-      extraOffset += result.length - match.length;
-
-      return result;
-    });
-
-  // This is a workaround for handling unnamed matching groups.
-  while (m = MATCHING_GROUP_REGEXP.exec(path)) {
-    if (m[0][0] === '\\') continue;
-
-    if (keysOffset + i === keys.length || keys[keysOffset + i].offset > m.index) {
-      keys.splice(keysOffset + i, 0, {
-        name: name++, // Unnamed matching groups must be consistently linear.
-        optional: false,
-        offset: m.index
-      });
+}
+exports.TokenData = TokenData;
+/**
+ * ParseError is thrown when there is an error processing the path.
+ */
+class PathError extends TypeError {
+    constructor(message, originalPath) {
+        let text = message;
+        if (originalPath)
+            text += `: ${originalPath}`;
+        text += `; visit https://git.new/pathToRegexpError for info`;
+        super(text);
+        this.originalPath = originalPath;
     }
-
-    i++;
-  }
-
-  path += strict ? '' : path[path.length - 1] === '/' ? '?' : '/?';
-
-  // If the path is non-ending, match until the end or a slash.
-  if (end) {
-    path += '$';
-  } else if (path[path.length - 1] !== '/') {
-    path += lookahead ? '(?=/|$)' : '(?:/|$)';
-  }
-
-  return new RegExp('^' + path, flags);
-};
-
+}
+exports.PathError = PathError;
+/**
+ * Parse a string for the raw tokens.
+ */
+function parse(str, options = {}) {
+    const { encodePath = NOOP_VALUE } = options;
+    const chars = [...str];
+    const tokens = [];
+    let index = 0;
+    let pos = 0;
+    function name() {
+        let value = "";
+        if (ID_START.test(chars[index])) {
+            do {
+                value += chars[index++];
+            } while (ID_CONTINUE.test(chars[index]));
+        }
+        else if (chars[index] === '"') {
+            let quoteStart = index;
+            while (index < chars.length) {
+                if (chars[++index] === '"') {
+                    index++;
+                    quoteStart = 0;
+                    break;
+                }
+                // Increment over escape characters.
+                if (chars[index] === "\\")
+                    index++;
+                value += chars[index];
+            }
+            if (quoteStart) {
+                throw new PathError(`Unterminated quote at index ${quoteStart}`, str);
+            }
+        }
+        if (!value) {
+            throw new PathError(`Missing parameter name at index ${index}`, str);
+        }
+        return value;
+    }
+    while (index < chars.length) {
+        const value = chars[index++];
+        if (SIMPLE_TOKENS.includes(value)) {
+            tokens.push({ type: value, index, value });
+        }
+        else if (value === "\\") {
+            tokens.push({ type: "escape", index, value: chars[index++] });
+        }
+        else if (value === ":") {
+            tokens.push({ type: "param", index, value: name() });
+        }
+        else if (value === "*") {
+            tokens.push({ type: "wildcard", index, value: name() });
+        }
+        else {
+            tokens.push({ type: "char", index, value });
+        }
+    }
+    tokens.push({ type: "end", index, value: "" });
+    function consumeUntil(endType) {
+        const output = [];
+        while (true) {
+            const token = tokens[pos++];
+            if (token.type === endType)
+                break;
+            if (token.type === "char" || token.type === "escape") {
+                let path = token.value;
+                let cur = tokens[pos];
+                while (cur.type === "char" || cur.type === "escape") {
+                    path += cur.value;
+                    cur = tokens[++pos];
+                }
+                output.push({
+                    type: "text",
+                    value: encodePath(path),
+                });
+                continue;
+            }
+            if (token.type === "param" || token.type === "wildcard") {
+                output.push({
+                    type: token.type,
+                    name: token.value,
+                });
+                continue;
+            }
+            if (token.type === "{") {
+                output.push({
+                    type: "group",
+                    tokens: consumeUntil("}"),
+                });
+                continue;
+            }
+            throw new PathError(`Unexpected ${token.type} at index ${token.index}, expected ${endType}`, str);
+        }
+        return output;
+    }
+    return new TokenData(consumeUntil("end"), str);
+}
+/**
+ * Compile a string to a template function for the path.
+ */
+function compile(path, options = {}) {
+    const { encode = encodeURIComponent, delimiter = DEFAULT_DELIMITER } = options;
+    const data = typeof path === "object" ? path : parse(path, options);
+    const fn = tokensToFunction(data.tokens, delimiter, encode);
+    return function path(params = {}) {
+        const [path, ...missing] = fn(params);
+        if (missing.length) {
+            throw new TypeError(`Missing parameters: ${missing.join(", ")}`);
+        }
+        return path;
+    };
+}
+function tokensToFunction(tokens, delimiter, encode) {
+    const encoders = tokens.map((token) => tokenToFunction(token, delimiter, encode));
+    return (data) => {
+        const result = [""];
+        for (const encoder of encoders) {
+            const [value, ...extras] = encoder(data);
+            result[0] += value;
+            result.push(...extras);
+        }
+        return result;
+    };
+}
+/**
+ * Convert a single token into a path building function.
+ */
+function tokenToFunction(token, delimiter, encode) {
+    if (token.type === "text")
+        return () => [token.value];
+    if (token.type === "group") {
+        const fn = tokensToFunction(token.tokens, delimiter, encode);
+        return (data) => {
+            const [value, ...missing] = fn(data);
+            if (!missing.length)
+                return [value];
+            return [""];
+        };
+    }
+    const encodeValue = encode || NOOP_VALUE;
+    if (token.type === "wildcard" && encode !== false) {
+        return (data) => {
+            const value = data[token.name];
+            if (value == null)
+                return ["", token.name];
+            if (!Array.isArray(value) || value.length === 0) {
+                throw new TypeError(`Expected "${token.name}" to be a non-empty array`);
+            }
+            return [
+                value
+                    .map((value, index) => {
+                    if (typeof value !== "string") {
+                        throw new TypeError(`Expected "${token.name}/${index}" to be a string`);
+                    }
+                    return encodeValue(value);
+                })
+                    .join(delimiter),
+            ];
+        };
+    }
+    return (data) => {
+        const value = data[token.name];
+        if (value == null)
+            return ["", token.name];
+        if (typeof value !== "string") {
+            throw new TypeError(`Expected "${token.name}" to be a string`);
+        }
+        return [encodeValue(value)];
+    };
+}
+/**
+ * Transform a path into a match function.
+ */
+function match(path, options = {}) {
+    const { decode = decodeURIComponent, delimiter = DEFAULT_DELIMITER } = options;
+    const { regexp, keys } = pathToRegexp(path, options);
+    const decoders = keys.map((key) => {
+        if (decode === false)
+            return NOOP_VALUE;
+        if (key.type === "param")
+            return decode;
+        return (value) => value.split(delimiter).map(decode);
+    });
+    return function match(input) {
+        const m = regexp.exec(input);
+        if (!m)
+            return false;
+        const path = m[0];
+        const params = Object.create(null);
+        for (let i = 1; i < m.length; i++) {
+            if (m[i] === undefined)
+                continue;
+            const key = keys[i - 1];
+            const decoder = decoders[i - 1];
+            params[key.name] = decoder(m[i]);
+        }
+        return { path, params };
+    };
+}
+/**
+ * Transform a path into a regular expression and capture keys.
+ */
+function pathToRegexp(path, options = {}) {
+    const { delimiter = DEFAULT_DELIMITER, end = true, sensitive = false, trailing = true, } = options;
+    const root = new SourceNode("^");
+    const paths = [path];
+    let combinations = 0;
+    while (paths.length) {
+        const path = paths.shift();
+        if (Array.isArray(path)) {
+            paths.push(...path);
+            continue;
+        }
+        const data = typeof path === "object" ? path : parse(path, options);
+        flatten(data.tokens, 0, [], (tokens) => {
+            if (combinations++ >= 256) {
+                throw new PathError("Too many path combinations", data.originalPath);
+            }
+            let node = root;
+            for (const part of toRegExpSource(tokens, delimiter, data.originalPath)) {
+                node = node.add(part.source, part.key);
+            }
+            node.add(""); // Mark the end of the source.
+        });
+    }
+    const keys = [];
+    let pattern = toRegExp(root, keys);
+    if (trailing)
+        pattern += "(?:" + escape(delimiter) + "$)?";
+    pattern += end ? "$" : "(?=" + escape(delimiter) + "|$)";
+    return { regexp: new RegExp(pattern, sensitive ? "" : "i"), keys };
+}
+function toRegExp(node, keys) {
+    if (node.key)
+        keys.push(node.key);
+    const children = Object.keys(node.children);
+    const text = children
+        .map((id) => toRegExp(node.children[id], keys))
+        .join("|");
+    return node.source + (children.length < 2 ? text : `(?:${text})`);
+}
+class SourceNode {
+    constructor(source, key) {
+        this.source = source;
+        this.key = key;
+        this.children = Object.create(null);
+    }
+    add(source, key) {
+        var _a;
+        const id = source + ":" + (key ? key.name : "");
+        return ((_a = this.children)[id] || (_a[id] = new SourceNode(source, key)));
+    }
+}
+/**
+ * Generate a flat list of sequence tokens from the given tokens.
+ */
+function flatten(tokens, index, result, callback) {
+    while (index < tokens.length) {
+        const token = tokens[index++];
+        if (token.type === "group") {
+            flatten(token.tokens, 0, result.slice(), (seq) => flatten(tokens, index, seq, callback));
+            continue;
+        }
+        result.push(token);
+    }
+    callback(result);
+}
+/**
+ * Transform a flat sequence of tokens into a regular expression.
+ */
+function toRegExpSource(tokens, delimiter, originalPath) {
+    let result = [];
+    let backtrack = "";
+    let wildcardBacktrack = "";
+    let prevCaptureType = 0;
+    let hasSegmentCapture = 0;
+    let index = 0;
+    function hasInSegment(index, type) {
+        while (index < tokens.length) {
+            const token = tokens[index++];
+            if (token.type === type)
+                return true;
+            if (token.type === "text") {
+                if (token.value.includes(delimiter))
+                    break;
+            }
+        }
+        return false;
+    }
+    function peekText(index) {
+        let result = "";
+        while (index < tokens.length) {
+            const token = tokens[index++];
+            if (token.type !== "text")
+                break;
+            result += token.value;
+        }
+        return result;
+    }
+    while (index < tokens.length) {
+        const token = tokens[index++];
+        if (token.type === "text") {
+            result.push({ source: escape(token.value) });
+            backtrack += token.value;
+            if (prevCaptureType === 2)
+                wildcardBacktrack += token.value;
+            if (token.value.includes(delimiter))
+                hasSegmentCapture = 0;
+            continue;
+        }
+        if (token.type === "param" || token.type === "wildcard") {
+            if (prevCaptureType && !backtrack) {
+                throw new PathError(`Missing text before "${token.name}" ${token.type}`, originalPath);
+            }
+            if (token.type === "param") {
+                result.push({
+                    source: hasSegmentCapture // Seen param/wildcard in segment.
+                        ? `(${negate(delimiter, backtrack)}+?)`
+                        : hasInSegment(index, "wildcard") // See wildcard later in segment.
+                            ? `(${negate(delimiter, peekText(index))}+?)`
+                            : `(${negate(delimiter, "")}+?)`,
+                    key: token,
+                });
+                hasSegmentCapture |= prevCaptureType = 1;
+            }
+            else {
+                result.push({
+                    source: hasSegmentCapture & 2 // Seen wildcard in segment.
+                        ? `(${negate(backtrack, "")}+?)`
+                        : hasSegmentCapture & 1 // Seen param in segment.
+                            ? `(${negate(wildcardBacktrack, "")}+?)`
+                            : wildcardBacktrack // No capture in segment, seen wildcard in path.
+                                ? `(${negate(wildcardBacktrack, "")}+?|${negate(delimiter, "")}+?)`
+                                : `([^]+?)`,
+                    key: token,
+                });
+                wildcardBacktrack = "";
+                hasSegmentCapture |= prevCaptureType = 2;
+            }
+            backtrack = "";
+            continue;
+        }
+        throw new TypeError(`Unknown token type: ${token.type}`);
+    }
+    return result;
+}
+/**
+ * Block backtracking on previous text/delimiter.
+ */
+function negate(a, b) {
+    if (b.length > a.length)
+        return negate(b, a); // Longest string first.
+    if (a === b)
+        b = ""; // Cleaner regex strings, no duplication.
+    if (b.length > 1)
+        return `(?:(?!${escape(a)}|${escape(b)})[^])`;
+    if (a.length > 1)
+        return `(?:(?!${escape(a)})[^${escape(b)}])`;
+    return `[^${escape(a + b)}]`;
+}
+/**
+ * Stringify an array of tokens into a path string.
+ */
+function stringifyTokens(tokens, index) {
+    let value = "";
+    while (index < tokens.length) {
+        const token = tokens[index++];
+        if (token.type === "text") {
+            value += escapeText(token.value);
+            continue;
+        }
+        if (token.type === "group") {
+            value += "{" + stringifyTokens(token.tokens, 0) + "}";
+            continue;
+        }
+        if (token.type === "param") {
+            value += ":" + stringifyName(token.name, tokens[index]);
+            continue;
+        }
+        if (token.type === "wildcard") {
+            value += "*" + stringifyName(token.name, tokens[index]);
+            continue;
+        }
+        throw new TypeError(`Unknown token type: ${token.type}`);
+    }
+    return value;
+}
+/**
+ * Stringify token data into a path string.
+ */
+function stringify(data) {
+    return stringifyTokens(data.tokens, 0);
+}
+/**
+ * Stringify a parameter name, escaping when it cannot be emitted directly.
+ */
+function stringifyName(name, next) {
+    if (!ID.test(name))
+        return JSON.stringify(name);
+    if ((next === null || next === void 0 ? void 0 : next.type) === "text" && ID_CONTINUE.test(next.value[0])) {
+        return JSON.stringify(name);
+    }
+    return name;
+}
+//# sourceMappingURL=index.js.map
 
 /***/ }),
 
@@ -26556,6 +22429,7 @@ var defaults = {
     parseArrays: true,
     plainObjects: false,
     strictDepth: false,
+    strictMerge: true,
     strictNullHandling: false,
     throwOnLimitExceeded: false
 };
@@ -26670,7 +22544,7 @@ var parseValues = function parseQueryStringValues(str, options) {
 
         if (key !== null) {
             var existing = has.call(obj, key);
-            if (existing && options.duplicates === 'combine') {
+            if (existing && (options.duplicates === 'combine' || part.indexOf('[]=') > -1)) {
                 obj[key] = utils.combine(
                     obj[key],
                     val,
@@ -26870,6 +22744,7 @@ var normalizeParseOptions = function normalizeParseOptions(opts) {
         parseArrays: opts.parseArrays !== false,
         plainObjects: typeof opts.plainObjects === 'boolean' ? opts.plainObjects : defaults.plainObjects,
         strictDepth: typeof opts.strictDepth === 'boolean' ? !!opts.strictDepth : defaults.strictDepth,
+        strictMerge: typeof opts.strictMerge === 'boolean' ? !!opts.strictMerge : defaults.strictMerge,
         strictNullHandling: typeof opts.strictNullHandling === 'boolean' ? opts.strictNullHandling : defaults.strictNullHandling,
         throwOnLimitExceeded: typeof opts.throwOnLimitExceeded === 'boolean' ? opts.throwOnLimitExceeded : false
     };
@@ -27359,6 +23234,8 @@ var merge = function merge(target, source, options) {
                 var newIndex = getMaxIndex(target) + 1;
                 target[newIndex] = source;
                 setMaxIndex(target, newIndex);
+            } else if (options && options.strictMerge) {
+                return [target, source];
             } else if (
                 (options && (options.plainObjects || options.allowPrototypes))
                 || !has.call(Object.prototype, source)
@@ -28130,74 +24007,1263 @@ function wrap (fn) {
 
 /***/ }),
 
-/***/ 3058:
-/***/ ((module, exports, __nccwpck_require__) => {
+/***/ 2969:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-/*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
-/* eslint-disable node/no-deprecated-api */
-var buffer = __nccwpck_require__(181)
-var Buffer = buffer.Buffer
+"use strict";
+/*!
+ * router
+ * Copyright(c) 2013 Roman Shtylman
+ * Copyright(c) 2014-2022 Douglas Christopher Wilson
+ * MIT Licensed
+ */
 
-// alternative to using Object.keys for old browsers
-function copyProps (src, dst) {
-  for (var key in src) {
-    dst[key] = src[key]
+
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+const isPromise = __nccwpck_require__(6904)
+const Layer = __nccwpck_require__(9076)
+const { METHODS } = __nccwpck_require__(7067)
+const parseUrl = __nccwpck_require__(3404)
+const Route = __nccwpck_require__(6544)
+const debug = __nccwpck_require__(2830)('router')
+const deprecate = __nccwpck_require__(95)('router')
+
+/**
+ * Module variables.
+ * @private
+ */
+
+const slice = Array.prototype.slice
+const flatten = Array.prototype.flat
+const methods = METHODS.map((method) => method.toLowerCase())
+
+/**
+ * Expose `Router`.
+ */
+
+module.exports = Router
+
+/**
+ * Expose `Route`.
+ */
+
+module.exports.Route = Route
+
+/**
+ * Initialize a new `Router` with the given `options`.
+ *
+ * @param {object} [options]
+ * @return {Router} which is a callable function
+ * @public
+ */
+
+function Router (options) {
+  if (!(this instanceof Router)) {
+    return new Router(options)
   }
-}
-if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow) {
-  module.exports = buffer
-} else {
-  // Copy properties from require('buffer')
-  copyProps(buffer, exports)
-  exports.Buffer = SafeBuffer
-}
 
-function SafeBuffer (arg, encodingOrOffset, length) {
-  return Buffer(arg, encodingOrOffset, length)
-}
+  const opts = options || {}
 
-SafeBuffer.prototype = Object.create(Buffer.prototype)
-
-// Copy static methods from Buffer
-copyProps(Buffer, SafeBuffer)
-
-SafeBuffer.from = function (arg, encodingOrOffset, length) {
-  if (typeof arg === 'number') {
-    throw new TypeError('Argument must not be a number')
+  function router (req, res, next) {
+    router.handle(req, res, next)
   }
-  return Buffer(arg, encodingOrOffset, length)
+
+  // inherit from the correct prototype
+  Object.setPrototypeOf(router, this)
+
+  router.caseSensitive = opts.caseSensitive
+  router.mergeParams = opts.mergeParams
+  router.params = {}
+  router.strict = opts.strict
+  router.stack = []
+
+  return router
 }
 
-SafeBuffer.alloc = function (size, fill, encoding) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
+/**
+ * Router prototype inherits from a Function.
+ */
+
+/* istanbul ignore next */
+Router.prototype = function () {}
+
+/**
+ * Map the given param placeholder `name`(s) to the given callback.
+ *
+ * Parameter mapping is used to provide pre-conditions to routes
+ * which use normalized placeholders. For example a _:user_id_ parameter
+ * could automatically load a user's information from the database without
+ * any additional code.
+ *
+ * The callback uses the same signature as middleware, the only difference
+ * being that the value of the placeholder is passed, in this case the _id_
+ * of the user. Once the `next()` function is invoked, just like middleware
+ * it will continue on to execute the route, or subsequent parameter functions.
+ *
+ * Just like in middleware, you must either respond to the request or call next
+ * to avoid stalling the request.
+ *
+ *  router.param('user_id', function(req, res, next, id){
+ *    User.find(id, function(err, user){
+ *      if (err) {
+ *        return next(err)
+ *      } else if (!user) {
+ *        return next(new Error('failed to load user'))
+ *      }
+ *      req.user = user
+ *      next()
+ *    })
+ *  })
+ *
+ * @param {string} name
+ * @param {function} fn
+ * @public
+ */
+
+Router.prototype.param = function param (name, fn) {
+  if (!name) {
+    throw new TypeError('argument name is required')
   }
-  var buf = Buffer(size)
-  if (fill !== undefined) {
-    if (typeof encoding === 'string') {
-      buf.fill(fill, encoding)
-    } else {
-      buf.fill(fill)
+
+  if (typeof name !== 'string') {
+    throw new TypeError('argument name must be a string')
+  }
+
+  if (!fn) {
+    throw new TypeError('argument fn is required')
+  }
+
+  if (typeof fn !== 'function') {
+    throw new TypeError('argument fn must be a function')
+  }
+
+  let params = this.params[name]
+
+  if (!params) {
+    params = this.params[name] = []
+  }
+
+  params.push(fn)
+
+  return this
+}
+
+/**
+ * Dispatch a req, res into the router.
+ *
+ * @private
+ */
+
+Router.prototype.handle = function handle (req, res, callback) {
+  if (!callback) {
+    throw new TypeError('argument callback is required')
+  }
+
+  debug('dispatching %s %s', req.method, req.url)
+
+  let idx = 0
+  let methods
+  const protohost = getProtohost(req.url) || ''
+  let removed = ''
+  const self = this
+  let slashAdded = false
+  let sync = 0
+  const paramcalled = {}
+
+  // middleware and routes
+  const stack = this.stack
+
+  // manage inter-router variables
+  const parentParams = req.params
+  const parentUrl = req.baseUrl || ''
+  let done = restore(callback, req, 'baseUrl', 'next', 'params')
+
+  // setup next layer
+  req.next = next
+
+  // for options requests, respond with a default if nothing else responds
+  if (req.method === 'OPTIONS') {
+    methods = []
+    done = wrap(done, generateOptionsResponder(res, methods))
+  }
+
+  // setup basic req values
+  req.baseUrl = parentUrl
+  req.originalUrl = req.originalUrl || req.url
+
+  next()
+
+  function next (err) {
+    let layerError = err === 'route'
+      ? null
+      : err
+
+    // remove added slash
+    if (slashAdded) {
+      req.url = req.url.slice(1)
+      slashAdded = false
     }
-  } else {
-    buf.fill(0)
+
+    // restore altered req.url
+    if (removed.length !== 0) {
+      req.baseUrl = parentUrl
+      req.url = protohost + removed + req.url.slice(protohost.length)
+      removed = ''
+    }
+
+    // signal to exit router
+    if (layerError === 'router') {
+      setImmediate(done, null)
+      return
+    }
+
+    // no more matching layers
+    if (idx >= stack.length) {
+      setImmediate(done, layerError)
+      return
+    }
+
+    // max sync stack
+    if (++sync > 100) {
+      return setImmediate(next, err)
+    }
+
+    // get pathname of request
+    const path = getPathname(req)
+
+    if (path == null) {
+      return done(layerError)
+    }
+
+    // find next matching layer
+    let layer
+    let match
+    let route
+
+    while (match !== true && idx < stack.length) {
+      layer = stack[idx++]
+      match = matchLayer(layer, path)
+      route = layer.route
+
+      if (typeof match !== 'boolean') {
+        // hold on to layerError
+        layerError = layerError || match
+      }
+
+      if (match !== true) {
+        continue
+      }
+
+      if (!route) {
+        // process non-route handlers normally
+        continue
+      }
+
+      if (layerError) {
+        // routes do not match with a pending error
+        match = false
+        continue
+      }
+
+      const method = req.method
+      const hasMethod = route._handlesMethod(method)
+
+      // build up automatic options response
+      if (!hasMethod && method === 'OPTIONS' && methods) {
+        methods.push.apply(methods, route._methods())
+      }
+
+      // don't even bother matching route
+      if (!hasMethod && method !== 'HEAD') {
+        match = false
+      }
+    }
+
+    // no match
+    if (match !== true) {
+      return done(layerError)
+    }
+
+    // store route for dispatch on change
+    if (route) {
+      req.route = route
+    }
+
+    // Capture one-time layer values
+    req.params = self.mergeParams
+      ? mergeParams(layer.params, parentParams)
+      : layer.params
+    const layerPath = layer.path
+
+    // this should be done for the layer
+    processParams(self.params, layer, paramcalled, req, res, function (err) {
+      if (err) {
+        next(layerError || err)
+      } else if (route) {
+        layer.handleRequest(req, res, next)
+      } else {
+        trimPrefix(layer, layerError, layerPath, path)
+      }
+
+      sync = 0
+    })
   }
-  return buf
+
+  function trimPrefix (layer, layerError, layerPath, path) {
+    if (layerPath.length !== 0) {
+      // Validate path is a prefix match
+      if (layerPath !== path.substring(0, layerPath.length)) {
+        next(layerError)
+        return
+      }
+
+      // Validate path breaks on a path separator
+      const c = path[layerPath.length]
+      if (c && c !== '/') {
+        next(layerError)
+        return
+      }
+
+      // Trim off the part of the url that matches the route
+      // middleware (.use stuff) needs to have the path stripped
+      debug('trim prefix (%s) from url %s', layerPath, req.url)
+      removed = layerPath
+      req.url = protohost + req.url.slice(protohost.length + removed.length)
+
+      // Ensure leading slash
+      if (!protohost && req.url[0] !== '/') {
+        req.url = '/' + req.url
+        slashAdded = true
+      }
+
+      // Setup base URL (no trailing slash)
+      req.baseUrl = parentUrl + (removed[removed.length - 1] === '/'
+        ? removed.substring(0, removed.length - 1)
+        : removed)
+    }
+
+    debug('%s %s : %s', layer.name, layerPath, req.originalUrl)
+
+    if (layerError) {
+      layer.handleError(layerError, req, res, next)
+    } else {
+      layer.handleRequest(req, res, next)
+    }
+  }
 }
 
-SafeBuffer.allocUnsafe = function (size) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
+/**
+ * Use the given middleware function, with optional path, defaulting to "/".
+ *
+ * Use (like `.all`) will run for any http METHOD, but it will not add
+ * handlers for those methods so OPTIONS requests will not consider `.use`
+ * functions even if they could respond.
+ *
+ * The other difference is that _route_ path is stripped and not visible
+ * to the handler function. The main effect of this feature is that mounted
+ * handlers can operate without any code changes regardless of the "prefix"
+ * pathname.
+ *
+ * @public
+ */
+
+Router.prototype.use = function use (handler) {
+  let offset = 0
+  let path = '/'
+
+  // default path to '/'
+  // disambiguate router.use([handler])
+  if (typeof handler !== 'function') {
+    let arg = handler
+
+    while (Array.isArray(arg) && arg.length !== 0) {
+      arg = arg[0]
+    }
+
+    // first arg is the path
+    if (typeof arg !== 'function') {
+      offset = 1
+      path = handler
+    }
   }
-  return Buffer(size)
+
+  const callbacks = flatten.call(slice.call(arguments, offset), Infinity)
+
+  if (callbacks.length === 0) {
+    throw new TypeError('argument handler is required')
+  }
+
+  for (let i = 0; i < callbacks.length; i++) {
+    const fn = callbacks[i]
+
+    if (typeof fn !== 'function') {
+      throw new TypeError('argument handler must be a function')
+    }
+
+    // add the middleware
+    debug('use %o %s', path, fn.name || '<anonymous>')
+
+    const layer = new Layer(path, {
+      sensitive: this.caseSensitive,
+      strict: false,
+      end: false
+    }, fn)
+
+    layer.route = undefined
+
+    this.stack.push(layer)
+  }
+
+  return this
 }
 
-SafeBuffer.allocUnsafeSlow = function (size) {
-  if (typeof size !== 'number') {
-    throw new TypeError('Argument must be a number')
+/**
+ * Create a new Route for the given path.
+ *
+ * Each route contains a separate middleware stack and VERB handlers.
+ *
+ * See the Route api documentation for details on adding handlers
+ * and middleware to routes.
+ *
+ * @param {string} path
+ * @return {Route}
+ * @public
+ */
+
+Router.prototype.route = function route (path) {
+  const route = new Route(path)
+
+  const layer = new Layer(path, {
+    sensitive: this.caseSensitive,
+    strict: this.strict,
+    end: true
+  }, handle)
+
+  function handle (req, res, next) {
+    route.dispatch(req, res, next)
   }
-  return buffer.SlowBuffer(size)
+
+  layer.route = route
+
+  this.stack.push(layer)
+  return route
 }
+
+// create Router#VERB functions
+methods.concat('all').forEach(function (method) {
+  Router.prototype[method] = function (path) {
+    const route = this.route(path)
+    route[method].apply(route, slice.call(arguments, 1))
+    return this
+  }
+})
+
+/**
+ * Generate a callback that will make an OPTIONS response.
+ *
+ * @param {OutgoingMessage} res
+ * @param {array} methods
+ * @private
+ */
+
+function generateOptionsResponder (res, methods) {
+  return function onDone (fn, err) {
+    if (err || methods.length === 0) {
+      return fn(err)
+    }
+
+    trySendOptionsResponse(res, methods, fn)
+  }
+}
+
+/**
+ * Get pathname of request.
+ *
+ * @param {IncomingMessage} req
+ * @private
+ */
+
+function getPathname (req) {
+  try {
+    return parseUrl(req).pathname
+  } catch (err) {
+    return undefined
+  }
+}
+
+/**
+ * Get get protocol + host for a URL.
+ *
+ * @param {string} url
+ * @private
+ */
+
+function getProtohost (url) {
+  if (typeof url !== 'string' || url.length === 0 || url[0] === '/') {
+    return undefined
+  }
+
+  const searchIndex = url.indexOf('?')
+  const pathLength = searchIndex !== -1
+    ? searchIndex
+    : url.length
+  const fqdnIndex = url.substring(0, pathLength).indexOf('://')
+
+  return fqdnIndex !== -1
+    ? url.substring(0, url.indexOf('/', 3 + fqdnIndex))
+    : undefined
+}
+
+/**
+ * Match path to a layer.
+ *
+ * @param {Layer} layer
+ * @param {string} path
+ * @private
+ */
+
+function matchLayer (layer, path) {
+  try {
+    return layer.match(path)
+  } catch (err) {
+    return err
+  }
+}
+
+/**
+ * Merge params with parent params
+ *
+ * @private
+ */
+
+function mergeParams (params, parent) {
+  if (typeof parent !== 'object' || !parent) {
+    return params
+  }
+
+  // make copy of parent for base
+  const obj = Object.assign({}, parent)
+
+  // simple non-numeric merging
+  if (!(0 in params) || !(0 in parent)) {
+    return Object.assign(obj, params)
+  }
+
+  let i = 0
+  let o = 0
+
+  // determine numeric gap in params
+  while (i in params) {
+    i++
+  }
+
+  // determine numeric gap in parent
+  while (o in parent) {
+    o++
+  }
+
+  // offset numeric indices in params before merge
+  for (i--; i >= 0; i--) {
+    params[i + o] = params[i]
+
+    // create holes for the merge when necessary
+    if (i < o) {
+      delete params[i]
+    }
+  }
+
+  return Object.assign(obj, params)
+}
+
+/**
+ * Process any parameters for the layer.
+ *
+ * @private
+ */
+
+function processParams (params, layer, called, req, res, done) {
+  // captured parameters from the layer, keys and values
+  const keys = layer.keys
+
+  // fast track
+  if (!keys || keys.length === 0) {
+    return done()
+  }
+
+  let i = 0
+  let paramIndex = 0
+  let key
+  let paramVal
+  let paramCallbacks
+  let paramCalled
+
+  // process params in order
+  // param callbacks can be async
+  function param (err) {
+    if (err) {
+      return done(err)
+    }
+
+    if (i >= keys.length) {
+      return done()
+    }
+
+    paramIndex = 0
+    key = keys[i++]
+    paramVal = req.params[key]
+    paramCallbacks = params[key]
+    paramCalled = called[key]
+
+    if (paramVal === undefined || !paramCallbacks) {
+      return param()
+    }
+
+    // param previously called with same value or error occurred
+    if (paramCalled && (paramCalled.match === paramVal ||
+      (paramCalled.error && paramCalled.error !== 'route'))) {
+      // restore value
+      req.params[key] = paramCalled.value
+
+      // next param
+      return param(paramCalled.error)
+    }
+
+    called[key] = paramCalled = {
+      error: null,
+      match: paramVal,
+      value: paramVal
+    }
+
+    paramCallback()
+  }
+
+  // single param callbacks
+  function paramCallback (err) {
+    const fn = paramCallbacks[paramIndex++]
+
+    // store updated value
+    paramCalled.value = req.params[key]
+
+    if (err) {
+      // store error
+      paramCalled.error = err
+      param(err)
+      return
+    }
+
+    if (!fn) return param()
+
+    try {
+      const ret = fn(req, res, paramCallback, paramVal, key)
+      if (isPromise(ret)) {
+        if (!(ret instanceof Promise)) {
+          deprecate('parameters that are Promise-like are deprecated, use a native Promise instead')
+        }
+
+        ret.then(null, function (error) {
+          paramCallback(error || new Error('Rejected promise'))
+        })
+      }
+    } catch (e) {
+      paramCallback(e)
+    }
+  }
+
+  param()
+}
+
+/**
+ * Restore obj props after function
+ *
+ * @private
+ */
+
+function restore (fn, obj) {
+  const props = new Array(arguments.length - 2)
+  const vals = new Array(arguments.length - 2)
+
+  for (let i = 0; i < props.length; i++) {
+    props[i] = arguments[i + 2]
+    vals[i] = obj[props[i]]
+  }
+
+  return function () {
+    // restore vals
+    for (let i = 0; i < props.length; i++) {
+      obj[props[i]] = vals[i]
+    }
+
+    return fn.apply(this, arguments)
+  }
+}
+
+/**
+ * Send an OPTIONS response.
+ *
+ * @private
+ */
+
+function sendOptionsResponse (res, methods) {
+  const options = Object.create(null)
+
+  // build unique method map
+  for (let i = 0; i < methods.length; i++) {
+    options[methods[i]] = true
+  }
+
+  // construct the allow list
+  const allow = Object.keys(options).sort().join(', ')
+
+  // send response
+  res.setHeader('Allow', allow)
+  res.setHeader('Content-Length', Buffer.byteLength(allow))
+  res.setHeader('Content-Type', 'text/plain')
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.end(allow)
+}
+
+/**
+ * Try to send an OPTIONS response.
+ *
+ * @private
+ */
+
+function trySendOptionsResponse (res, methods, next) {
+  try {
+    sendOptionsResponse(res, methods)
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * Wrap a function
+ *
+ * @private
+ */
+
+function wrap (old, fn) {
+  return function proxy () {
+    const args = new Array(arguments.length + 1)
+
+    args[0] = old
+    for (let i = 0, len = arguments.length; i < len; i++) {
+      args[i + 1] = arguments[i]
+    }
+
+    fn.apply(this, args)
+  }
+}
+
+
+/***/ }),
+
+/***/ 9076:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+/*!
+ * router
+ * Copyright(c) 2013 Roman Shtylman
+ * Copyright(c) 2014-2022 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+const isPromise = __nccwpck_require__(6904)
+const pathRegexp = __nccwpck_require__(4868)
+const debug = __nccwpck_require__(2830)('router:layer')
+const deprecate = __nccwpck_require__(95)('router')
+
+/**
+ * Module variables.
+ * @private
+ */
+
+const TRAILING_SLASH_REGEXP = /\/+$/
+const MATCHING_GROUP_REGEXP = /\((?:\?<(.*?)>)?(?!\?)/g
+
+/**
+ * Expose `Layer`.
+ */
+
+module.exports = Layer
+
+function Layer (path, options, fn) {
+  if (!(this instanceof Layer)) {
+    return new Layer(path, options, fn)
+  }
+
+  debug('new %o', path)
+  const opts = options || {}
+
+  this.handle = fn
+  this.keys = []
+  this.name = fn.name || '<anonymous>'
+  this.params = undefined
+  this.path = undefined
+  this.slash = path === '/' && opts.end === false
+
+  function matcher (_path) {
+    if (_path instanceof RegExp) {
+      const keys = []
+      let name = 0
+      let m
+      // eslint-disable-next-line no-cond-assign
+      while (m = MATCHING_GROUP_REGEXP.exec(_path.source)) {
+        keys.push({
+          name: m[1] || name++,
+          offset: m.index
+        })
+      }
+
+      return function regexpMatcher (p) {
+        const match = _path.exec(p)
+        if (!match) {
+          return false
+        }
+
+        const params = {}
+        for (let i = 1; i < match.length; i++) {
+          const key = keys[i - 1]
+          const prop = key.name
+          const val = decodeParam(match[i])
+
+          if (val !== undefined) {
+            params[prop] = val
+          }
+        }
+
+        return {
+          params,
+          path: match[0]
+        }
+      }
+    }
+
+    return pathRegexp.match((opts.strict ? _path : loosen(_path)), {
+      sensitive: opts.sensitive,
+      end: opts.end,
+      trailing: !opts.strict,
+      decode: decodeParam
+    })
+  }
+  this.matchers = Array.isArray(path) ? path.map(matcher) : [matcher(path)]
+}
+
+/**
+ * Handle the error for the layer.
+ *
+ * @param {Error} error
+ * @param {Request} req
+ * @param {Response} res
+ * @param {function} next
+ * @api private
+ */
+
+Layer.prototype.handleError = function handleError (error, req, res, next) {
+  const fn = this.handle
+
+  if (fn.length !== 4) {
+    // not a standard error handler
+    return next(error)
+  }
+
+  try {
+    // invoke function
+    const ret = fn(error, req, res, next)
+
+    // wait for returned promise
+    if (isPromise(ret)) {
+      if (!(ret instanceof Promise)) {
+        deprecate('handlers that are Promise-like are deprecated, use a native Promise instead')
+      }
+
+      ret.then(null, function (error) {
+        next(error || new Error('Rejected promise'))
+      })
+    }
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * Handle the request for the layer.
+ *
+ * @param {Request} req
+ * @param {Response} res
+ * @param {function} next
+ * @api private
+ */
+
+Layer.prototype.handleRequest = function handleRequest (req, res, next) {
+  const fn = this.handle
+
+  if (fn.length > 3) {
+    // not a standard request handler
+    return next()
+  }
+
+  try {
+    // invoke function
+    const ret = fn(req, res, next)
+
+    // wait for returned promise
+    if (isPromise(ret)) {
+      if (!(ret instanceof Promise)) {
+        deprecate('handlers that are Promise-like are deprecated, use a native Promise instead')
+      }
+
+      ret.then(null, function (error) {
+        next(error || new Error('Rejected promise'))
+      })
+    }
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * Check if this route matches `path`, if so
+ * populate `.params`.
+ *
+ * @param {String} path
+ * @return {Boolean}
+ * @api private
+ */
+
+Layer.prototype.match = function match (path) {
+  let match
+
+  if (path != null) {
+    // fast path non-ending match for / (any path matches)
+    if (this.slash) {
+      this.params = {}
+      this.path = ''
+      return true
+    }
+
+    let i = 0
+    while (!match && i < this.matchers.length) {
+      // match the path
+      match = this.matchers[i](path)
+      i++
+    }
+  }
+
+  if (!match) {
+    this.params = undefined
+    this.path = undefined
+    return false
+  }
+
+  // store values
+  this.params = match.params
+  this.path = match.path
+  this.keys = Object.keys(match.params)
+
+  return true
+}
+
+/**
+ * Decode param value.
+ *
+ * @param {string} val
+ * @return {string}
+ * @private
+ */
+
+function decodeParam (val) {
+  if (typeof val !== 'string' || val.length === 0) {
+    return val
+  }
+
+  try {
+    return decodeURIComponent(val)
+  } catch (err) {
+    if (err instanceof URIError) {
+      err.message = 'Failed to decode param \'' + val + '\''
+      err.status = 400
+    }
+
+    throw err
+  }
+}
+
+/**
+ * Loosens the given path for path-to-regexp matching.
+ */
+function loosen (path) {
+  if (path instanceof RegExp || path === '/') {
+    return path
+  }
+
+  return Array.isArray(path)
+    ? path.map(function (p) { return loosen(p) })
+    : String(path).replace(TRAILING_SLASH_REGEXP, '')
+}
+
+
+/***/ }),
+
+/***/ 6544:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+/*!
+ * router
+ * Copyright(c) 2013 Roman Shtylman
+ * Copyright(c) 2014-2022 Douglas Christopher Wilson
+ * MIT Licensed
+ */
+
+
+
+/**
+ * Module dependencies.
+ * @private
+ */
+
+const debug = __nccwpck_require__(2830)('router:route')
+const Layer = __nccwpck_require__(9076)
+const { METHODS } = __nccwpck_require__(7067)
+
+/**
+ * Module variables.
+ * @private
+ */
+
+const slice = Array.prototype.slice
+const flatten = Array.prototype.flat
+const methods = METHODS.map((method) => method.toLowerCase())
+
+/**
+ * Expose `Route`.
+ */
+
+module.exports = Route
+
+/**
+ * Initialize `Route` with the given `path`,
+ *
+ * @param {String} path
+ * @api private
+ */
+
+function Route (path) {
+  debug('new %o', path)
+  this.path = path
+  this.stack = []
+
+  // route handlers for various http methods
+  this.methods = Object.create(null)
+}
+
+/**
+ * @private
+ */
+
+Route.prototype._handlesMethod = function _handlesMethod (method) {
+  if (this.methods._all) {
+    return true
+  }
+
+  // normalize name
+  let name = typeof method === 'string'
+    ? method.toLowerCase()
+    : method
+
+  if (name === 'head' && !this.methods.head) {
+    name = 'get'
+  }
+
+  return Boolean(this.methods[name])
+}
+
+/**
+ * @return {array} supported HTTP methods
+ * @private
+ */
+
+Route.prototype._methods = function _methods () {
+  const methods = Object.keys(this.methods)
+
+  // append automatic head
+  if (this.methods.get && !this.methods.head) {
+    methods.push('head')
+  }
+
+  for (let i = 0; i < methods.length; i++) {
+    // make upper case
+    methods[i] = methods[i].toUpperCase()
+  }
+
+  return methods
+}
+
+/**
+ * dispatch req, res into this route
+ *
+ * @private
+ */
+
+Route.prototype.dispatch = function dispatch (req, res, done) {
+  let idx = 0
+  const stack = this.stack
+  let sync = 0
+
+  if (stack.length === 0) {
+    return done()
+  }
+
+  let method = typeof req.method === 'string'
+    ? req.method.toLowerCase()
+    : req.method
+
+  if (method === 'head' && !this.methods.head) {
+    method = 'get'
+  }
+
+  req.route = this
+
+  next()
+
+  function next (err) {
+    // signal to exit route
+    if (err && err === 'route') {
+      return done()
+    }
+
+    // signal to exit router
+    if (err && err === 'router') {
+      return done(err)
+    }
+
+    // no more matching layers
+    if (idx >= stack.length) {
+      return done(err)
+    }
+
+    // max sync stack
+    if (++sync > 100) {
+      return setImmediate(next, err)
+    }
+
+    let layer
+    let match
+
+    // find next matching layer
+    while (match !== true && idx < stack.length) {
+      layer = stack[idx++]
+      match = !layer.method || layer.method === method
+    }
+
+    // no match
+    if (match !== true) {
+      return done(err)
+    }
+
+    if (err) {
+      layer.handleError(err, req, res, next)
+    } else {
+      layer.handleRequest(req, res, next)
+    }
+
+    sync = 0
+  }
+}
+
+/**
+ * Add a handler for all HTTP verbs to this route.
+ *
+ * Behaves just like middleware and can respond or call `next`
+ * to continue processing.
+ *
+ * You can use multiple `.all` call to add multiple handlers.
+ *
+ *   function check_something(req, res, next){
+ *     next()
+ *   }
+ *
+ *   function validate_user(req, res, next){
+ *     next()
+ *   }
+ *
+ *   route
+ *   .all(validate_user)
+ *   .all(check_something)
+ *   .get(function(req, res, next){
+ *     res.send('hello world')
+ *   })
+ *
+ * @param {array|function} handler
+ * @return {Route} for chaining
+ * @api public
+ */
+
+Route.prototype.all = function all (handler) {
+  const callbacks = flatten.call(slice.call(arguments), Infinity)
+
+  if (callbacks.length === 0) {
+    throw new TypeError('argument handler is required')
+  }
+
+  for (let i = 0; i < callbacks.length; i++) {
+    const fn = callbacks[i]
+
+    if (typeof fn !== 'function') {
+      throw new TypeError('argument handler must be a function')
+    }
+
+    const layer = Layer('/', {}, fn)
+    layer.method = undefined
+
+    this.methods._all = true
+    this.stack.push(layer)
+  }
+
+  return this
+}
+
+methods.forEach(function (method) {
+  Route.prototype[method] = function (handler) {
+    const callbacks = flatten.call(slice.call(arguments), Infinity)
+
+    if (callbacks.length === 0) {
+      throw new TypeError('argument handler is required')
+    }
+
+    for (let i = 0; i < callbacks.length; i++) {
+      const fn = callbacks[i]
+
+      if (typeof fn !== 'function') {
+        throw new TypeError('argument handler must be a function')
+      }
+
+      debug('%s %s', method, this.path)
+
+      const layer = Layer('/', {}, fn)
+      layer.method = method
+
+      this.methods[method] = true
+      this.stack.push(layer)
+    }
+
+    return this
+  }
+})
 
 
 /***/ }),
@@ -28306,15 +25372,13 @@ module.exports = safer
  */
 
 var createError = __nccwpck_require__(8024)
-var debug = __nccwpck_require__(7500)('send')
-var deprecate = __nccwpck_require__(95)('send')
-var destroy = __nccwpck_require__(2194)
+var debug = __nccwpck_require__(2830)('send')
 var encodeUrl = __nccwpck_require__(3835)
 var escapeHtml = __nccwpck_require__(2759)
 var etag = __nccwpck_require__(1825)
 var fresh = __nccwpck_require__(755)
 var fs = __nccwpck_require__(9896)
-var mime = __nccwpck_require__(2322)
+var mime = __nccwpck_require__(4096)
 var ms = __nccwpck_require__(744)
 var onFinished = __nccwpck_require__(5698)
 var parseRange = __nccwpck_require__(6412)
@@ -28361,7 +25425,6 @@ var UP_PATH_REGEXP = /(?:^|[\\/])\.\.(?:[\\/]|$)/
  */
 
 module.exports = send
-module.exports.mime = mime
 
 /**
  * Return a `SendStream` for `req` and `path`.
@@ -28415,17 +25478,6 @@ function SendStream (req, path, options) {
     throw new TypeError('dotfiles option must be "allow", "deny", or "ignore"')
   }
 
-  this._hidden = Boolean(opts.hidden)
-
-  if (opts.hidden !== undefined) {
-    deprecate('hidden: use dotfiles: \'' + (this._hidden ? 'allow' : 'ignore') + '\' instead')
-  }
-
-  // legacy support
-  if (opts.dotfiles === undefined) {
-    this._dotfiles = undefined
-  }
-
   this._extensions = opts.extensions !== undefined
     ? normalizeList(opts.extensions, 'extensions option')
     : []
@@ -28453,10 +25505,6 @@ function SendStream (req, path, options) {
   this._root = opts.root
     ? resolve(opts.root)
     : null
-
-  if (!this._root && opts.from) {
-    this.from(opts.from)
-  }
 }
 
 /**
@@ -28464,90 +25512,6 @@ function SendStream (req, path, options) {
  */
 
 util.inherits(SendStream, Stream)
-
-/**
- * Enable or disable etag generation.
- *
- * @param {Boolean} val
- * @return {SendStream}
- * @api public
- */
-
-SendStream.prototype.etag = deprecate.function(function etag (val) {
-  this._etag = Boolean(val)
-  debug('etag %s', this._etag)
-  return this
-}, 'send.etag: pass etag as option')
-
-/**
- * Enable or disable "hidden" (dot) files.
- *
- * @param {Boolean} path
- * @return {SendStream}
- * @api public
- */
-
-SendStream.prototype.hidden = deprecate.function(function hidden (val) {
-  this._hidden = Boolean(val)
-  this._dotfiles = undefined
-  debug('hidden %s', this._hidden)
-  return this
-}, 'send.hidden: use dotfiles option')
-
-/**
- * Set index `paths`, set to a falsy
- * value to disable index support.
- *
- * @param {String|Boolean|Array} paths
- * @return {SendStream}
- * @api public
- */
-
-SendStream.prototype.index = deprecate.function(function index (paths) {
-  var index = !paths ? [] : normalizeList(paths, 'paths argument')
-  debug('index %o', paths)
-  this._index = index
-  return this
-}, 'send.index: pass index as option')
-
-/**
- * Set root `path`.
- *
- * @param {String} path
- * @return {SendStream}
- * @api public
- */
-
-SendStream.prototype.root = function root (path) {
-  this._root = resolve(String(path))
-  debug('root %s', this._root)
-  return this
-}
-
-SendStream.prototype.from = deprecate.function(SendStream.prototype.root,
-  'send.from: pass root as option')
-
-SendStream.prototype.root = deprecate.function(SendStream.prototype.root,
-  'send.root: pass root as option')
-
-/**
- * Set max-age to `maxAge`.
- *
- * @param {Number} maxAge
- * @return {SendStream}
- * @api public
- */
-
-SendStream.prototype.maxage = deprecate.function(function maxage (maxAge) {
-  this._maxage = typeof maxAge === 'string'
-    ? ms(maxAge)
-    : Number(maxAge)
-  this._maxage = !isNaN(this._maxage)
-    ? Math.min(Math.max(0, this._maxage), MAX_MAXAGE)
-    : 0
-  debug('max-age %d', this._maxage)
-  return this
-}, 'send.maxage: pass maxAge as option')
 
 /**
  * Emit error with `status`.
@@ -28851,17 +25815,8 @@ SendStream.prototype.pipe = function pipe (res) {
 
   // dotfile handling
   if (containsDotFile(parts)) {
-    var access = this._dotfiles
-
-    // legacy support
-    if (access === undefined) {
-      access = parts[parts.length - 1][0] === '.'
-        ? (this._hidden ? 'allow' : 'ignore')
-        : 'allow'
-    }
-
-    debug('%s dotfile "%s"', access, path)
-    switch (access) {
+    debug('%s dotfile "%s"', this._dotfiles, path)
+    switch (this._dotfiles) {
       case 'allow':
         break
       case 'deny':
@@ -28900,7 +25855,7 @@ SendStream.prototype.send = function send (path, stat) {
   var ranges = req.headers.range
   var offset = options.start || 0
 
-  if (headersSent(res)) {
+  if (res.headersSent) {
     // impossible to send now
     this.headersAlreadySent()
     return
@@ -29007,12 +25962,14 @@ SendStream.prototype.sendFile = function sendFile (path) {
 
   debug('stat "%s"', path)
   fs.stat(path, function onstat (err, stat) {
-    if (err && err.code === 'ENOENT' && !extname(path) && path[path.length - 1] !== sep) {
+    var pathEndsWithSep = path[path.length - 1] === sep
+    if (err && err.code === 'ENOENT' && !extname(path) && !pathEndsWithSep) {
       // not found, check extensions
       return next(err)
     }
     if (err) return self.onStatError(err)
     if (stat.isDirectory()) return self.redirect(path)
+    if (pathEndsWithSep) return self.error(404)
     self.emit('file', path, stat)
     self.send(path, stat)
   })
@@ -29085,7 +26042,7 @@ SendStream.prototype.stream = function stream (path, options) {
 
   // cleanup
   function cleanup () {
-    destroy(stream, true)
+    stream.destroy()
   }
 
   // response finished, cleanup
@@ -29119,17 +26076,11 @@ SendStream.prototype.type = function type (path) {
 
   if (res.getHeader('Content-Type')) return
 
-  var type = mime.lookup(path)
-
-  if (!type) {
-    debug('no content-type')
-    return
-  }
-
-  var charset = mime.charsets.lookup(type)
+  var ext = extname(path)
+  var type = mime.contentType(ext) || 'application/octet-stream'
 
   debug('content-type %s', type)
-  res.setHeader('Content-Type', type + (charset ? '; charset=' + charset : ''))
+  res.setHeader('Content-Type', type)
 }
 
 /**
@@ -29183,10 +26134,8 @@ SendStream.prototype.setHeader = function setHeader (path, stat) {
  */
 
 function clearHeaders (res) {
-  var headers = getHeaderNames(res)
-
-  for (var i = 0; i < headers.length; i++) {
-    res.removeHeader(headers[i])
+  for (const header of res.getHeaderNames()) {
+    res.removeHeader(header)
   }
 }
 
@@ -29295,23 +26244,9 @@ function decode (path) {
 }
 
 /**
- * Get the header names on a respnse.
- *
- * @param {object} res
- * @returns {array[string]}
- * @private
- */
-
-function getHeaderNames (res) {
-  return typeof res.getHeaderNames !== 'function'
-    ? Object.keys(res._headers || {})
-    : res.getHeaderNames()
-}
-
-/**
  * Determine if emitter has listeners of a given type.
  *
- * The way to do this check is done three different ways in Node.js >= 0.8
+ * The way to do this check is done three different ways in Node.js >= 0.10
  * so this consolidates them into a minimal set using instance methods.
  *
  * @param {EventEmitter} emitter
@@ -29326,20 +26261,6 @@ function hasListeners (emitter, type) {
     : emitter.listenerCount(type)
 
   return count > 0
-}
-
-/**
- * Determine if the response headers have been sent.
- *
- * @param {object} res
- * @returns {boolean}
- * @private
- */
-
-function headersSent (res) {
-  return typeof res.headersSent !== 'boolean'
-    ? Boolean(res._header)
-    : res.headersSent
 }
 
 /**
@@ -29437,838 +26358,6 @@ function setHeaders (res, headers) {
 
 /***/ }),
 
-/***/ 4697:
-/***/ ((module) => {
-
-/**
- * Helpers.
- */
-
-var s = 1000;
-var m = s * 60;
-var h = m * 60;
-var d = h * 24;
-var y = d * 365.25;
-
-/**
- * Parse or format the given `val`.
- *
- * Options:
- *
- *  - `long` verbose formatting [false]
- *
- * @param {String|Number} val
- * @param {Object} [options]
- * @throws {Error} throw an error if val is not a non-empty string or a number
- * @return {String|Number}
- * @api public
- */
-
-module.exports = function(val, options) {
-  options = options || {};
-  var type = typeof val;
-  if (type === 'string' && val.length > 0) {
-    return parse(val);
-  } else if (type === 'number' && isNaN(val) === false) {
-    return options.long ? fmtLong(val) : fmtShort(val);
-  }
-  throw new Error(
-    'val is not a non-empty string or a valid number. val=' +
-      JSON.stringify(val)
-  );
-};
-
-/**
- * Parse the given `str` and return milliseconds.
- *
- * @param {String} str
- * @return {Number}
- * @api private
- */
-
-function parse(str) {
-  str = String(str);
-  if (str.length > 100) {
-    return;
-  }
-  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(
-    str
-  );
-  if (!match) {
-    return;
-  }
-  var n = parseFloat(match[1]);
-  var type = (match[2] || 'ms').toLowerCase();
-  switch (type) {
-    case 'years':
-    case 'year':
-    case 'yrs':
-    case 'yr':
-    case 'y':
-      return n * y;
-    case 'days':
-    case 'day':
-    case 'd':
-      return n * d;
-    case 'hours':
-    case 'hour':
-    case 'hrs':
-    case 'hr':
-    case 'h':
-      return n * h;
-    case 'minutes':
-    case 'minute':
-    case 'mins':
-    case 'min':
-    case 'm':
-      return n * m;
-    case 'seconds':
-    case 'second':
-    case 'secs':
-    case 'sec':
-    case 's':
-      return n * s;
-    case 'milliseconds':
-    case 'millisecond':
-    case 'msecs':
-    case 'msec':
-    case 'ms':
-      return n;
-    default:
-      return undefined;
-  }
-}
-
-/**
- * Short format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtShort(ms) {
-  if (ms >= d) {
-    return Math.round(ms / d) + 'd';
-  }
-  if (ms >= h) {
-    return Math.round(ms / h) + 'h';
-  }
-  if (ms >= m) {
-    return Math.round(ms / m) + 'm';
-  }
-  if (ms >= s) {
-    return Math.round(ms / s) + 's';
-  }
-  return ms + 'ms';
-}
-
-/**
- * Long format for `ms`.
- *
- * @param {Number} ms
- * @return {String}
- * @api private
- */
-
-function fmtLong(ms) {
-  return plural(ms, d, 'day') ||
-    plural(ms, h, 'hour') ||
-    plural(ms, m, 'minute') ||
-    plural(ms, s, 'second') ||
-    ms + ' ms';
-}
-
-/**
- * Pluralization helper.
- */
-
-function plural(ms, n, name) {
-  if (ms < n) {
-    return;
-  }
-  if (ms < n * 1.5) {
-    return Math.floor(ms / n) + ' ' + name;
-  }
-  return Math.ceil(ms / n) + ' ' + name + 's';
-}
-
-
-/***/ }),
-
-/***/ 2936:
-/***/ ((module, exports, __nccwpck_require__) => {
-
-/**
- * This is the web browser implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = __nccwpck_require__(5955);
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-exports.storage = 'undefined' != typeof chrome
-               && 'undefined' != typeof chrome.storage
-                  ? chrome.storage.local
-                  : localstorage();
-
-/**
- * Colors.
- */
-
-exports.colors = [
-  'lightseagreen',
-  'forestgreen',
-  'goldenrod',
-  'dodgerblue',
-  'darkorchid',
-  'crimson'
-];
-
-/**
- * Currently only WebKit-based Web Inspectors, Firefox >= v31,
- * and the Firebug extension (any Firefox version) are known
- * to support "%c" CSS customizations.
- *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
- */
-
-function useColors() {
-  // NB: In an Electron preload script, document will be defined but not fully
-  // initialized. Since we know we're in Chrome, we'll just detect this case
-  // explicitly
-  if (typeof window !== 'undefined' && window.process && window.process.type === 'renderer') {
-    return true;
-  }
-
-  // is webkit? http://stackoverflow.com/a/16459606/376773
-  // document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-  return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
-    // is firebug? http://stackoverflow.com/a/398120/376773
-    (typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
-    // is firefox >= v31?
-    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-    (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31) ||
-    // double check webkit in userAgent just in case we are in a worker
-    (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
-}
-
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
-
-exports.formatters.j = function(v) {
-  try {
-    return JSON.stringify(v);
-  } catch (err) {
-    return '[UnexpectedJSONParseError]: ' + err.message;
-  }
-};
-
-
-/**
- * Colorize log arguments if enabled.
- *
- * @api public
- */
-
-function formatArgs(args) {
-  var useColors = this.useColors;
-
-  args[0] = (useColors ? '%c' : '')
-    + this.namespace
-    + (useColors ? ' %c' : ' ')
-    + args[0]
-    + (useColors ? '%c ' : ' ')
-    + '+' + exports.humanize(this.diff);
-
-  if (!useColors) return;
-
-  var c = 'color: ' + this.color;
-  args.splice(1, 0, c, 'color: inherit')
-
-  // the final "%c" is somewhat tricky, because there could be other
-  // arguments passed either before or after the %c, so we need to
-  // figure out the correct index to insert the CSS into
-  var index = 0;
-  var lastC = 0;
-  args[0].replace(/%[a-zA-Z%]/g, function(match) {
-    if ('%%' === match) return;
-    index++;
-    if ('%c' === match) {
-      // we only are interested in the *last* %c
-      // (the user may have provided their own)
-      lastC = index;
-    }
-  });
-
-  args.splice(lastC, 0, c);
-}
-
-/**
- * Invokes `console.log()` when available.
- * No-op when `console.log` is not a "function".
- *
- * @api public
- */
-
-function log() {
-  // this hackery is required for IE8/9, where
-  // the `console.log` function doesn't have 'apply'
-  return 'object' === typeof console
-    && console.log
-    && Function.prototype.apply.call(console.log, console, arguments);
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  try {
-    if (null == namespaces) {
-      exports.storage.removeItem('debug');
-    } else {
-      exports.storage.debug = namespaces;
-    }
-  } catch(e) {}
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  var r;
-  try {
-    r = exports.storage.debug;
-  } catch(e) {}
-
-  // If debug isn't set in LS, and we're in Electron, try to load $DEBUG
-  if (!r && typeof process !== 'undefined' && 'env' in process) {
-    r = process.env.DEBUG;
-  }
-
-  return r;
-}
-
-/**
- * Enable namespaces listed in `localStorage.debug` initially.
- */
-
-exports.enable(load());
-
-/**
- * Localstorage attempts to return the localstorage.
- *
- * This is necessary because safari throws
- * when a user disables cookies/localstorage
- * and you attempt to access it.
- *
- * @return {LocalStorage}
- * @api private
- */
-
-function localstorage() {
-  try {
-    return window.localStorage;
-  } catch (e) {}
-}
-
-
-/***/ }),
-
-/***/ 5955:
-/***/ ((module, exports, __nccwpck_require__) => {
-
-
-/**
- * This is the common logic for both the Node.js and web browser
- * implementations of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = createDebug.debug = createDebug['default'] = createDebug;
-exports.coerce = coerce;
-exports.disable = disable;
-exports.enable = enable;
-exports.enabled = enabled;
-exports.humanize = __nccwpck_require__(4697);
-
-/**
- * The currently active debug mode names, and names to skip.
- */
-
-exports.names = [];
-exports.skips = [];
-
-/**
- * Map of special "%n" handling functions, for the debug "format" argument.
- *
- * Valid key names are a single, lower or upper-case letter, i.e. "n" and "N".
- */
-
-exports.formatters = {};
-
-/**
- * Previous log timestamp.
- */
-
-var prevTime;
-
-/**
- * Select a color.
- * @param {String} namespace
- * @return {Number}
- * @api private
- */
-
-function selectColor(namespace) {
-  var hash = 0, i;
-
-  for (i in namespace) {
-    hash  = ((hash << 5) - hash) + namespace.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
-  }
-
-  return exports.colors[Math.abs(hash) % exports.colors.length];
-}
-
-/**
- * Create a debugger with the given `namespace`.
- *
- * @param {String} namespace
- * @return {Function}
- * @api public
- */
-
-function createDebug(namespace) {
-
-  function debug() {
-    // disabled?
-    if (!debug.enabled) return;
-
-    var self = debug;
-
-    // set `diff` timestamp
-    var curr = +new Date();
-    var ms = curr - (prevTime || curr);
-    self.diff = ms;
-    self.prev = prevTime;
-    self.curr = curr;
-    prevTime = curr;
-
-    // turn the `arguments` into a proper Array
-    var args = new Array(arguments.length);
-    for (var i = 0; i < args.length; i++) {
-      args[i] = arguments[i];
-    }
-
-    args[0] = exports.coerce(args[0]);
-
-    if ('string' !== typeof args[0]) {
-      // anything else let's inspect with %O
-      args.unshift('%O');
-    }
-
-    // apply any `formatters` transformations
-    var index = 0;
-    args[0] = args[0].replace(/%([a-zA-Z%])/g, function(match, format) {
-      // if we encounter an escaped % then don't increase the array index
-      if (match === '%%') return match;
-      index++;
-      var formatter = exports.formatters[format];
-      if ('function' === typeof formatter) {
-        var val = args[index];
-        match = formatter.call(self, val);
-
-        // now we need to remove `args[index]` since it's inlined in the `format`
-        args.splice(index, 1);
-        index--;
-      }
-      return match;
-    });
-
-    // apply env-specific formatting (colors, etc.)
-    exports.formatArgs.call(self, args);
-
-    var logFn = debug.log || exports.log || console.log.bind(console);
-    logFn.apply(self, args);
-  }
-
-  debug.namespace = namespace;
-  debug.enabled = exports.enabled(namespace);
-  debug.useColors = exports.useColors();
-  debug.color = selectColor(namespace);
-
-  // env-specific initialization logic for debug instances
-  if ('function' === typeof exports.init) {
-    exports.init(debug);
-  }
-
-  return debug;
-}
-
-/**
- * Enables a debug mode by namespaces. This can include modes
- * separated by a colon and wildcards.
- *
- * @param {String} namespaces
- * @api public
- */
-
-function enable(namespaces) {
-  exports.save(namespaces);
-
-  exports.names = [];
-  exports.skips = [];
-
-  var split = (typeof namespaces === 'string' ? namespaces : '').split(/[\s,]+/);
-  var len = split.length;
-
-  for (var i = 0; i < len; i++) {
-    if (!split[i]) continue; // ignore empty strings
-    namespaces = split[i].replace(/\*/g, '.*?');
-    if (namespaces[0] === '-') {
-      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
-    } else {
-      exports.names.push(new RegExp('^' + namespaces + '$'));
-    }
-  }
-}
-
-/**
- * Disable debug output.
- *
- * @api public
- */
-
-function disable() {
-  exports.enable('');
-}
-
-/**
- * Returns true if the given mode name is enabled, false otherwise.
- *
- * @param {String} name
- * @return {Boolean}
- * @api public
- */
-
-function enabled(name) {
-  var i, len;
-  for (i = 0, len = exports.skips.length; i < len; i++) {
-    if (exports.skips[i].test(name)) {
-      return false;
-    }
-  }
-  for (i = 0, len = exports.names.length; i < len; i++) {
-    if (exports.names[i].test(name)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Coerce `val`.
- *
- * @param {Mixed} val
- * @return {Mixed}
- * @api private
- */
-
-function coerce(val) {
-  if (val instanceof Error) return val.stack || val.message;
-  return val;
-}
-
-
-/***/ }),
-
-/***/ 7500:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-/**
- * Detect Electron renderer process, which is node, but we should
- * treat as a browser.
- */
-
-if (typeof process !== 'undefined' && process.type === 'renderer') {
-  module.exports = __nccwpck_require__(2936);
-} else {
-  module.exports = __nccwpck_require__(9098);
-}
-
-
-/***/ }),
-
-/***/ 9098:
-/***/ ((module, exports, __nccwpck_require__) => {
-
-/**
- * Module dependencies.
- */
-
-var tty = __nccwpck_require__(2018);
-var util = __nccwpck_require__(9023);
-
-/**
- * This is the Node.js implementation of `debug()`.
- *
- * Expose `debug()` as the module.
- */
-
-exports = module.exports = __nccwpck_require__(5955);
-exports.init = init;
-exports.log = log;
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-
-/**
- * Colors.
- */
-
-exports.colors = [6, 2, 3, 4, 5, 1];
-
-/**
- * Build up the default `inspectOpts` object from the environment variables.
- *
- *   $ DEBUG_COLORS=no DEBUG_DEPTH=10 DEBUG_SHOW_HIDDEN=enabled node script.js
- */
-
-exports.inspectOpts = Object.keys(process.env).filter(function (key) {
-  return /^debug_/i.test(key);
-}).reduce(function (obj, key) {
-  // camel-case
-  var prop = key
-    .substring(6)
-    .toLowerCase()
-    .replace(/_([a-z])/g, function (_, k) { return k.toUpperCase() });
-
-  // coerce string value into JS value
-  var val = process.env[key];
-  if (/^(yes|on|true|enabled)$/i.test(val)) val = true;
-  else if (/^(no|off|false|disabled)$/i.test(val)) val = false;
-  else if (val === 'null') val = null;
-  else val = Number(val);
-
-  obj[prop] = val;
-  return obj;
-}, {});
-
-/**
- * The file descriptor to write the `debug()` calls to.
- * Set the `DEBUG_FD` env variable to override with another value. i.e.:
- *
- *   $ DEBUG_FD=3 node script.js 3>debug.log
- */
-
-var fd = parseInt(process.env.DEBUG_FD, 10) || 2;
-
-if (1 !== fd && 2 !== fd) {
-  util.deprecate(function(){}, 'except for stderr(2) and stdout(1), any other usage of DEBUG_FD is deprecated. Override debug.log if you want to use a different log function (https://git.io/debug_fd)')()
-}
-
-var stream = 1 === fd ? process.stdout :
-             2 === fd ? process.stderr :
-             createWritableStdioStream(fd);
-
-/**
- * Is stdout a TTY? Colored output is enabled when `true`.
- */
-
-function useColors() {
-  return 'colors' in exports.inspectOpts
-    ? Boolean(exports.inspectOpts.colors)
-    : tty.isatty(fd);
-}
-
-/**
- * Map %o to `util.inspect()`, all on a single line.
- */
-
-exports.formatters.o = function(v) {
-  this.inspectOpts.colors = this.useColors;
-  return util.inspect(v, this.inspectOpts)
-    .split('\n').map(function(str) {
-      return str.trim()
-    }).join(' ');
-};
-
-/**
- * Map %o to `util.inspect()`, allowing multiple lines if needed.
- */
-
-exports.formatters.O = function(v) {
-  this.inspectOpts.colors = this.useColors;
-  return util.inspect(v, this.inspectOpts);
-};
-
-/**
- * Adds ANSI color escape codes if enabled.
- *
- * @api public
- */
-
-function formatArgs(args) {
-  var name = this.namespace;
-  var useColors = this.useColors;
-
-  if (useColors) {
-    var c = this.color;
-    var prefix = '  \u001b[3' + c + ';1m' + name + ' ' + '\u001b[0m';
-
-    args[0] = prefix + args[0].split('\n').join('\n' + prefix);
-    args.push('\u001b[3' + c + 'm+' + exports.humanize(this.diff) + '\u001b[0m');
-  } else {
-    args[0] = new Date().toUTCString()
-      + ' ' + name + ' ' + args[0];
-  }
-}
-
-/**
- * Invokes `util.format()` with the specified arguments and writes to `stream`.
- */
-
-function log() {
-  return stream.write(util.format.apply(util, arguments) + '\n');
-}
-
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-
-function save(namespaces) {
-  if (null == namespaces) {
-    // If you set a process.env field to null or undefined, it gets cast to the
-    // string 'null' or 'undefined'. Just delete instead.
-    delete process.env.DEBUG;
-  } else {
-    process.env.DEBUG = namespaces;
-  }
-}
-
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-
-function load() {
-  return process.env.DEBUG;
-}
-
-/**
- * Copied from `node/src/node.js`.
- *
- * XXX: It's lame that node doesn't expose this API out-of-the-box. It also
- * relies on the undocumented `tty_wrap.guessHandleType()` which is also lame.
- */
-
-function createWritableStdioStream (fd) {
-  var stream;
-  var tty_wrap = process.binding('tty_wrap');
-
-  // Note stream._type is used for test-module-load-list.js
-
-  switch (tty_wrap.guessHandleType(fd)) {
-    case 'TTY':
-      stream = new tty.WriteStream(fd);
-      stream._type = 'tty';
-
-      // Hack to have stream not keep the event loop alive.
-      // See https://github.com/joyent/node/issues/1726
-      if (stream._handle && stream._handle.unref) {
-        stream._handle.unref();
-      }
-      break;
-
-    case 'FILE':
-      var fs = __nccwpck_require__(9896);
-      stream = new fs.SyncWriteStream(fd, { autoClose: false });
-      stream._type = 'fs';
-      break;
-
-    case 'PIPE':
-    case 'TCP':
-      var net = __nccwpck_require__(9278);
-      stream = new net.Socket({
-        fd: fd,
-        readable: false,
-        writable: true
-      });
-
-      // FIXME Should probably have an option in net.Socket to create a
-      // stream from an existing fd which is writable only. But for now
-      // we'll just add this hack and set the `readable` member to false.
-      // Test: ./node test/fixtures/echo.js < /etc/passwd
-      stream.readable = false;
-      stream.read = null;
-      stream._type = 'pipe';
-
-      // FIXME Hack to have stream not keep the event loop alive.
-      // See https://github.com/joyent/node/issues/1726
-      if (stream._handle && stream._handle.unref) {
-        stream._handle.unref();
-      }
-      break;
-
-    default:
-      // Probably an error on in uv_guess_handle()
-      throw new Error('Implement me. Unknown stream file type!');
-  }
-
-  // For supporting legacy API we put the FD here.
-  stream.fd = fd;
-
-  stream._isStdio = true;
-
-  return stream;
-}
-
-/**
- * Init logic for `debug` instances.
- *
- * Create a new `inspectOpts` object in case `useColors` is set
- * differently for a particular `debug` instance.
- */
-
-function init (debug) {
-  debug.inspectOpts = {};
-
-  var keys = Object.keys(exports.inspectOpts);
-  for (var i = 0; i < keys.length; i++) {
-    debug.inspectOpts[keys[i]] = exports.inspectOpts[keys[i]];
-  }
-}
-
-/**
- * Enable namespaces listed in `process.env.DEBUG` initially.
- */
-
-exports.enable(load());
-
-
-/***/ }),
-
 /***/ 6004:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -30301,7 +26390,6 @@ var url = __nccwpck_require__(7016)
  */
 
 module.exports = serveStatic
-module.exports.mime = send.mime
 
 /**
  * @param {string} root
@@ -31344,8 +27432,9 @@ __webpack_unused_export__ = debug; // for test
  * @private
  */
 
-var typer = __nccwpck_require__(827)
+var contentType = __nccwpck_require__(756)
 var mime = __nccwpck_require__(4096)
+var typer = __nccwpck_require__(827)
 
 /**
  * Module exports.
@@ -31447,27 +27536,19 @@ function hasbody (req) {
  *
  *     this.is('html'); // => false
  *
- * @param {String|Array} types...
- * @return {String|false|null}
+ * @param {Object} req
+ * @param {(String|Array)} types...
+ * @return {(String|false|null)}
  * @public
  */
 
 function typeofrequest (req, types_) {
-  var types = types_
-
   // no body
-  if (!hasbody(req)) {
-    return null
-  }
-
+  if (!hasbody(req)) return null
   // support flattened arguments
-  if (arguments.length > 2) {
-    types = new Array(arguments.length - 1)
-    for (var i = 0; i < types.length; i++) {
-      types[i] = arguments[i + 1]
-    }
-  }
-
+  var types = arguments.length > 2
+    ? Array.prototype.slice.call(arguments, 1)
+    : types_
   // request content type
   var value = req.headers['content-type']
 
@@ -31487,7 +27568,8 @@ function typeofrequest (req, types_) {
  * and are thus ensured to work.
  *
  * @param {String} type
- * @private
+ * @return {String|false|null}
+ * @public
  */
 
 function normalize (type) {
@@ -31521,7 +27603,7 @@ function normalize (type) {
  * @param {String} expected
  * @param {String} actual
  * @return {Boolean}
- * @private
+ * @public
  */
 
 function mimeMatch (expected, actual) {
@@ -31545,9 +27627,9 @@ function mimeMatch (expected, actual) {
   }
 
   // validate suffix wildcard
-  if (expectedParts[1].substr(0, 2) === '*+') {
+  if (expectedParts[1].slice(0, 2) === '*+') {
     return expectedParts[1].length <= actualParts[1].length + 1 &&
-      expectedParts[1].substr(1) === actualParts[1].substr(1 - expectedParts[1].length)
+      expectedParts[1].slice(1) === actualParts[1].slice(1 - expectedParts[1].length)
   }
 
   // validate subtype
@@ -31562,36 +27644,26 @@ function mimeMatch (expected, actual) {
  * Normalize a type and remove parameters.
  *
  * @param {string} value
- * @return {string}
+ * @return {(string|null)}
  * @private
  */
-
 function normalizeType (value) {
-  // parse the type
-  var type = typer.parse(value)
+  // Parse the type
+  var type = contentType.parse(value).type
 
-  // remove the parameters
-  type.parameters = undefined
-
-  // reformat it
-  return typer.format(type)
+  return typer.test(type) ? type : null
 }
 
 /**
  * Try to normalize a type and remove parameters.
  *
  * @param {string} value
- * @return {string}
+ * @return {(string|null)}
  * @private
  */
-
 function tryNormalizeType (value) {
-  if (!value) {
-    return null
-  }
-
   try {
-    return normalizeType(value)
+    return value ? normalizeType(value) : null
   } catch (err) {
     return null
   }
@@ -59113,36 +55185,6 @@ function unpipe(stream) {
 
 /***/ }),
 
-/***/ 1448:
-/***/ ((module, exports) => {
-
-/**
- * Merge object b with object a.
- *
- *     var a = { foo: 'bar' }
- *       , b = { bar: 'baz' };
- *
- *     merge(a, b);
- *     // => { foo: 'bar', bar: 'baz' }
- *
- * @param {Object} a
- * @param {Object} b
- * @return {Object}
- * @api public
- */
-
-exports = module.exports = function(a, b){
-  if (a && b) {
-    for (var key in b) {
-      a[key] = b[key];
-    }
-  }
-  return a;
-};
-
-
-/***/ }),
-
 /***/ 5116:
 /***/ ((module) => {
 
@@ -59294,6 +55336,46 @@ function vary (res, field) {
   // set new header
   if ((val = append(header, field))) {
     res.setHeader('Vary', val)
+  }
+}
+
+
+/***/ }),
+
+/***/ 8264:
+/***/ ((module) => {
+
+// Returns a wrapper function that returns a wrapped callback
+// The wrapper function should do some stuff, and return a
+// presumably different callback function.
+// This makes sure that own properties are retained, so that
+// decorations and such are not lost along the way.
+module.exports = wrappy
+function wrappy (fn, cb) {
+  if (fn && cb) return wrappy(fn)(cb)
+
+  if (typeof fn !== 'function')
+    throw new TypeError('need wrapper function')
+
+  Object.keys(fn).forEach(function (k) {
+    wrapper[k] = fn[k]
+  })
+
+  return wrapper
+
+  function wrapper() {
+    var args = new Array(arguments.length)
+    for (var i = 0; i < args.length; i++) {
+      args[i] = arguments[i]
+    }
+    var ret = fn.apply(this, args)
+    var cb = args[args.length-1]
+    if (typeof ret === 'function' && ret !== cb) {
+      Object.keys(cb).forEach(function (k) {
+        ret[k] = cb[k]
+      })
+    }
+    return ret
   }
 }
 
@@ -59452,6 +55534,14 @@ module.exports = require("node:events");
 
 /***/ }),
 
+/***/ 3024:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs");
+
+/***/ }),
+
 /***/ 7067:
 /***/ ((module) => {
 
@@ -59473,6 +55563,14 @@ module.exports = require("node:http2");
 
 "use strict";
 module.exports = require("node:net");
+
+/***/ }),
+
+/***/ 6760:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:path");
 
 /***/ }),
 
@@ -59556,14 +55654,6 @@ module.exports = require("path");
 
 /***/ }),
 
-/***/ 3480:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("querystring");
-
-/***/ }),
-
 /***/ 2203:
 /***/ ((module) => {
 
@@ -59620,6 +55710,14 @@ module.exports = require("zlib");
 
 /***/ }),
 
+/***/ 7286:
+/***/ ((module) => {
+
+"use strict";
+module.exports = /*#__PURE__*/JSON.parse('{"application/1d-interleaved-parityfec":{"source":"iana"},"application/3gpdash-qoe-report+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/3gpp-ims+xml":{"source":"iana","compressible":true},"application/3gpphal+json":{"source":"iana","compressible":true},"application/3gpphalforms+json":{"source":"iana","compressible":true},"application/a2l":{"source":"iana"},"application/ace+cbor":{"source":"iana"},"application/activemessage":{"source":"iana"},"application/activity+json":{"source":"iana","compressible":true},"application/alto-costmap+json":{"source":"iana","compressible":true},"application/alto-costmapfilter+json":{"source":"iana","compressible":true},"application/alto-directory+json":{"source":"iana","compressible":true},"application/alto-endpointcost+json":{"source":"iana","compressible":true},"application/alto-endpointcostparams+json":{"source":"iana","compressible":true},"application/alto-endpointprop+json":{"source":"iana","compressible":true},"application/alto-endpointpropparams+json":{"source":"iana","compressible":true},"application/alto-error+json":{"source":"iana","compressible":true},"application/alto-networkmap+json":{"source":"iana","compressible":true},"application/alto-networkmapfilter+json":{"source":"iana","compressible":true},"application/alto-updatestreamcontrol+json":{"source":"iana","compressible":true},"application/alto-updatestreamparams+json":{"source":"iana","compressible":true},"application/aml":{"source":"iana"},"application/andrew-inset":{"source":"iana","extensions":["ez"]},"application/applefile":{"source":"iana"},"application/applixware":{"source":"apache","extensions":["aw"]},"application/at+jwt":{"source":"iana"},"application/atf":{"source":"iana"},"application/atfx":{"source":"iana"},"application/atom+xml":{"source":"iana","compressible":true,"extensions":["atom"]},"application/atomcat+xml":{"source":"iana","compressible":true,"extensions":["atomcat"]},"application/atomdeleted+xml":{"source":"iana","compressible":true,"extensions":["atomdeleted"]},"application/atomicmail":{"source":"iana"},"application/atomsvc+xml":{"source":"iana","compressible":true,"extensions":["atomsvc"]},"application/atsc-dwd+xml":{"source":"iana","compressible":true,"extensions":["dwd"]},"application/atsc-dynamic-event-message":{"source":"iana"},"application/atsc-held+xml":{"source":"iana","compressible":true,"extensions":["held"]},"application/atsc-rdt+json":{"source":"iana","compressible":true},"application/atsc-rsat+xml":{"source":"iana","compressible":true,"extensions":["rsat"]},"application/atxml":{"source":"iana"},"application/auth-policy+xml":{"source":"iana","compressible":true},"application/bacnet-xdd+zip":{"source":"iana","compressible":false},"application/batch-smtp":{"source":"iana"},"application/bdoc":{"compressible":false,"extensions":["bdoc"]},"application/beep+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/calendar+json":{"source":"iana","compressible":true},"application/calendar+xml":{"source":"iana","compressible":true,"extensions":["xcs"]},"application/call-completion":{"source":"iana"},"application/cals-1840":{"source":"iana"},"application/captive+json":{"source":"iana","compressible":true},"application/cbor":{"source":"iana"},"application/cbor-seq":{"source":"iana"},"application/cccex":{"source":"iana"},"application/ccmp+xml":{"source":"iana","compressible":true},"application/ccxml+xml":{"source":"iana","compressible":true,"extensions":["ccxml"]},"application/cdfx+xml":{"source":"iana","compressible":true,"extensions":["cdfx"]},"application/cdmi-capability":{"source":"iana","extensions":["cdmia"]},"application/cdmi-container":{"source":"iana","extensions":["cdmic"]},"application/cdmi-domain":{"source":"iana","extensions":["cdmid"]},"application/cdmi-object":{"source":"iana","extensions":["cdmio"]},"application/cdmi-queue":{"source":"iana","extensions":["cdmiq"]},"application/cdni":{"source":"iana"},"application/cea":{"source":"iana"},"application/cea-2018+xml":{"source":"iana","compressible":true},"application/cellml+xml":{"source":"iana","compressible":true},"application/cfw":{"source":"iana"},"application/city+json":{"source":"iana","compressible":true},"application/clr":{"source":"iana"},"application/clue+xml":{"source":"iana","compressible":true},"application/clue_info+xml":{"source":"iana","compressible":true},"application/cms":{"source":"iana"},"application/cnrp+xml":{"source":"iana","compressible":true},"application/coap-group+json":{"source":"iana","compressible":true},"application/coap-payload":{"source":"iana"},"application/commonground":{"source":"iana"},"application/conference-info+xml":{"source":"iana","compressible":true},"application/cose":{"source":"iana"},"application/cose-key":{"source":"iana"},"application/cose-key-set":{"source":"iana"},"application/cpl+xml":{"source":"iana","compressible":true,"extensions":["cpl"]},"application/csrattrs":{"source":"iana"},"application/csta+xml":{"source":"iana","compressible":true},"application/cstadata+xml":{"source":"iana","compressible":true},"application/csvm+json":{"source":"iana","compressible":true},"application/cu-seeme":{"source":"apache","extensions":["cu"]},"application/cwt":{"source":"iana"},"application/cybercash":{"source":"iana"},"application/dart":{"compressible":true},"application/dash+xml":{"source":"iana","compressible":true,"extensions":["mpd"]},"application/dash-patch+xml":{"source":"iana","compressible":true,"extensions":["mpp"]},"application/dashdelta":{"source":"iana"},"application/davmount+xml":{"source":"iana","compressible":true,"extensions":["davmount"]},"application/dca-rft":{"source":"iana"},"application/dcd":{"source":"iana"},"application/dec-dx":{"source":"iana"},"application/dialog-info+xml":{"source":"iana","compressible":true},"application/dicom":{"source":"iana"},"application/dicom+json":{"source":"iana","compressible":true},"application/dicom+xml":{"source":"iana","compressible":true},"application/dii":{"source":"iana"},"application/dit":{"source":"iana"},"application/dns":{"source":"iana"},"application/dns+json":{"source":"iana","compressible":true},"application/dns-message":{"source":"iana"},"application/docbook+xml":{"source":"apache","compressible":true,"extensions":["dbk"]},"application/dots+cbor":{"source":"iana"},"application/dskpp+xml":{"source":"iana","compressible":true},"application/dssc+der":{"source":"iana","extensions":["dssc"]},"application/dssc+xml":{"source":"iana","compressible":true,"extensions":["xdssc"]},"application/dvcs":{"source":"iana"},"application/ecmascript":{"source":"iana","compressible":true,"extensions":["es","ecma"]},"application/edi-consent":{"source":"iana"},"application/edi-x12":{"source":"iana","compressible":false},"application/edifact":{"source":"iana","compressible":false},"application/efi":{"source":"iana"},"application/elm+json":{"source":"iana","charset":"UTF-8","compressible":true},"application/elm+xml":{"source":"iana","compressible":true},"application/emergencycalldata.cap+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/emergencycalldata.comment+xml":{"source":"iana","compressible":true},"application/emergencycalldata.control+xml":{"source":"iana","compressible":true},"application/emergencycalldata.deviceinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.ecall.msd":{"source":"iana"},"application/emergencycalldata.providerinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.serviceinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.subscriberinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.veds+xml":{"source":"iana","compressible":true},"application/emma+xml":{"source":"iana","compressible":true,"extensions":["emma"]},"application/emotionml+xml":{"source":"iana","compressible":true,"extensions":["emotionml"]},"application/encaprtp":{"source":"iana"},"application/epp+xml":{"source":"iana","compressible":true},"application/epub+zip":{"source":"iana","compressible":false,"extensions":["epub"]},"application/eshop":{"source":"iana"},"application/exi":{"source":"iana","extensions":["exi"]},"application/expect-ct-report+json":{"source":"iana","compressible":true},"application/express":{"source":"iana","extensions":["exp"]},"application/fastinfoset":{"source":"iana"},"application/fastsoap":{"source":"iana"},"application/fdt+xml":{"source":"iana","compressible":true,"extensions":["fdt"]},"application/fhir+json":{"source":"iana","charset":"UTF-8","compressible":true},"application/fhir+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/fido.trusted-apps+json":{"compressible":true},"application/fits":{"source":"iana"},"application/flexfec":{"source":"iana"},"application/font-sfnt":{"source":"iana"},"application/font-tdpfr":{"source":"iana","extensions":["pfr"]},"application/font-woff":{"source":"iana","compressible":false},"application/framework-attributes+xml":{"source":"iana","compressible":true},"application/geo+json":{"source":"iana","compressible":true,"extensions":["geojson"]},"application/geo+json-seq":{"source":"iana"},"application/geopackage+sqlite3":{"source":"iana"},"application/geoxacml+xml":{"source":"iana","compressible":true},"application/gltf-buffer":{"source":"iana"},"application/gml+xml":{"source":"iana","compressible":true,"extensions":["gml"]},"application/gpx+xml":{"source":"apache","compressible":true,"extensions":["gpx"]},"application/gxf":{"source":"apache","extensions":["gxf"]},"application/gzip":{"source":"iana","compressible":false,"extensions":["gz"]},"application/h224":{"source":"iana"},"application/held+xml":{"source":"iana","compressible":true},"application/hjson":{"extensions":["hjson"]},"application/http":{"source":"iana"},"application/hyperstudio":{"source":"iana","extensions":["stk"]},"application/ibe-key-request+xml":{"source":"iana","compressible":true},"application/ibe-pkg-reply+xml":{"source":"iana","compressible":true},"application/ibe-pp-data":{"source":"iana"},"application/iges":{"source":"iana"},"application/im-iscomposing+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/index":{"source":"iana"},"application/index.cmd":{"source":"iana"},"application/index.obj":{"source":"iana"},"application/index.response":{"source":"iana"},"application/index.vnd":{"source":"iana"},"application/inkml+xml":{"source":"iana","compressible":true,"extensions":["ink","inkml"]},"application/iotp":{"source":"iana"},"application/ipfix":{"source":"iana","extensions":["ipfix"]},"application/ipp":{"source":"iana"},"application/isup":{"source":"iana"},"application/its+xml":{"source":"iana","compressible":true,"extensions":["its"]},"application/java-archive":{"source":"apache","compressible":false,"extensions":["jar","war","ear"]},"application/java-serialized-object":{"source":"apache","compressible":false,"extensions":["ser"]},"application/java-vm":{"source":"apache","compressible":false,"extensions":["class"]},"application/javascript":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["js","mjs"]},"application/jf2feed+json":{"source":"iana","compressible":true},"application/jose":{"source":"iana"},"application/jose+json":{"source":"iana","compressible":true},"application/jrd+json":{"source":"iana","compressible":true},"application/jscalendar+json":{"source":"iana","compressible":true},"application/json":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["json","map"]},"application/json-patch+json":{"source":"iana","compressible":true},"application/json-seq":{"source":"iana"},"application/json5":{"extensions":["json5"]},"application/jsonml+json":{"source":"apache","compressible":true,"extensions":["jsonml"]},"application/jwk+json":{"source":"iana","compressible":true},"application/jwk-set+json":{"source":"iana","compressible":true},"application/jwt":{"source":"iana"},"application/kpml-request+xml":{"source":"iana","compressible":true},"application/kpml-response+xml":{"source":"iana","compressible":true},"application/ld+json":{"source":"iana","compressible":true,"extensions":["jsonld"]},"application/lgr+xml":{"source":"iana","compressible":true,"extensions":["lgr"]},"application/link-format":{"source":"iana"},"application/load-control+xml":{"source":"iana","compressible":true},"application/lost+xml":{"source":"iana","compressible":true,"extensions":["lostxml"]},"application/lostsync+xml":{"source":"iana","compressible":true},"application/lpf+zip":{"source":"iana","compressible":false},"application/lxf":{"source":"iana"},"application/mac-binhex40":{"source":"iana","extensions":["hqx"]},"application/mac-compactpro":{"source":"apache","extensions":["cpt"]},"application/macwriteii":{"source":"iana"},"application/mads+xml":{"source":"iana","compressible":true,"extensions":["mads"]},"application/manifest+json":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["webmanifest"]},"application/marc":{"source":"iana","extensions":["mrc"]},"application/marcxml+xml":{"source":"iana","compressible":true,"extensions":["mrcx"]},"application/mathematica":{"source":"iana","extensions":["ma","nb","mb"]},"application/mathml+xml":{"source":"iana","compressible":true,"extensions":["mathml"]},"application/mathml-content+xml":{"source":"iana","compressible":true},"application/mathml-presentation+xml":{"source":"iana","compressible":true},"application/mbms-associated-procedure-description+xml":{"source":"iana","compressible":true},"application/mbms-deregister+xml":{"source":"iana","compressible":true},"application/mbms-envelope+xml":{"source":"iana","compressible":true},"application/mbms-msk+xml":{"source":"iana","compressible":true},"application/mbms-msk-response+xml":{"source":"iana","compressible":true},"application/mbms-protection-description+xml":{"source":"iana","compressible":true},"application/mbms-reception-report+xml":{"source":"iana","compressible":true},"application/mbms-register+xml":{"source":"iana","compressible":true},"application/mbms-register-response+xml":{"source":"iana","compressible":true},"application/mbms-schedule+xml":{"source":"iana","compressible":true},"application/mbms-user-service-description+xml":{"source":"iana","compressible":true},"application/mbox":{"source":"iana","extensions":["mbox"]},"application/media-policy-dataset+xml":{"source":"iana","compressible":true,"extensions":["mpf"]},"application/media_control+xml":{"source":"iana","compressible":true},"application/mediaservercontrol+xml":{"source":"iana","compressible":true,"extensions":["mscml"]},"application/merge-patch+json":{"source":"iana","compressible":true},"application/metalink+xml":{"source":"apache","compressible":true,"extensions":["metalink"]},"application/metalink4+xml":{"source":"iana","compressible":true,"extensions":["meta4"]},"application/mets+xml":{"source":"iana","compressible":true,"extensions":["mets"]},"application/mf4":{"source":"iana"},"application/mikey":{"source":"iana"},"application/mipc":{"source":"iana"},"application/missing-blocks+cbor-seq":{"source":"iana"},"application/mmt-aei+xml":{"source":"iana","compressible":true,"extensions":["maei"]},"application/mmt-usd+xml":{"source":"iana","compressible":true,"extensions":["musd"]},"application/mods+xml":{"source":"iana","compressible":true,"extensions":["mods"]},"application/moss-keys":{"source":"iana"},"application/moss-signature":{"source":"iana"},"application/mosskey-data":{"source":"iana"},"application/mosskey-request":{"source":"iana"},"application/mp21":{"source":"iana","extensions":["m21","mp21"]},"application/mp4":{"source":"iana","extensions":["mp4s","m4p"]},"application/mpeg4-generic":{"source":"iana"},"application/mpeg4-iod":{"source":"iana"},"application/mpeg4-iod-xmt":{"source":"iana"},"application/mrb-consumer+xml":{"source":"iana","compressible":true},"application/mrb-publish+xml":{"source":"iana","compressible":true},"application/msc-ivr+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/msc-mixer+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/msword":{"source":"iana","compressible":false,"extensions":["doc","dot"]},"application/mud+json":{"source":"iana","compressible":true},"application/multipart-core":{"source":"iana"},"application/mxf":{"source":"iana","extensions":["mxf"]},"application/n-quads":{"source":"iana","extensions":["nq"]},"application/n-triples":{"source":"iana","extensions":["nt"]},"application/nasdata":{"source":"iana"},"application/news-checkgroups":{"source":"iana","charset":"US-ASCII"},"application/news-groupinfo":{"source":"iana","charset":"US-ASCII"},"application/news-transmission":{"source":"iana"},"application/nlsml+xml":{"source":"iana","compressible":true},"application/node":{"source":"iana","extensions":["cjs"]},"application/nss":{"source":"iana"},"application/oauth-authz-req+jwt":{"source":"iana"},"application/oblivious-dns-message":{"source":"iana"},"application/ocsp-request":{"source":"iana"},"application/ocsp-response":{"source":"iana"},"application/octet-stream":{"source":"iana","compressible":false,"extensions":["bin","dms","lrf","mar","so","dist","distz","pkg","bpk","dump","elc","deploy","exe","dll","deb","dmg","iso","img","msi","msp","msm","buffer"]},"application/oda":{"source":"iana","extensions":["oda"]},"application/odm+xml":{"source":"iana","compressible":true},"application/odx":{"source":"iana"},"application/oebps-package+xml":{"source":"iana","compressible":true,"extensions":["opf"]},"application/ogg":{"source":"iana","compressible":false,"extensions":["ogx"]},"application/omdoc+xml":{"source":"apache","compressible":true,"extensions":["omdoc"]},"application/onenote":{"source":"apache","extensions":["onetoc","onetoc2","onetmp","onepkg"]},"application/opc-nodeset+xml":{"source":"iana","compressible":true},"application/oscore":{"source":"iana"},"application/oxps":{"source":"iana","extensions":["oxps"]},"application/p21":{"source":"iana"},"application/p21+zip":{"source":"iana","compressible":false},"application/p2p-overlay+xml":{"source":"iana","compressible":true,"extensions":["relo"]},"application/parityfec":{"source":"iana"},"application/passport":{"source":"iana"},"application/patch-ops-error+xml":{"source":"iana","compressible":true,"extensions":["xer"]},"application/pdf":{"source":"iana","compressible":false,"extensions":["pdf"]},"application/pdx":{"source":"iana"},"application/pem-certificate-chain":{"source":"iana"},"application/pgp-encrypted":{"source":"iana","compressible":false,"extensions":["pgp"]},"application/pgp-keys":{"source":"iana","extensions":["asc"]},"application/pgp-signature":{"source":"iana","extensions":["asc","sig"]},"application/pics-rules":{"source":"apache","extensions":["prf"]},"application/pidf+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/pidf-diff+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/pkcs10":{"source":"iana","extensions":["p10"]},"application/pkcs12":{"source":"iana"},"application/pkcs7-mime":{"source":"iana","extensions":["p7m","p7c"]},"application/pkcs7-signature":{"source":"iana","extensions":["p7s"]},"application/pkcs8":{"source":"iana","extensions":["p8"]},"application/pkcs8-encrypted":{"source":"iana"},"application/pkix-attr-cert":{"source":"iana","extensions":["ac"]},"application/pkix-cert":{"source":"iana","extensions":["cer"]},"application/pkix-crl":{"source":"iana","extensions":["crl"]},"application/pkix-pkipath":{"source":"iana","extensions":["pkipath"]},"application/pkixcmp":{"source":"iana","extensions":["pki"]},"application/pls+xml":{"source":"iana","compressible":true,"extensions":["pls"]},"application/poc-settings+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/postscript":{"source":"iana","compressible":true,"extensions":["ai","eps","ps"]},"application/ppsp-tracker+json":{"source":"iana","compressible":true},"application/problem+json":{"source":"iana","compressible":true},"application/problem+xml":{"source":"iana","compressible":true},"application/provenance+xml":{"source":"iana","compressible":true,"extensions":["provx"]},"application/prs.alvestrand.titrax-sheet":{"source":"iana"},"application/prs.cww":{"source":"iana","extensions":["cww"]},"application/prs.cyn":{"source":"iana","charset":"7-BIT"},"application/prs.hpub+zip":{"source":"iana","compressible":false},"application/prs.nprend":{"source":"iana"},"application/prs.plucker":{"source":"iana"},"application/prs.rdf-xml-crypt":{"source":"iana"},"application/prs.xsf+xml":{"source":"iana","compressible":true},"application/pskc+xml":{"source":"iana","compressible":true,"extensions":["pskcxml"]},"application/pvd+json":{"source":"iana","compressible":true},"application/qsig":{"source":"iana"},"application/raml+yaml":{"compressible":true,"extensions":["raml"]},"application/raptorfec":{"source":"iana"},"application/rdap+json":{"source":"iana","compressible":true},"application/rdf+xml":{"source":"iana","compressible":true,"extensions":["rdf","owl"]},"application/reginfo+xml":{"source":"iana","compressible":true,"extensions":["rif"]},"application/relax-ng-compact-syntax":{"source":"iana","extensions":["rnc"]},"application/remote-printing":{"source":"iana"},"application/reputon+json":{"source":"iana","compressible":true},"application/resource-lists+xml":{"source":"iana","compressible":true,"extensions":["rl"]},"application/resource-lists-diff+xml":{"source":"iana","compressible":true,"extensions":["rld"]},"application/rfc+xml":{"source":"iana","compressible":true},"application/riscos":{"source":"iana"},"application/rlmi+xml":{"source":"iana","compressible":true},"application/rls-services+xml":{"source":"iana","compressible":true,"extensions":["rs"]},"application/route-apd+xml":{"source":"iana","compressible":true,"extensions":["rapd"]},"application/route-s-tsid+xml":{"source":"iana","compressible":true,"extensions":["sls"]},"application/route-usd+xml":{"source":"iana","compressible":true,"extensions":["rusd"]},"application/rpki-ghostbusters":{"source":"iana","extensions":["gbr"]},"application/rpki-manifest":{"source":"iana","extensions":["mft"]},"application/rpki-publication":{"source":"iana"},"application/rpki-roa":{"source":"iana","extensions":["roa"]},"application/rpki-updown":{"source":"iana"},"application/rsd+xml":{"source":"apache","compressible":true,"extensions":["rsd"]},"application/rss+xml":{"source":"apache","compressible":true,"extensions":["rss"]},"application/rtf":{"source":"iana","compressible":true,"extensions":["rtf"]},"application/rtploopback":{"source":"iana"},"application/rtx":{"source":"iana"},"application/samlassertion+xml":{"source":"iana","compressible":true},"application/samlmetadata+xml":{"source":"iana","compressible":true},"application/sarif+json":{"source":"iana","compressible":true},"application/sarif-external-properties+json":{"source":"iana","compressible":true},"application/sbe":{"source":"iana"},"application/sbml+xml":{"source":"iana","compressible":true,"extensions":["sbml"]},"application/scaip+xml":{"source":"iana","compressible":true},"application/scim+json":{"source":"iana","compressible":true},"application/scvp-cv-request":{"source":"iana","extensions":["scq"]},"application/scvp-cv-response":{"source":"iana","extensions":["scs"]},"application/scvp-vp-request":{"source":"iana","extensions":["spq"]},"application/scvp-vp-response":{"source":"iana","extensions":["spp"]},"application/sdp":{"source":"iana","extensions":["sdp"]},"application/secevent+jwt":{"source":"iana"},"application/senml+cbor":{"source":"iana"},"application/senml+json":{"source":"iana","compressible":true},"application/senml+xml":{"source":"iana","compressible":true,"extensions":["senmlx"]},"application/senml-etch+cbor":{"source":"iana"},"application/senml-etch+json":{"source":"iana","compressible":true},"application/senml-exi":{"source":"iana"},"application/sensml+cbor":{"source":"iana"},"application/sensml+json":{"source":"iana","compressible":true},"application/sensml+xml":{"source":"iana","compressible":true,"extensions":["sensmlx"]},"application/sensml-exi":{"source":"iana"},"application/sep+xml":{"source":"iana","compressible":true},"application/sep-exi":{"source":"iana"},"application/session-info":{"source":"iana"},"application/set-payment":{"source":"iana"},"application/set-payment-initiation":{"source":"iana","extensions":["setpay"]},"application/set-registration":{"source":"iana"},"application/set-registration-initiation":{"source":"iana","extensions":["setreg"]},"application/sgml":{"source":"iana"},"application/sgml-open-catalog":{"source":"iana"},"application/shf+xml":{"source":"iana","compressible":true,"extensions":["shf"]},"application/sieve":{"source":"iana","extensions":["siv","sieve"]},"application/simple-filter+xml":{"source":"iana","compressible":true},"application/simple-message-summary":{"source":"iana"},"application/simplesymbolcontainer":{"source":"iana"},"application/sipc":{"source":"iana"},"application/slate":{"source":"iana"},"application/smil":{"source":"iana"},"application/smil+xml":{"source":"iana","compressible":true,"extensions":["smi","smil"]},"application/smpte336m":{"source":"iana"},"application/soap+fastinfoset":{"source":"iana"},"application/soap+xml":{"source":"iana","compressible":true},"application/sparql-query":{"source":"iana","extensions":["rq"]},"application/sparql-results+xml":{"source":"iana","compressible":true,"extensions":["srx"]},"application/spdx+json":{"source":"iana","compressible":true},"application/spirits-event+xml":{"source":"iana","compressible":true},"application/sql":{"source":"iana"},"application/srgs":{"source":"iana","extensions":["gram"]},"application/srgs+xml":{"source":"iana","compressible":true,"extensions":["grxml"]},"application/sru+xml":{"source":"iana","compressible":true,"extensions":["sru"]},"application/ssdl+xml":{"source":"apache","compressible":true,"extensions":["ssdl"]},"application/ssml+xml":{"source":"iana","compressible":true,"extensions":["ssml"]},"application/stix+json":{"source":"iana","compressible":true},"application/swid+xml":{"source":"iana","compressible":true,"extensions":["swidtag"]},"application/tamp-apex-update":{"source":"iana"},"application/tamp-apex-update-confirm":{"source":"iana"},"application/tamp-community-update":{"source":"iana"},"application/tamp-community-update-confirm":{"source":"iana"},"application/tamp-error":{"source":"iana"},"application/tamp-sequence-adjust":{"source":"iana"},"application/tamp-sequence-adjust-confirm":{"source":"iana"},"application/tamp-status-query":{"source":"iana"},"application/tamp-status-response":{"source":"iana"},"application/tamp-update":{"source":"iana"},"application/tamp-update-confirm":{"source":"iana"},"application/tar":{"compressible":true},"application/taxii+json":{"source":"iana","compressible":true},"application/td+json":{"source":"iana","compressible":true},"application/tei+xml":{"source":"iana","compressible":true,"extensions":["tei","teicorpus"]},"application/tetra_isi":{"source":"iana"},"application/thraud+xml":{"source":"iana","compressible":true,"extensions":["tfi"]},"application/timestamp-query":{"source":"iana"},"application/timestamp-reply":{"source":"iana"},"application/timestamped-data":{"source":"iana","extensions":["tsd"]},"application/tlsrpt+gzip":{"source":"iana"},"application/tlsrpt+json":{"source":"iana","compressible":true},"application/tnauthlist":{"source":"iana"},"application/token-introspection+jwt":{"source":"iana"},"application/toml":{"compressible":true,"extensions":["toml"]},"application/trickle-ice-sdpfrag":{"source":"iana"},"application/trig":{"source":"iana","extensions":["trig"]},"application/ttml+xml":{"source":"iana","compressible":true,"extensions":["ttml"]},"application/tve-trigger":{"source":"iana"},"application/tzif":{"source":"iana"},"application/tzif-leap":{"source":"iana"},"application/ubjson":{"compressible":false,"extensions":["ubj"]},"application/ulpfec":{"source":"iana"},"application/urc-grpsheet+xml":{"source":"iana","compressible":true},"application/urc-ressheet+xml":{"source":"iana","compressible":true,"extensions":["rsheet"]},"application/urc-targetdesc+xml":{"source":"iana","compressible":true,"extensions":["td"]},"application/urc-uisocketdesc+xml":{"source":"iana","compressible":true},"application/vcard+json":{"source":"iana","compressible":true},"application/vcard+xml":{"source":"iana","compressible":true},"application/vemmi":{"source":"iana"},"application/vividence.scriptfile":{"source":"apache"},"application/vnd.1000minds.decision-model+xml":{"source":"iana","compressible":true,"extensions":["1km"]},"application/vnd.3gpp-prose+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-prose-pc3ch+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-v2x-local-service-information":{"source":"iana"},"application/vnd.3gpp.5gnas":{"source":"iana"},"application/vnd.3gpp.access-transfer-events+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.bsf+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.gmop+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.gtpc":{"source":"iana"},"application/vnd.3gpp.interworking-data":{"source":"iana"},"application/vnd.3gpp.lpp":{"source":"iana"},"application/vnd.3gpp.mc-signalling-ear":{"source":"iana"},"application/vnd.3gpp.mcdata-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-payload":{"source":"iana"},"application/vnd.3gpp.mcdata-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-signalling":{"source":"iana"},"application/vnd.3gpp.mcdata-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-floor-request+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-location-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-mbms-usage-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-signed+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-ue-init-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-affiliation-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-location-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-mbms-usage-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-transmission-request+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mid-call+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.ngap":{"source":"iana"},"application/vnd.3gpp.pfcp":{"source":"iana"},"application/vnd.3gpp.pic-bw-large":{"source":"iana","extensions":["plb"]},"application/vnd.3gpp.pic-bw-small":{"source":"iana","extensions":["psb"]},"application/vnd.3gpp.pic-bw-var":{"source":"iana","extensions":["pvb"]},"application/vnd.3gpp.s1ap":{"source":"iana"},"application/vnd.3gpp.sms":{"source":"iana"},"application/vnd.3gpp.sms+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.srvcc-ext+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.srvcc-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.state-and-event-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.ussd+xml":{"source":"iana","compressible":true},"application/vnd.3gpp2.bcmcsinfo+xml":{"source":"iana","compressible":true},"application/vnd.3gpp2.sms":{"source":"iana"},"application/vnd.3gpp2.tcap":{"source":"iana","extensions":["tcap"]},"application/vnd.3lightssoftware.imagescal":{"source":"iana"},"application/vnd.3m.post-it-notes":{"source":"iana","extensions":["pwn"]},"application/vnd.accpac.simply.aso":{"source":"iana","extensions":["aso"]},"application/vnd.accpac.simply.imp":{"source":"iana","extensions":["imp"]},"application/vnd.acucobol":{"source":"iana","extensions":["acu"]},"application/vnd.acucorp":{"source":"iana","extensions":["atc","acutc"]},"application/vnd.adobe.air-application-installer-package+zip":{"source":"apache","compressible":false,"extensions":["air"]},"application/vnd.adobe.flash.movie":{"source":"iana"},"application/vnd.adobe.formscentral.fcdt":{"source":"iana","extensions":["fcdt"]},"application/vnd.adobe.fxp":{"source":"iana","extensions":["fxp","fxpl"]},"application/vnd.adobe.partial-upload":{"source":"iana"},"application/vnd.adobe.xdp+xml":{"source":"iana","compressible":true,"extensions":["xdp"]},"application/vnd.adobe.xfdf":{"source":"iana","extensions":["xfdf"]},"application/vnd.aether.imp":{"source":"iana"},"application/vnd.afpc.afplinedata":{"source":"iana"},"application/vnd.afpc.afplinedata-pagedef":{"source":"iana"},"application/vnd.afpc.cmoca-cmresource":{"source":"iana"},"application/vnd.afpc.foca-charset":{"source":"iana"},"application/vnd.afpc.foca-codedfont":{"source":"iana"},"application/vnd.afpc.foca-codepage":{"source":"iana"},"application/vnd.afpc.modca":{"source":"iana"},"application/vnd.afpc.modca-cmtable":{"source":"iana"},"application/vnd.afpc.modca-formdef":{"source":"iana"},"application/vnd.afpc.modca-mediummap":{"source":"iana"},"application/vnd.afpc.modca-objectcontainer":{"source":"iana"},"application/vnd.afpc.modca-overlay":{"source":"iana"},"application/vnd.afpc.modca-pagesegment":{"source":"iana"},"application/vnd.age":{"source":"iana","extensions":["age"]},"application/vnd.ah-barcode":{"source":"iana"},"application/vnd.ahead.space":{"source":"iana","extensions":["ahead"]},"application/vnd.airzip.filesecure.azf":{"source":"iana","extensions":["azf"]},"application/vnd.airzip.filesecure.azs":{"source":"iana","extensions":["azs"]},"application/vnd.amadeus+json":{"source":"iana","compressible":true},"application/vnd.amazon.ebook":{"source":"apache","extensions":["azw"]},"application/vnd.amazon.mobi8-ebook":{"source":"iana"},"application/vnd.americandynamics.acc":{"source":"iana","extensions":["acc"]},"application/vnd.amiga.ami":{"source":"iana","extensions":["ami"]},"application/vnd.amundsen.maze+xml":{"source":"iana","compressible":true},"application/vnd.android.ota":{"source":"iana"},"application/vnd.android.package-archive":{"source":"apache","compressible":false,"extensions":["apk"]},"application/vnd.anki":{"source":"iana"},"application/vnd.anser-web-certificate-issue-initiation":{"source":"iana","extensions":["cii"]},"application/vnd.anser-web-funds-transfer-initiation":{"source":"apache","extensions":["fti"]},"application/vnd.antix.game-component":{"source":"iana","extensions":["atx"]},"application/vnd.apache.arrow.file":{"source":"iana"},"application/vnd.apache.arrow.stream":{"source":"iana"},"application/vnd.apache.thrift.binary":{"source":"iana"},"application/vnd.apache.thrift.compact":{"source":"iana"},"application/vnd.apache.thrift.json":{"source":"iana"},"application/vnd.api+json":{"source":"iana","compressible":true},"application/vnd.aplextor.warrp+json":{"source":"iana","compressible":true},"application/vnd.apothekende.reservation+json":{"source":"iana","compressible":true},"application/vnd.apple.installer+xml":{"source":"iana","compressible":true,"extensions":["mpkg"]},"application/vnd.apple.keynote":{"source":"iana","extensions":["key"]},"application/vnd.apple.mpegurl":{"source":"iana","extensions":["m3u8"]},"application/vnd.apple.numbers":{"source":"iana","extensions":["numbers"]},"application/vnd.apple.pages":{"source":"iana","extensions":["pages"]},"application/vnd.apple.pkpass":{"compressible":false,"extensions":["pkpass"]},"application/vnd.arastra.swi":{"source":"iana"},"application/vnd.aristanetworks.swi":{"source":"iana","extensions":["swi"]},"application/vnd.artisan+json":{"source":"iana","compressible":true},"application/vnd.artsquare":{"source":"iana"},"application/vnd.astraea-software.iota":{"source":"iana","extensions":["iota"]},"application/vnd.audiograph":{"source":"iana","extensions":["aep"]},"application/vnd.autopackage":{"source":"iana"},"application/vnd.avalon+json":{"source":"iana","compressible":true},"application/vnd.avistar+xml":{"source":"iana","compressible":true},"application/vnd.balsamiq.bmml+xml":{"source":"iana","compressible":true,"extensions":["bmml"]},"application/vnd.balsamiq.bmpr":{"source":"iana"},"application/vnd.banana-accounting":{"source":"iana"},"application/vnd.bbf.usp.error":{"source":"iana"},"application/vnd.bbf.usp.msg":{"source":"iana"},"application/vnd.bbf.usp.msg+json":{"source":"iana","compressible":true},"application/vnd.bekitzur-stech+json":{"source":"iana","compressible":true},"application/vnd.bint.med-content":{"source":"iana"},"application/vnd.biopax.rdf+xml":{"source":"iana","compressible":true},"application/vnd.blink-idb-value-wrapper":{"source":"iana"},"application/vnd.blueice.multipass":{"source":"iana","extensions":["mpm"]},"application/vnd.bluetooth.ep.oob":{"source":"iana"},"application/vnd.bluetooth.le.oob":{"source":"iana"},"application/vnd.bmi":{"source":"iana","extensions":["bmi"]},"application/vnd.bpf":{"source":"iana"},"application/vnd.bpf3":{"source":"iana"},"application/vnd.businessobjects":{"source":"iana","extensions":["rep"]},"application/vnd.byu.uapi+json":{"source":"iana","compressible":true},"application/vnd.cab-jscript":{"source":"iana"},"application/vnd.canon-cpdl":{"source":"iana"},"application/vnd.canon-lips":{"source":"iana"},"application/vnd.capasystems-pg+json":{"source":"iana","compressible":true},"application/vnd.cendio.thinlinc.clientconf":{"source":"iana"},"application/vnd.century-systems.tcp_stream":{"source":"iana"},"application/vnd.chemdraw+xml":{"source":"iana","compressible":true,"extensions":["cdxml"]},"application/vnd.chess-pgn":{"source":"iana"},"application/vnd.chipnuts.karaoke-mmd":{"source":"iana","extensions":["mmd"]},"application/vnd.ciedi":{"source":"iana"},"application/vnd.cinderella":{"source":"iana","extensions":["cdy"]},"application/vnd.cirpack.isdn-ext":{"source":"iana"},"application/vnd.citationstyles.style+xml":{"source":"iana","compressible":true,"extensions":["csl"]},"application/vnd.claymore":{"source":"iana","extensions":["cla"]},"application/vnd.cloanto.rp9":{"source":"iana","extensions":["rp9"]},"application/vnd.clonk.c4group":{"source":"iana","extensions":["c4g","c4d","c4f","c4p","c4u"]},"application/vnd.cluetrust.cartomobile-config":{"source":"iana","extensions":["c11amc"]},"application/vnd.cluetrust.cartomobile-config-pkg":{"source":"iana","extensions":["c11amz"]},"application/vnd.coffeescript":{"source":"iana"},"application/vnd.collabio.xodocuments.document":{"source":"iana"},"application/vnd.collabio.xodocuments.document-template":{"source":"iana"},"application/vnd.collabio.xodocuments.presentation":{"source":"iana"},"application/vnd.collabio.xodocuments.presentation-template":{"source":"iana"},"application/vnd.collabio.xodocuments.spreadsheet":{"source":"iana"},"application/vnd.collabio.xodocuments.spreadsheet-template":{"source":"iana"},"application/vnd.collection+json":{"source":"iana","compressible":true},"application/vnd.collection.doc+json":{"source":"iana","compressible":true},"application/vnd.collection.next+json":{"source":"iana","compressible":true},"application/vnd.comicbook+zip":{"source":"iana","compressible":false},"application/vnd.comicbook-rar":{"source":"iana"},"application/vnd.commerce-battelle":{"source":"iana"},"application/vnd.commonspace":{"source":"iana","extensions":["csp"]},"application/vnd.contact.cmsg":{"source":"iana","extensions":["cdbcmsg"]},"application/vnd.coreos.ignition+json":{"source":"iana","compressible":true},"application/vnd.cosmocaller":{"source":"iana","extensions":["cmc"]},"application/vnd.crick.clicker":{"source":"iana","extensions":["clkx"]},"application/vnd.crick.clicker.keyboard":{"source":"iana","extensions":["clkk"]},"application/vnd.crick.clicker.palette":{"source":"iana","extensions":["clkp"]},"application/vnd.crick.clicker.template":{"source":"iana","extensions":["clkt"]},"application/vnd.crick.clicker.wordbank":{"source":"iana","extensions":["clkw"]},"application/vnd.criticaltools.wbs+xml":{"source":"iana","compressible":true,"extensions":["wbs"]},"application/vnd.cryptii.pipe+json":{"source":"iana","compressible":true},"application/vnd.crypto-shade-file":{"source":"iana"},"application/vnd.cryptomator.encrypted":{"source":"iana"},"application/vnd.cryptomator.vault":{"source":"iana"},"application/vnd.ctc-posml":{"source":"iana","extensions":["pml"]},"application/vnd.ctct.ws+xml":{"source":"iana","compressible":true},"application/vnd.cups-pdf":{"source":"iana"},"application/vnd.cups-postscript":{"source":"iana"},"application/vnd.cups-ppd":{"source":"iana","extensions":["ppd"]},"application/vnd.cups-raster":{"source":"iana"},"application/vnd.cups-raw":{"source":"iana"},"application/vnd.curl":{"source":"iana"},"application/vnd.curl.car":{"source":"apache","extensions":["car"]},"application/vnd.curl.pcurl":{"source":"apache","extensions":["pcurl"]},"application/vnd.cyan.dean.root+xml":{"source":"iana","compressible":true},"application/vnd.cybank":{"source":"iana"},"application/vnd.cyclonedx+json":{"source":"iana","compressible":true},"application/vnd.cyclonedx+xml":{"source":"iana","compressible":true},"application/vnd.d2l.coursepackage1p0+zip":{"source":"iana","compressible":false},"application/vnd.d3m-dataset":{"source":"iana"},"application/vnd.d3m-problem":{"source":"iana"},"application/vnd.dart":{"source":"iana","compressible":true,"extensions":["dart"]},"application/vnd.data-vision.rdz":{"source":"iana","extensions":["rdz"]},"application/vnd.datapackage+json":{"source":"iana","compressible":true},"application/vnd.dataresource+json":{"source":"iana","compressible":true},"application/vnd.dbf":{"source":"iana","extensions":["dbf"]},"application/vnd.debian.binary-package":{"source":"iana"},"application/vnd.dece.data":{"source":"iana","extensions":["uvf","uvvf","uvd","uvvd"]},"application/vnd.dece.ttml+xml":{"source":"iana","compressible":true,"extensions":["uvt","uvvt"]},"application/vnd.dece.unspecified":{"source":"iana","extensions":["uvx","uvvx"]},"application/vnd.dece.zip":{"source":"iana","extensions":["uvz","uvvz"]},"application/vnd.denovo.fcselayout-link":{"source":"iana","extensions":["fe_launch"]},"application/vnd.desmume.movie":{"source":"iana"},"application/vnd.dir-bi.plate-dl-nosuffix":{"source":"iana"},"application/vnd.dm.delegation+xml":{"source":"iana","compressible":true},"application/vnd.dna":{"source":"iana","extensions":["dna"]},"application/vnd.document+json":{"source":"iana","compressible":true},"application/vnd.dolby.mlp":{"source":"apache","extensions":["mlp"]},"application/vnd.dolby.mobile.1":{"source":"iana"},"application/vnd.dolby.mobile.2":{"source":"iana"},"application/vnd.doremir.scorecloud-binary-document":{"source":"iana"},"application/vnd.dpgraph":{"source":"iana","extensions":["dpg"]},"application/vnd.dreamfactory":{"source":"iana","extensions":["dfac"]},"application/vnd.drive+json":{"source":"iana","compressible":true},"application/vnd.ds-keypoint":{"source":"apache","extensions":["kpxx"]},"application/vnd.dtg.local":{"source":"iana"},"application/vnd.dtg.local.flash":{"source":"iana"},"application/vnd.dtg.local.html":{"source":"iana"},"application/vnd.dvb.ait":{"source":"iana","extensions":["ait"]},"application/vnd.dvb.dvbisl+xml":{"source":"iana","compressible":true},"application/vnd.dvb.dvbj":{"source":"iana"},"application/vnd.dvb.esgcontainer":{"source":"iana"},"application/vnd.dvb.ipdcdftnotifaccess":{"source":"iana"},"application/vnd.dvb.ipdcesgaccess":{"source":"iana"},"application/vnd.dvb.ipdcesgaccess2":{"source":"iana"},"application/vnd.dvb.ipdcesgpdd":{"source":"iana"},"application/vnd.dvb.ipdcroaming":{"source":"iana"},"application/vnd.dvb.iptv.alfec-base":{"source":"iana"},"application/vnd.dvb.iptv.alfec-enhancement":{"source":"iana"},"application/vnd.dvb.notif-aggregate-root+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-container+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-generic+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-msglist+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-registration-request+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-registration-response+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-init+xml":{"source":"iana","compressible":true},"application/vnd.dvb.pfr":{"source":"iana"},"application/vnd.dvb.service":{"source":"iana","extensions":["svc"]},"application/vnd.dxr":{"source":"iana"},"application/vnd.dynageo":{"source":"iana","extensions":["geo"]},"application/vnd.dzr":{"source":"iana"},"application/vnd.easykaraoke.cdgdownload":{"source":"iana"},"application/vnd.ecdis-update":{"source":"iana"},"application/vnd.ecip.rlp":{"source":"iana"},"application/vnd.eclipse.ditto+json":{"source":"iana","compressible":true},"application/vnd.ecowin.chart":{"source":"iana","extensions":["mag"]},"application/vnd.ecowin.filerequest":{"source":"iana"},"application/vnd.ecowin.fileupdate":{"source":"iana"},"application/vnd.ecowin.series":{"source":"iana"},"application/vnd.ecowin.seriesrequest":{"source":"iana"},"application/vnd.ecowin.seriesupdate":{"source":"iana"},"application/vnd.efi.img":{"source":"iana"},"application/vnd.efi.iso":{"source":"iana"},"application/vnd.emclient.accessrequest+xml":{"source":"iana","compressible":true},"application/vnd.enliven":{"source":"iana","extensions":["nml"]},"application/vnd.enphase.envoy":{"source":"iana"},"application/vnd.eprints.data+xml":{"source":"iana","compressible":true},"application/vnd.epson.esf":{"source":"iana","extensions":["esf"]},"application/vnd.epson.msf":{"source":"iana","extensions":["msf"]},"application/vnd.epson.quickanime":{"source":"iana","extensions":["qam"]},"application/vnd.epson.salt":{"source":"iana","extensions":["slt"]},"application/vnd.epson.ssf":{"source":"iana","extensions":["ssf"]},"application/vnd.ericsson.quickcall":{"source":"iana"},"application/vnd.espass-espass+zip":{"source":"iana","compressible":false},"application/vnd.eszigno3+xml":{"source":"iana","compressible":true,"extensions":["es3","et3"]},"application/vnd.etsi.aoc+xml":{"source":"iana","compressible":true},"application/vnd.etsi.asic-e+zip":{"source":"iana","compressible":false},"application/vnd.etsi.asic-s+zip":{"source":"iana","compressible":false},"application/vnd.etsi.cug+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvcommand+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvdiscovery+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvprofile+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-bc+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-cod+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-npvr+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvservice+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsync+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvueprofile+xml":{"source":"iana","compressible":true},"application/vnd.etsi.mcid+xml":{"source":"iana","compressible":true},"application/vnd.etsi.mheg5":{"source":"iana"},"application/vnd.etsi.overload-control-policy-dataset+xml":{"source":"iana","compressible":true},"application/vnd.etsi.pstn+xml":{"source":"iana","compressible":true},"application/vnd.etsi.sci+xml":{"source":"iana","compressible":true},"application/vnd.etsi.simservs+xml":{"source":"iana","compressible":true},"application/vnd.etsi.timestamp-token":{"source":"iana"},"application/vnd.etsi.tsl+xml":{"source":"iana","compressible":true},"application/vnd.etsi.tsl.der":{"source":"iana"},"application/vnd.eu.kasparian.car+json":{"source":"iana","compressible":true},"application/vnd.eudora.data":{"source":"iana"},"application/vnd.evolv.ecig.profile":{"source":"iana"},"application/vnd.evolv.ecig.settings":{"source":"iana"},"application/vnd.evolv.ecig.theme":{"source":"iana"},"application/vnd.exstream-empower+zip":{"source":"iana","compressible":false},"application/vnd.exstream-package":{"source":"iana"},"application/vnd.ezpix-album":{"source":"iana","extensions":["ez2"]},"application/vnd.ezpix-package":{"source":"iana","extensions":["ez3"]},"application/vnd.f-secure.mobile":{"source":"iana"},"application/vnd.familysearch.gedcom+zip":{"source":"iana","compressible":false},"application/vnd.fastcopy-disk-image":{"source":"iana"},"application/vnd.fdf":{"source":"iana","extensions":["fdf"]},"application/vnd.fdsn.mseed":{"source":"iana","extensions":["mseed"]},"application/vnd.fdsn.seed":{"source":"iana","extensions":["seed","dataless"]},"application/vnd.ffsns":{"source":"iana"},"application/vnd.ficlab.flb+zip":{"source":"iana","compressible":false},"application/vnd.filmit.zfc":{"source":"iana"},"application/vnd.fints":{"source":"iana"},"application/vnd.firemonkeys.cloudcell":{"source":"iana"},"application/vnd.flographit":{"source":"iana","extensions":["gph"]},"application/vnd.fluxtime.clip":{"source":"iana","extensions":["ftc"]},"application/vnd.font-fontforge-sfd":{"source":"iana"},"application/vnd.framemaker":{"source":"iana","extensions":["fm","frame","maker","book"]},"application/vnd.frogans.fnc":{"source":"iana","extensions":["fnc"]},"application/vnd.frogans.ltf":{"source":"iana","extensions":["ltf"]},"application/vnd.fsc.weblaunch":{"source":"iana","extensions":["fsc"]},"application/vnd.fujifilm.fb.docuworks":{"source":"iana"},"application/vnd.fujifilm.fb.docuworks.binder":{"source":"iana"},"application/vnd.fujifilm.fb.docuworks.container":{"source":"iana"},"application/vnd.fujifilm.fb.jfi+xml":{"source":"iana","compressible":true},"application/vnd.fujitsu.oasys":{"source":"iana","extensions":["oas"]},"application/vnd.fujitsu.oasys2":{"source":"iana","extensions":["oa2"]},"application/vnd.fujitsu.oasys3":{"source":"iana","extensions":["oa3"]},"application/vnd.fujitsu.oasysgp":{"source":"iana","extensions":["fg5"]},"application/vnd.fujitsu.oasysprs":{"source":"iana","extensions":["bh2"]},"application/vnd.fujixerox.art-ex":{"source":"iana"},"application/vnd.fujixerox.art4":{"source":"iana"},"application/vnd.fujixerox.ddd":{"source":"iana","extensions":["ddd"]},"application/vnd.fujixerox.docuworks":{"source":"iana","extensions":["xdw"]},"application/vnd.fujixerox.docuworks.binder":{"source":"iana","extensions":["xbd"]},"application/vnd.fujixerox.docuworks.container":{"source":"iana"},"application/vnd.fujixerox.hbpl":{"source":"iana"},"application/vnd.fut-misnet":{"source":"iana"},"application/vnd.futoin+cbor":{"source":"iana"},"application/vnd.futoin+json":{"source":"iana","compressible":true},"application/vnd.fuzzysheet":{"source":"iana","extensions":["fzs"]},"application/vnd.genomatix.tuxedo":{"source":"iana","extensions":["txd"]},"application/vnd.gentics.grd+json":{"source":"iana","compressible":true},"application/vnd.geo+json":{"source":"iana","compressible":true},"application/vnd.geocube+xml":{"source":"iana","compressible":true},"application/vnd.geogebra.file":{"source":"iana","extensions":["ggb"]},"application/vnd.geogebra.slides":{"source":"iana"},"application/vnd.geogebra.tool":{"source":"iana","extensions":["ggt"]},"application/vnd.geometry-explorer":{"source":"iana","extensions":["gex","gre"]},"application/vnd.geonext":{"source":"iana","extensions":["gxt"]},"application/vnd.geoplan":{"source":"iana","extensions":["g2w"]},"application/vnd.geospace":{"source":"iana","extensions":["g3w"]},"application/vnd.gerber":{"source":"iana"},"application/vnd.globalplatform.card-content-mgt":{"source":"iana"},"application/vnd.globalplatform.card-content-mgt-response":{"source":"iana"},"application/vnd.gmx":{"source":"iana","extensions":["gmx"]},"application/vnd.google-apps.document":{"compressible":false,"extensions":["gdoc"]},"application/vnd.google-apps.presentation":{"compressible":false,"extensions":["gslides"]},"application/vnd.google-apps.spreadsheet":{"compressible":false,"extensions":["gsheet"]},"application/vnd.google-earth.kml+xml":{"source":"iana","compressible":true,"extensions":["kml"]},"application/vnd.google-earth.kmz":{"source":"iana","compressible":false,"extensions":["kmz"]},"application/vnd.gov.sk.e-form+xml":{"source":"iana","compressible":true},"application/vnd.gov.sk.e-form+zip":{"source":"iana","compressible":false},"application/vnd.gov.sk.xmldatacontainer+xml":{"source":"iana","compressible":true},"application/vnd.grafeq":{"source":"iana","extensions":["gqf","gqs"]},"application/vnd.gridmp":{"source":"iana"},"application/vnd.groove-account":{"source":"iana","extensions":["gac"]},"application/vnd.groove-help":{"source":"iana","extensions":["ghf"]},"application/vnd.groove-identity-message":{"source":"iana","extensions":["gim"]},"application/vnd.groove-injector":{"source":"iana","extensions":["grv"]},"application/vnd.groove-tool-message":{"source":"iana","extensions":["gtm"]},"application/vnd.groove-tool-template":{"source":"iana","extensions":["tpl"]},"application/vnd.groove-vcard":{"source":"iana","extensions":["vcg"]},"application/vnd.hal+json":{"source":"iana","compressible":true},"application/vnd.hal+xml":{"source":"iana","compressible":true,"extensions":["hal"]},"application/vnd.handheld-entertainment+xml":{"source":"iana","compressible":true,"extensions":["zmm"]},"application/vnd.hbci":{"source":"iana","extensions":["hbci"]},"application/vnd.hc+json":{"source":"iana","compressible":true},"application/vnd.hcl-bireports":{"source":"iana"},"application/vnd.hdt":{"source":"iana"},"application/vnd.heroku+json":{"source":"iana","compressible":true},"application/vnd.hhe.lesson-player":{"source":"iana","extensions":["les"]},"application/vnd.hl7cda+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.hl7v2+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.hp-hpgl":{"source":"iana","extensions":["hpgl"]},"application/vnd.hp-hpid":{"source":"iana","extensions":["hpid"]},"application/vnd.hp-hps":{"source":"iana","extensions":["hps"]},"application/vnd.hp-jlyt":{"source":"iana","extensions":["jlt"]},"application/vnd.hp-pcl":{"source":"iana","extensions":["pcl"]},"application/vnd.hp-pclxl":{"source":"iana","extensions":["pclxl"]},"application/vnd.httphone":{"source":"iana"},"application/vnd.hydrostatix.sof-data":{"source":"iana","extensions":["sfd-hdstx"]},"application/vnd.hyper+json":{"source":"iana","compressible":true},"application/vnd.hyper-item+json":{"source":"iana","compressible":true},"application/vnd.hyperdrive+json":{"source":"iana","compressible":true},"application/vnd.hzn-3d-crossword":{"source":"iana"},"application/vnd.ibm.afplinedata":{"source":"iana"},"application/vnd.ibm.electronic-media":{"source":"iana"},"application/vnd.ibm.minipay":{"source":"iana","extensions":["mpy"]},"application/vnd.ibm.modcap":{"source":"iana","extensions":["afp","listafp","list3820"]},"application/vnd.ibm.rights-management":{"source":"iana","extensions":["irm"]},"application/vnd.ibm.secure-container":{"source":"iana","extensions":["sc"]},"application/vnd.iccprofile":{"source":"iana","extensions":["icc","icm"]},"application/vnd.ieee.1905":{"source":"iana"},"application/vnd.igloader":{"source":"iana","extensions":["igl"]},"application/vnd.imagemeter.folder+zip":{"source":"iana","compressible":false},"application/vnd.imagemeter.image+zip":{"source":"iana","compressible":false},"application/vnd.immervision-ivp":{"source":"iana","extensions":["ivp"]},"application/vnd.immervision-ivu":{"source":"iana","extensions":["ivu"]},"application/vnd.ims.imsccv1p1":{"source":"iana"},"application/vnd.ims.imsccv1p2":{"source":"iana"},"application/vnd.ims.imsccv1p3":{"source":"iana"},"application/vnd.ims.lis.v2.result+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolconsumerprofile+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolproxy+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolproxy.id+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolsettings+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolsettings.simple+json":{"source":"iana","compressible":true},"application/vnd.informedcontrol.rms+xml":{"source":"iana","compressible":true},"application/vnd.informix-visionary":{"source":"iana"},"application/vnd.infotech.project":{"source":"iana"},"application/vnd.infotech.project+xml":{"source":"iana","compressible":true},"application/vnd.innopath.wamp.notification":{"source":"iana"},"application/vnd.insors.igm":{"source":"iana","extensions":["igm"]},"application/vnd.intercon.formnet":{"source":"iana","extensions":["xpw","xpx"]},"application/vnd.intergeo":{"source":"iana","extensions":["i2g"]},"application/vnd.intertrust.digibox":{"source":"iana"},"application/vnd.intertrust.nncp":{"source":"iana"},"application/vnd.intu.qbo":{"source":"iana","extensions":["qbo"]},"application/vnd.intu.qfx":{"source":"iana","extensions":["qfx"]},"application/vnd.iptc.g2.catalogitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.conceptitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.knowledgeitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.newsitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.newsmessage+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.packageitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.planningitem+xml":{"source":"iana","compressible":true},"application/vnd.ipunplugged.rcprofile":{"source":"iana","extensions":["rcprofile"]},"application/vnd.irepository.package+xml":{"source":"iana","compressible":true,"extensions":["irp"]},"application/vnd.is-xpr":{"source":"iana","extensions":["xpr"]},"application/vnd.isac.fcs":{"source":"iana","extensions":["fcs"]},"application/vnd.iso11783-10+zip":{"source":"iana","compressible":false},"application/vnd.jam":{"source":"iana","extensions":["jam"]},"application/vnd.japannet-directory-service":{"source":"iana"},"application/vnd.japannet-jpnstore-wakeup":{"source":"iana"},"application/vnd.japannet-payment-wakeup":{"source":"iana"},"application/vnd.japannet-registration":{"source":"iana"},"application/vnd.japannet-registration-wakeup":{"source":"iana"},"application/vnd.japannet-setstore-wakeup":{"source":"iana"},"application/vnd.japannet-verification":{"source":"iana"},"application/vnd.japannet-verification-wakeup":{"source":"iana"},"application/vnd.jcp.javame.midlet-rms":{"source":"iana","extensions":["rms"]},"application/vnd.jisp":{"source":"iana","extensions":["jisp"]},"application/vnd.joost.joda-archive":{"source":"iana","extensions":["joda"]},"application/vnd.jsk.isdn-ngn":{"source":"iana"},"application/vnd.kahootz":{"source":"iana","extensions":["ktz","ktr"]},"application/vnd.kde.karbon":{"source":"iana","extensions":["karbon"]},"application/vnd.kde.kchart":{"source":"iana","extensions":["chrt"]},"application/vnd.kde.kformula":{"source":"iana","extensions":["kfo"]},"application/vnd.kde.kivio":{"source":"iana","extensions":["flw"]},"application/vnd.kde.kontour":{"source":"iana","extensions":["kon"]},"application/vnd.kde.kpresenter":{"source":"iana","extensions":["kpr","kpt"]},"application/vnd.kde.kspread":{"source":"iana","extensions":["ksp"]},"application/vnd.kde.kword":{"source":"iana","extensions":["kwd","kwt"]},"application/vnd.kenameaapp":{"source":"iana","extensions":["htke"]},"application/vnd.kidspiration":{"source":"iana","extensions":["kia"]},"application/vnd.kinar":{"source":"iana","extensions":["kne","knp"]},"application/vnd.koan":{"source":"iana","extensions":["skp","skd","skt","skm"]},"application/vnd.kodak-descriptor":{"source":"iana","extensions":["sse"]},"application/vnd.las":{"source":"iana"},"application/vnd.las.las+json":{"source":"iana","compressible":true},"application/vnd.las.las+xml":{"source":"iana","compressible":true,"extensions":["lasxml"]},"application/vnd.laszip":{"source":"iana"},"application/vnd.leap+json":{"source":"iana","compressible":true},"application/vnd.liberty-request+xml":{"source":"iana","compressible":true},"application/vnd.llamagraphics.life-balance.desktop":{"source":"iana","extensions":["lbd"]},"application/vnd.llamagraphics.life-balance.exchange+xml":{"source":"iana","compressible":true,"extensions":["lbe"]},"application/vnd.logipipe.circuit+zip":{"source":"iana","compressible":false},"application/vnd.loom":{"source":"iana"},"application/vnd.lotus-1-2-3":{"source":"iana","extensions":["123"]},"application/vnd.lotus-approach":{"source":"iana","extensions":["apr"]},"application/vnd.lotus-freelance":{"source":"iana","extensions":["pre"]},"application/vnd.lotus-notes":{"source":"iana","extensions":["nsf"]},"application/vnd.lotus-organizer":{"source":"iana","extensions":["org"]},"application/vnd.lotus-screencam":{"source":"iana","extensions":["scm"]},"application/vnd.lotus-wordpro":{"source":"iana","extensions":["lwp"]},"application/vnd.macports.portpkg":{"source":"iana","extensions":["portpkg"]},"application/vnd.mapbox-vector-tile":{"source":"iana","extensions":["mvt"]},"application/vnd.marlin.drm.actiontoken+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.conftoken+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.license+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.mdcf":{"source":"iana"},"application/vnd.mason+json":{"source":"iana","compressible":true},"application/vnd.maxar.archive.3tz+zip":{"source":"iana","compressible":false},"application/vnd.maxmind.maxmind-db":{"source":"iana"},"application/vnd.mcd":{"source":"iana","extensions":["mcd"]},"application/vnd.medcalcdata":{"source":"iana","extensions":["mc1"]},"application/vnd.mediastation.cdkey":{"source":"iana","extensions":["cdkey"]},"application/vnd.meridian-slingshot":{"source":"iana"},"application/vnd.mfer":{"source":"iana","extensions":["mwf"]},"application/vnd.mfmp":{"source":"iana","extensions":["mfm"]},"application/vnd.micro+json":{"source":"iana","compressible":true},"application/vnd.micrografx.flo":{"source":"iana","extensions":["flo"]},"application/vnd.micrografx.igx":{"source":"iana","extensions":["igx"]},"application/vnd.microsoft.portable-executable":{"source":"iana"},"application/vnd.microsoft.windows.thumbnail-cache":{"source":"iana"},"application/vnd.miele+json":{"source":"iana","compressible":true},"application/vnd.mif":{"source":"iana","extensions":["mif"]},"application/vnd.minisoft-hp3000-save":{"source":"iana"},"application/vnd.mitsubishi.misty-guard.trustweb":{"source":"iana"},"application/vnd.mobius.daf":{"source":"iana","extensions":["daf"]},"application/vnd.mobius.dis":{"source":"iana","extensions":["dis"]},"application/vnd.mobius.mbk":{"source":"iana","extensions":["mbk"]},"application/vnd.mobius.mqy":{"source":"iana","extensions":["mqy"]},"application/vnd.mobius.msl":{"source":"iana","extensions":["msl"]},"application/vnd.mobius.plc":{"source":"iana","extensions":["plc"]},"application/vnd.mobius.txf":{"source":"iana","extensions":["txf"]},"application/vnd.mophun.application":{"source":"iana","extensions":["mpn"]},"application/vnd.mophun.certificate":{"source":"iana","extensions":["mpc"]},"application/vnd.motorola.flexsuite":{"source":"iana"},"application/vnd.motorola.flexsuite.adsi":{"source":"iana"},"application/vnd.motorola.flexsuite.fis":{"source":"iana"},"application/vnd.motorola.flexsuite.gotap":{"source":"iana"},"application/vnd.motorola.flexsuite.kmr":{"source":"iana"},"application/vnd.motorola.flexsuite.ttc":{"source":"iana"},"application/vnd.motorola.flexsuite.wem":{"source":"iana"},"application/vnd.motorola.iprm":{"source":"iana"},"application/vnd.mozilla.xul+xml":{"source":"iana","compressible":true,"extensions":["xul"]},"application/vnd.ms-3mfdocument":{"source":"iana"},"application/vnd.ms-artgalry":{"source":"iana","extensions":["cil"]},"application/vnd.ms-asf":{"source":"iana"},"application/vnd.ms-cab-compressed":{"source":"iana","extensions":["cab"]},"application/vnd.ms-color.iccprofile":{"source":"apache"},"application/vnd.ms-excel":{"source":"iana","compressible":false,"extensions":["xls","xlm","xla","xlc","xlt","xlw"]},"application/vnd.ms-excel.addin.macroenabled.12":{"source":"iana","extensions":["xlam"]},"application/vnd.ms-excel.sheet.binary.macroenabled.12":{"source":"iana","extensions":["xlsb"]},"application/vnd.ms-excel.sheet.macroenabled.12":{"source":"iana","extensions":["xlsm"]},"application/vnd.ms-excel.template.macroenabled.12":{"source":"iana","extensions":["xltm"]},"application/vnd.ms-fontobject":{"source":"iana","compressible":true,"extensions":["eot"]},"application/vnd.ms-htmlhelp":{"source":"iana","extensions":["chm"]},"application/vnd.ms-ims":{"source":"iana","extensions":["ims"]},"application/vnd.ms-lrm":{"source":"iana","extensions":["lrm"]},"application/vnd.ms-office.activex+xml":{"source":"iana","compressible":true},"application/vnd.ms-officetheme":{"source":"iana","extensions":["thmx"]},"application/vnd.ms-opentype":{"source":"apache","compressible":true},"application/vnd.ms-outlook":{"compressible":false,"extensions":["msg"]},"application/vnd.ms-package.obfuscated-opentype":{"source":"apache"},"application/vnd.ms-pki.seccat":{"source":"apache","extensions":["cat"]},"application/vnd.ms-pki.stl":{"source":"apache","extensions":["stl"]},"application/vnd.ms-playready.initiator+xml":{"source":"iana","compressible":true},"application/vnd.ms-powerpoint":{"source":"iana","compressible":false,"extensions":["ppt","pps","pot"]},"application/vnd.ms-powerpoint.addin.macroenabled.12":{"source":"iana","extensions":["ppam"]},"application/vnd.ms-powerpoint.presentation.macroenabled.12":{"source":"iana","extensions":["pptm"]},"application/vnd.ms-powerpoint.slide.macroenabled.12":{"source":"iana","extensions":["sldm"]},"application/vnd.ms-powerpoint.slideshow.macroenabled.12":{"source":"iana","extensions":["ppsm"]},"application/vnd.ms-powerpoint.template.macroenabled.12":{"source":"iana","extensions":["potm"]},"application/vnd.ms-printdevicecapabilities+xml":{"source":"iana","compressible":true},"application/vnd.ms-printing.printticket+xml":{"source":"apache","compressible":true},"application/vnd.ms-printschematicket+xml":{"source":"iana","compressible":true},"application/vnd.ms-project":{"source":"iana","extensions":["mpp","mpt"]},"application/vnd.ms-tnef":{"source":"iana"},"application/vnd.ms-windows.devicepairing":{"source":"iana"},"application/vnd.ms-windows.nwprinting.oob":{"source":"iana"},"application/vnd.ms-windows.printerpairing":{"source":"iana"},"application/vnd.ms-windows.wsd.oob":{"source":"iana"},"application/vnd.ms-wmdrm.lic-chlg-req":{"source":"iana"},"application/vnd.ms-wmdrm.lic-resp":{"source":"iana"},"application/vnd.ms-wmdrm.meter-chlg-req":{"source":"iana"},"application/vnd.ms-wmdrm.meter-resp":{"source":"iana"},"application/vnd.ms-word.document.macroenabled.12":{"source":"iana","extensions":["docm"]},"application/vnd.ms-word.template.macroenabled.12":{"source":"iana","extensions":["dotm"]},"application/vnd.ms-works":{"source":"iana","extensions":["wps","wks","wcm","wdb"]},"application/vnd.ms-wpl":{"source":"iana","extensions":["wpl"]},"application/vnd.ms-xpsdocument":{"source":"iana","compressible":false,"extensions":["xps"]},"application/vnd.msa-disk-image":{"source":"iana"},"application/vnd.mseq":{"source":"iana","extensions":["mseq"]},"application/vnd.msign":{"source":"iana"},"application/vnd.multiad.creator":{"source":"iana"},"application/vnd.multiad.creator.cif":{"source":"iana"},"application/vnd.music-niff":{"source":"iana"},"application/vnd.musician":{"source":"iana","extensions":["mus"]},"application/vnd.muvee.style":{"source":"iana","extensions":["msty"]},"application/vnd.mynfc":{"source":"iana","extensions":["taglet"]},"application/vnd.nacamar.ybrid+json":{"source":"iana","compressible":true},"application/vnd.ncd.control":{"source":"iana"},"application/vnd.ncd.reference":{"source":"iana"},"application/vnd.nearst.inv+json":{"source":"iana","compressible":true},"application/vnd.nebumind.line":{"source":"iana"},"application/vnd.nervana":{"source":"iana"},"application/vnd.netfpx":{"source":"iana"},"application/vnd.neurolanguage.nlu":{"source":"iana","extensions":["nlu"]},"application/vnd.nimn":{"source":"iana"},"application/vnd.nintendo.nitro.rom":{"source":"iana"},"application/vnd.nintendo.snes.rom":{"source":"iana"},"application/vnd.nitf":{"source":"iana","extensions":["ntf","nitf"]},"application/vnd.noblenet-directory":{"source":"iana","extensions":["nnd"]},"application/vnd.noblenet-sealer":{"source":"iana","extensions":["nns"]},"application/vnd.noblenet-web":{"source":"iana","extensions":["nnw"]},"application/vnd.nokia.catalogs":{"source":"iana"},"application/vnd.nokia.conml+wbxml":{"source":"iana"},"application/vnd.nokia.conml+xml":{"source":"iana","compressible":true},"application/vnd.nokia.iptv.config+xml":{"source":"iana","compressible":true},"application/vnd.nokia.isds-radio-presets":{"source":"iana"},"application/vnd.nokia.landmark+wbxml":{"source":"iana"},"application/vnd.nokia.landmark+xml":{"source":"iana","compressible":true},"application/vnd.nokia.landmarkcollection+xml":{"source":"iana","compressible":true},"application/vnd.nokia.n-gage.ac+xml":{"source":"iana","compressible":true,"extensions":["ac"]},"application/vnd.nokia.n-gage.data":{"source":"iana","extensions":["ngdat"]},"application/vnd.nokia.n-gage.symbian.install":{"source":"iana","extensions":["n-gage"]},"application/vnd.nokia.ncd":{"source":"iana"},"application/vnd.nokia.pcd+wbxml":{"source":"iana"},"application/vnd.nokia.pcd+xml":{"source":"iana","compressible":true},"application/vnd.nokia.radio-preset":{"source":"iana","extensions":["rpst"]},"application/vnd.nokia.radio-presets":{"source":"iana","extensions":["rpss"]},"application/vnd.novadigm.edm":{"source":"iana","extensions":["edm"]},"application/vnd.novadigm.edx":{"source":"iana","extensions":["edx"]},"application/vnd.novadigm.ext":{"source":"iana","extensions":["ext"]},"application/vnd.ntt-local.content-share":{"source":"iana"},"application/vnd.ntt-local.file-transfer":{"source":"iana"},"application/vnd.ntt-local.ogw_remote-access":{"source":"iana"},"application/vnd.ntt-local.sip-ta_remote":{"source":"iana"},"application/vnd.ntt-local.sip-ta_tcp_stream":{"source":"iana"},"application/vnd.oasis.opendocument.chart":{"source":"iana","extensions":["odc"]},"application/vnd.oasis.opendocument.chart-template":{"source":"iana","extensions":["otc"]},"application/vnd.oasis.opendocument.database":{"source":"iana","extensions":["odb"]},"application/vnd.oasis.opendocument.formula":{"source":"iana","extensions":["odf"]},"application/vnd.oasis.opendocument.formula-template":{"source":"iana","extensions":["odft"]},"application/vnd.oasis.opendocument.graphics":{"source":"iana","compressible":false,"extensions":["odg"]},"application/vnd.oasis.opendocument.graphics-template":{"source":"iana","extensions":["otg"]},"application/vnd.oasis.opendocument.image":{"source":"iana","extensions":["odi"]},"application/vnd.oasis.opendocument.image-template":{"source":"iana","extensions":["oti"]},"application/vnd.oasis.opendocument.presentation":{"source":"iana","compressible":false,"extensions":["odp"]},"application/vnd.oasis.opendocument.presentation-template":{"source":"iana","extensions":["otp"]},"application/vnd.oasis.opendocument.spreadsheet":{"source":"iana","compressible":false,"extensions":["ods"]},"application/vnd.oasis.opendocument.spreadsheet-template":{"source":"iana","extensions":["ots"]},"application/vnd.oasis.opendocument.text":{"source":"iana","compressible":false,"extensions":["odt"]},"application/vnd.oasis.opendocument.text-master":{"source":"iana","extensions":["odm"]},"application/vnd.oasis.opendocument.text-template":{"source":"iana","extensions":["ott"]},"application/vnd.oasis.opendocument.text-web":{"source":"iana","extensions":["oth"]},"application/vnd.obn":{"source":"iana"},"application/vnd.ocf+cbor":{"source":"iana"},"application/vnd.oci.image.manifest.v1+json":{"source":"iana","compressible":true},"application/vnd.oftn.l10n+json":{"source":"iana","compressible":true},"application/vnd.oipf.contentaccessdownload+xml":{"source":"iana","compressible":true},"application/vnd.oipf.contentaccessstreaming+xml":{"source":"iana","compressible":true},"application/vnd.oipf.cspg-hexbinary":{"source":"iana"},"application/vnd.oipf.dae.svg+xml":{"source":"iana","compressible":true},"application/vnd.oipf.dae.xhtml+xml":{"source":"iana","compressible":true},"application/vnd.oipf.mippvcontrolmessage+xml":{"source":"iana","compressible":true},"application/vnd.oipf.pae.gem":{"source":"iana"},"application/vnd.oipf.spdiscovery+xml":{"source":"iana","compressible":true},"application/vnd.oipf.spdlist+xml":{"source":"iana","compressible":true},"application/vnd.oipf.ueprofile+xml":{"source":"iana","compressible":true},"application/vnd.oipf.userprofile+xml":{"source":"iana","compressible":true},"application/vnd.olpc-sugar":{"source":"iana","extensions":["xo"]},"application/vnd.oma-scws-config":{"source":"iana"},"application/vnd.oma-scws-http-request":{"source":"iana"},"application/vnd.oma-scws-http-response":{"source":"iana"},"application/vnd.oma.bcast.associated-procedure-parameter+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.drm-trigger+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.imd+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.ltkm":{"source":"iana"},"application/vnd.oma.bcast.notification+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.provisioningtrigger":{"source":"iana"},"application/vnd.oma.bcast.sgboot":{"source":"iana"},"application/vnd.oma.bcast.sgdd+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.sgdu":{"source":"iana"},"application/vnd.oma.bcast.simple-symbol-container":{"source":"iana"},"application/vnd.oma.bcast.smartcard-trigger+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.sprov+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.stkm":{"source":"iana"},"application/vnd.oma.cab-address-book+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-feature-handler+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-pcc+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-subs-invite+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-user-prefs+xml":{"source":"iana","compressible":true},"application/vnd.oma.dcd":{"source":"iana"},"application/vnd.oma.dcdc":{"source":"iana"},"application/vnd.oma.dd2+xml":{"source":"iana","compressible":true,"extensions":["dd2"]},"application/vnd.oma.drm.risd+xml":{"source":"iana","compressible":true},"application/vnd.oma.group-usage-list+xml":{"source":"iana","compressible":true},"application/vnd.oma.lwm2m+cbor":{"source":"iana"},"application/vnd.oma.lwm2m+json":{"source":"iana","compressible":true},"application/vnd.oma.lwm2m+tlv":{"source":"iana"},"application/vnd.oma.pal+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.detailed-progress-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.final-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.groups+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.invocation-descriptor+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.optimized-progress-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.push":{"source":"iana"},"application/vnd.oma.scidm.messages+xml":{"source":"iana","compressible":true},"application/vnd.oma.xcap-directory+xml":{"source":"iana","compressible":true},"application/vnd.omads-email+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omads-file+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omads-folder+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omaloc-supl-init":{"source":"iana"},"application/vnd.onepager":{"source":"iana"},"application/vnd.onepagertamp":{"source":"iana"},"application/vnd.onepagertamx":{"source":"iana"},"application/vnd.onepagertat":{"source":"iana"},"application/vnd.onepagertatp":{"source":"iana"},"application/vnd.onepagertatx":{"source":"iana"},"application/vnd.openblox.game+xml":{"source":"iana","compressible":true,"extensions":["obgx"]},"application/vnd.openblox.game-binary":{"source":"iana"},"application/vnd.openeye.oeb":{"source":"iana"},"application/vnd.openofficeorg.extension":{"source":"apache","extensions":["oxt"]},"application/vnd.openstreetmap.data+xml":{"source":"iana","compressible":true,"extensions":["osm"]},"application/vnd.opentimestamps.ots":{"source":"iana"},"application/vnd.openxmlformats-officedocument.custom-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.customxmlproperties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawing+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.chart+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.chartshapes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramcolors+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramdata+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramlayout+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramstyle+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.extended-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.commentauthors+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.handoutmaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.notesmaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.notesslide+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.presentation":{"source":"iana","compressible":false,"extensions":["pptx"]},"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.presprops+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slide":{"source":"iana","extensions":["sldx"]},"application/vnd.openxmlformats-officedocument.presentationml.slide+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slidelayout+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slidemaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slideshow":{"source":"iana","extensions":["ppsx"]},"application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slideupdateinfo+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.tablestyles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.tags+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.template":{"source":"iana","extensions":["potx"]},"application/vnd.openxmlformats-officedocument.presentationml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.viewprops+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.calcchain+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.connections+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.dialogsheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.externallink+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivotcachedefinition+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivotcacherecords+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivottable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.querytable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.revisionheaders+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.revisionlog+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedstrings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":{"source":"iana","compressible":false,"extensions":["xlsx"]},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheetmetadata+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.tablesinglecells+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.template":{"source":"iana","extensions":["xltx"]},"application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.usernames+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.volatiledependencies+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.theme+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.themeoverride+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.vmldrawing":{"source":"iana"},"application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.document":{"source":"iana","compressible":false,"extensions":["docx"]},"application/vnd.openxmlformats-officedocument.wordprocessingml.document.glossary+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.fonttable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.template":{"source":"iana","extensions":["dotx"]},"application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.websettings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.core-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.digital-signature-xmlsignature+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.relationships+xml":{"source":"iana","compressible":true},"application/vnd.oracle.resource+json":{"source":"iana","compressible":true},"application/vnd.orange.indata":{"source":"iana"},"application/vnd.osa.netdeploy":{"source":"iana"},"application/vnd.osgeo.mapguide.package":{"source":"iana","extensions":["mgp"]},"application/vnd.osgi.bundle":{"source":"iana"},"application/vnd.osgi.dp":{"source":"iana","extensions":["dp"]},"application/vnd.osgi.subsystem":{"source":"iana","extensions":["esa"]},"application/vnd.otps.ct-kip+xml":{"source":"iana","compressible":true},"application/vnd.oxli.countgraph":{"source":"iana"},"application/vnd.pagerduty+json":{"source":"iana","compressible":true},"application/vnd.palm":{"source":"iana","extensions":["pdb","pqa","oprc"]},"application/vnd.panoply":{"source":"iana"},"application/vnd.paos.xml":{"source":"iana"},"application/vnd.patentdive":{"source":"iana"},"application/vnd.patientecommsdoc":{"source":"iana"},"application/vnd.pawaafile":{"source":"iana","extensions":["paw"]},"application/vnd.pcos":{"source":"iana"},"application/vnd.pg.format":{"source":"iana","extensions":["str"]},"application/vnd.pg.osasli":{"source":"iana","extensions":["ei6"]},"application/vnd.piaccess.application-licence":{"source":"iana"},"application/vnd.picsel":{"source":"iana","extensions":["efif"]},"application/vnd.pmi.widget":{"source":"iana","extensions":["wg"]},"application/vnd.poc.group-advertisement+xml":{"source":"iana","compressible":true},"application/vnd.pocketlearn":{"source":"iana","extensions":["plf"]},"application/vnd.powerbuilder6":{"source":"iana","extensions":["pbd"]},"application/vnd.powerbuilder6-s":{"source":"iana"},"application/vnd.powerbuilder7":{"source":"iana"},"application/vnd.powerbuilder7-s":{"source":"iana"},"application/vnd.powerbuilder75":{"source":"iana"},"application/vnd.powerbuilder75-s":{"source":"iana"},"application/vnd.preminet":{"source":"iana"},"application/vnd.previewsystems.box":{"source":"iana","extensions":["box"]},"application/vnd.proteus.magazine":{"source":"iana","extensions":["mgz"]},"application/vnd.psfs":{"source":"iana"},"application/vnd.publishare-delta-tree":{"source":"iana","extensions":["qps"]},"application/vnd.pvi.ptid1":{"source":"iana","extensions":["ptid"]},"application/vnd.pwg-multiplexed":{"source":"iana"},"application/vnd.pwg-xhtml-print+xml":{"source":"iana","compressible":true},"application/vnd.qualcomm.brew-app-res":{"source":"iana"},"application/vnd.quarantainenet":{"source":"iana"},"application/vnd.quark.quarkxpress":{"source":"iana","extensions":["qxd","qxt","qwd","qwt","qxl","qxb"]},"application/vnd.quobject-quoxdocument":{"source":"iana"},"application/vnd.radisys.moml+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-conf+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-conn+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-dialog+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-stream+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-conf+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-base+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-fax-detect+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-fax-sendrecv+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-group+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-speech+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-transform+xml":{"source":"iana","compressible":true},"application/vnd.rainstor.data":{"source":"iana"},"application/vnd.rapid":{"source":"iana"},"application/vnd.rar":{"source":"iana","extensions":["rar"]},"application/vnd.realvnc.bed":{"source":"iana","extensions":["bed"]},"application/vnd.recordare.musicxml":{"source":"iana","extensions":["mxl"]},"application/vnd.recordare.musicxml+xml":{"source":"iana","compressible":true,"extensions":["musicxml"]},"application/vnd.renlearn.rlprint":{"source":"iana"},"application/vnd.resilient.logic":{"source":"iana"},"application/vnd.restful+json":{"source":"iana","compressible":true},"application/vnd.rig.cryptonote":{"source":"iana","extensions":["cryptonote"]},"application/vnd.rim.cod":{"source":"apache","extensions":["cod"]},"application/vnd.rn-realmedia":{"source":"apache","extensions":["rm"]},"application/vnd.rn-realmedia-vbr":{"source":"apache","extensions":["rmvb"]},"application/vnd.route66.link66+xml":{"source":"iana","compressible":true,"extensions":["link66"]},"application/vnd.rs-274x":{"source":"iana"},"application/vnd.ruckus.download":{"source":"iana"},"application/vnd.s3sms":{"source":"iana"},"application/vnd.sailingtracker.track":{"source":"iana","extensions":["st"]},"application/vnd.sar":{"source":"iana"},"application/vnd.sbm.cid":{"source":"iana"},"application/vnd.sbm.mid2":{"source":"iana"},"application/vnd.scribus":{"source":"iana"},"application/vnd.sealed.3df":{"source":"iana"},"application/vnd.sealed.csf":{"source":"iana"},"application/vnd.sealed.doc":{"source":"iana"},"application/vnd.sealed.eml":{"source":"iana"},"application/vnd.sealed.mht":{"source":"iana"},"application/vnd.sealed.net":{"source":"iana"},"application/vnd.sealed.ppt":{"source":"iana"},"application/vnd.sealed.tiff":{"source":"iana"},"application/vnd.sealed.xls":{"source":"iana"},"application/vnd.sealedmedia.softseal.html":{"source":"iana"},"application/vnd.sealedmedia.softseal.pdf":{"source":"iana"},"application/vnd.seemail":{"source":"iana","extensions":["see"]},"application/vnd.seis+json":{"source":"iana","compressible":true},"application/vnd.sema":{"source":"iana","extensions":["sema"]},"application/vnd.semd":{"source":"iana","extensions":["semd"]},"application/vnd.semf":{"source":"iana","extensions":["semf"]},"application/vnd.shade-save-file":{"source":"iana"},"application/vnd.shana.informed.formdata":{"source":"iana","extensions":["ifm"]},"application/vnd.shana.informed.formtemplate":{"source":"iana","extensions":["itp"]},"application/vnd.shana.informed.interchange":{"source":"iana","extensions":["iif"]},"application/vnd.shana.informed.package":{"source":"iana","extensions":["ipk"]},"application/vnd.shootproof+json":{"source":"iana","compressible":true},"application/vnd.shopkick+json":{"source":"iana","compressible":true},"application/vnd.shp":{"source":"iana"},"application/vnd.shx":{"source":"iana"},"application/vnd.sigrok.session":{"source":"iana"},"application/vnd.simtech-mindmapper":{"source":"iana","extensions":["twd","twds"]},"application/vnd.siren+json":{"source":"iana","compressible":true},"application/vnd.smaf":{"source":"iana","extensions":["mmf"]},"application/vnd.smart.notebook":{"source":"iana"},"application/vnd.smart.teacher":{"source":"iana","extensions":["teacher"]},"application/vnd.snesdev-page-table":{"source":"iana"},"application/vnd.software602.filler.form+xml":{"source":"iana","compressible":true,"extensions":["fo"]},"application/vnd.software602.filler.form-xml-zip":{"source":"iana"},"application/vnd.solent.sdkm+xml":{"source":"iana","compressible":true,"extensions":["sdkm","sdkd"]},"application/vnd.spotfire.dxp":{"source":"iana","extensions":["dxp"]},"application/vnd.spotfire.sfs":{"source":"iana","extensions":["sfs"]},"application/vnd.sqlite3":{"source":"iana"},"application/vnd.sss-cod":{"source":"iana"},"application/vnd.sss-dtf":{"source":"iana"},"application/vnd.sss-ntf":{"source":"iana"},"application/vnd.stardivision.calc":{"source":"apache","extensions":["sdc"]},"application/vnd.stardivision.draw":{"source":"apache","extensions":["sda"]},"application/vnd.stardivision.impress":{"source":"apache","extensions":["sdd"]},"application/vnd.stardivision.math":{"source":"apache","extensions":["smf"]},"application/vnd.stardivision.writer":{"source":"apache","extensions":["sdw","vor"]},"application/vnd.stardivision.writer-global":{"source":"apache","extensions":["sgl"]},"application/vnd.stepmania.package":{"source":"iana","extensions":["smzip"]},"application/vnd.stepmania.stepchart":{"source":"iana","extensions":["sm"]},"application/vnd.street-stream":{"source":"iana"},"application/vnd.sun.wadl+xml":{"source":"iana","compressible":true,"extensions":["wadl"]},"application/vnd.sun.xml.calc":{"source":"apache","extensions":["sxc"]},"application/vnd.sun.xml.calc.template":{"source":"apache","extensions":["stc"]},"application/vnd.sun.xml.draw":{"source":"apache","extensions":["sxd"]},"application/vnd.sun.xml.draw.template":{"source":"apache","extensions":["std"]},"application/vnd.sun.xml.impress":{"source":"apache","extensions":["sxi"]},"application/vnd.sun.xml.impress.template":{"source":"apache","extensions":["sti"]},"application/vnd.sun.xml.math":{"source":"apache","extensions":["sxm"]},"application/vnd.sun.xml.writer":{"source":"apache","extensions":["sxw"]},"application/vnd.sun.xml.writer.global":{"source":"apache","extensions":["sxg"]},"application/vnd.sun.xml.writer.template":{"source":"apache","extensions":["stw"]},"application/vnd.sus-calendar":{"source":"iana","extensions":["sus","susp"]},"application/vnd.svd":{"source":"iana","extensions":["svd"]},"application/vnd.swiftview-ics":{"source":"iana"},"application/vnd.sycle+xml":{"source":"iana","compressible":true},"application/vnd.syft+json":{"source":"iana","compressible":true},"application/vnd.symbian.install":{"source":"apache","extensions":["sis","sisx"]},"application/vnd.syncml+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["xsm"]},"application/vnd.syncml.dm+wbxml":{"source":"iana","charset":"UTF-8","extensions":["bdm"]},"application/vnd.syncml.dm+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["xdm"]},"application/vnd.syncml.dm.notification":{"source":"iana"},"application/vnd.syncml.dmddf+wbxml":{"source":"iana"},"application/vnd.syncml.dmddf+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["ddf"]},"application/vnd.syncml.dmtnds+wbxml":{"source":"iana"},"application/vnd.syncml.dmtnds+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.syncml.ds.notification":{"source":"iana"},"application/vnd.tableschema+json":{"source":"iana","compressible":true},"application/vnd.tao.intent-module-archive":{"source":"iana","extensions":["tao"]},"application/vnd.tcpdump.pcap":{"source":"iana","extensions":["pcap","cap","dmp"]},"application/vnd.think-cell.ppttc+json":{"source":"iana","compressible":true},"application/vnd.tmd.mediaflex.api+xml":{"source":"iana","compressible":true},"application/vnd.tml":{"source":"iana"},"application/vnd.tmobile-livetv":{"source":"iana","extensions":["tmo"]},"application/vnd.tri.onesource":{"source":"iana"},"application/vnd.trid.tpt":{"source":"iana","extensions":["tpt"]},"application/vnd.triscape.mxs":{"source":"iana","extensions":["mxs"]},"application/vnd.trueapp":{"source":"iana","extensions":["tra"]},"application/vnd.truedoc":{"source":"iana"},"application/vnd.ubisoft.webplayer":{"source":"iana"},"application/vnd.ufdl":{"source":"iana","extensions":["ufd","ufdl"]},"application/vnd.uiq.theme":{"source":"iana","extensions":["utz"]},"application/vnd.umajin":{"source":"iana","extensions":["umj"]},"application/vnd.unity":{"source":"iana","extensions":["unityweb"]},"application/vnd.uoml+xml":{"source":"iana","compressible":true,"extensions":["uoml"]},"application/vnd.uplanet.alert":{"source":"iana"},"application/vnd.uplanet.alert-wbxml":{"source":"iana"},"application/vnd.uplanet.bearer-choice":{"source":"iana"},"application/vnd.uplanet.bearer-choice-wbxml":{"source":"iana"},"application/vnd.uplanet.cacheop":{"source":"iana"},"application/vnd.uplanet.cacheop-wbxml":{"source":"iana"},"application/vnd.uplanet.channel":{"source":"iana"},"application/vnd.uplanet.channel-wbxml":{"source":"iana"},"application/vnd.uplanet.list":{"source":"iana"},"application/vnd.uplanet.list-wbxml":{"source":"iana"},"application/vnd.uplanet.listcmd":{"source":"iana"},"application/vnd.uplanet.listcmd-wbxml":{"source":"iana"},"application/vnd.uplanet.signal":{"source":"iana"},"application/vnd.uri-map":{"source":"iana"},"application/vnd.valve.source.material":{"source":"iana"},"application/vnd.vcx":{"source":"iana","extensions":["vcx"]},"application/vnd.vd-study":{"source":"iana"},"application/vnd.vectorworks":{"source":"iana"},"application/vnd.vel+json":{"source":"iana","compressible":true},"application/vnd.verimatrix.vcas":{"source":"iana"},"application/vnd.veritone.aion+json":{"source":"iana","compressible":true},"application/vnd.veryant.thin":{"source":"iana"},"application/vnd.ves.encrypted":{"source":"iana"},"application/vnd.vidsoft.vidconference":{"source":"iana"},"application/vnd.visio":{"source":"iana","extensions":["vsd","vst","vss","vsw"]},"application/vnd.visionary":{"source":"iana","extensions":["vis"]},"application/vnd.vividence.scriptfile":{"source":"iana"},"application/vnd.vsf":{"source":"iana","extensions":["vsf"]},"application/vnd.wap.sic":{"source":"iana"},"application/vnd.wap.slc":{"source":"iana"},"application/vnd.wap.wbxml":{"source":"iana","charset":"UTF-8","extensions":["wbxml"]},"application/vnd.wap.wmlc":{"source":"iana","extensions":["wmlc"]},"application/vnd.wap.wmlscriptc":{"source":"iana","extensions":["wmlsc"]},"application/vnd.webturbo":{"source":"iana","extensions":["wtb"]},"application/vnd.wfa.dpp":{"source":"iana"},"application/vnd.wfa.p2p":{"source":"iana"},"application/vnd.wfa.wsc":{"source":"iana"},"application/vnd.windows.devicepairing":{"source":"iana"},"application/vnd.wmc":{"source":"iana"},"application/vnd.wmf.bootstrap":{"source":"iana"},"application/vnd.wolfram.mathematica":{"source":"iana"},"application/vnd.wolfram.mathematica.package":{"source":"iana"},"application/vnd.wolfram.player":{"source":"iana","extensions":["nbp"]},"application/vnd.wordperfect":{"source":"iana","extensions":["wpd"]},"application/vnd.wqd":{"source":"iana","extensions":["wqd"]},"application/vnd.wrq-hp3000-labelled":{"source":"iana"},"application/vnd.wt.stf":{"source":"iana","extensions":["stf"]},"application/vnd.wv.csp+wbxml":{"source":"iana"},"application/vnd.wv.csp+xml":{"source":"iana","compressible":true},"application/vnd.wv.ssp+xml":{"source":"iana","compressible":true},"application/vnd.xacml+json":{"source":"iana","compressible":true},"application/vnd.xara":{"source":"iana","extensions":["xar"]},"application/vnd.xfdl":{"source":"iana","extensions":["xfdl"]},"application/vnd.xfdl.webform":{"source":"iana"},"application/vnd.xmi+xml":{"source":"iana","compressible":true},"application/vnd.xmpie.cpkg":{"source":"iana"},"application/vnd.xmpie.dpkg":{"source":"iana"},"application/vnd.xmpie.plan":{"source":"iana"},"application/vnd.xmpie.ppkg":{"source":"iana"},"application/vnd.xmpie.xlim":{"source":"iana"},"application/vnd.yamaha.hv-dic":{"source":"iana","extensions":["hvd"]},"application/vnd.yamaha.hv-script":{"source":"iana","extensions":["hvs"]},"application/vnd.yamaha.hv-voice":{"source":"iana","extensions":["hvp"]},"application/vnd.yamaha.openscoreformat":{"source":"iana","extensions":["osf"]},"application/vnd.yamaha.openscoreformat.osfpvg+xml":{"source":"iana","compressible":true,"extensions":["osfpvg"]},"application/vnd.yamaha.remote-setup":{"source":"iana"},"application/vnd.yamaha.smaf-audio":{"source":"iana","extensions":["saf"]},"application/vnd.yamaha.smaf-phrase":{"source":"iana","extensions":["spf"]},"application/vnd.yamaha.through-ngn":{"source":"iana"},"application/vnd.yamaha.tunnel-udpencap":{"source":"iana"},"application/vnd.yaoweme":{"source":"iana"},"application/vnd.yellowriver-custom-menu":{"source":"iana","extensions":["cmp"]},"application/vnd.youtube.yt":{"source":"iana"},"application/vnd.zul":{"source":"iana","extensions":["zir","zirz"]},"application/vnd.zzazz.deck+xml":{"source":"iana","compressible":true,"extensions":["zaz"]},"application/voicexml+xml":{"source":"iana","compressible":true,"extensions":["vxml"]},"application/voucher-cms+json":{"source":"iana","compressible":true},"application/vq-rtcpxr":{"source":"iana"},"application/wasm":{"source":"iana","compressible":true,"extensions":["wasm"]},"application/watcherinfo+xml":{"source":"iana","compressible":true,"extensions":["wif"]},"application/webpush-options+json":{"source":"iana","compressible":true},"application/whoispp-query":{"source":"iana"},"application/whoispp-response":{"source":"iana"},"application/widget":{"source":"iana","extensions":["wgt"]},"application/winhlp":{"source":"apache","extensions":["hlp"]},"application/wita":{"source":"iana"},"application/wordperfect5.1":{"source":"iana"},"application/wsdl+xml":{"source":"iana","compressible":true,"extensions":["wsdl"]},"application/wspolicy+xml":{"source":"iana","compressible":true,"extensions":["wspolicy"]},"application/x-7z-compressed":{"source":"apache","compressible":false,"extensions":["7z"]},"application/x-abiword":{"source":"apache","extensions":["abw"]},"application/x-ace-compressed":{"source":"apache","extensions":["ace"]},"application/x-amf":{"source":"apache"},"application/x-apple-diskimage":{"source":"apache","extensions":["dmg"]},"application/x-arj":{"compressible":false,"extensions":["arj"]},"application/x-authorware-bin":{"source":"apache","extensions":["aab","x32","u32","vox"]},"application/x-authorware-map":{"source":"apache","extensions":["aam"]},"application/x-authorware-seg":{"source":"apache","extensions":["aas"]},"application/x-bcpio":{"source":"apache","extensions":["bcpio"]},"application/x-bdoc":{"compressible":false,"extensions":["bdoc"]},"application/x-bittorrent":{"source":"apache","extensions":["torrent"]},"application/x-blorb":{"source":"apache","extensions":["blb","blorb"]},"application/x-bzip":{"source":"apache","compressible":false,"extensions":["bz"]},"application/x-bzip2":{"source":"apache","compressible":false,"extensions":["bz2","boz"]},"application/x-cbr":{"source":"apache","extensions":["cbr","cba","cbt","cbz","cb7"]},"application/x-cdlink":{"source":"apache","extensions":["vcd"]},"application/x-cfs-compressed":{"source":"apache","extensions":["cfs"]},"application/x-chat":{"source":"apache","extensions":["chat"]},"application/x-chess-pgn":{"source":"apache","extensions":["pgn"]},"application/x-chrome-extension":{"extensions":["crx"]},"application/x-cocoa":{"source":"nginx","extensions":["cco"]},"application/x-compress":{"source":"apache"},"application/x-conference":{"source":"apache","extensions":["nsc"]},"application/x-cpio":{"source":"apache","extensions":["cpio"]},"application/x-csh":{"source":"apache","extensions":["csh"]},"application/x-deb":{"compressible":false},"application/x-debian-package":{"source":"apache","extensions":["deb","udeb"]},"application/x-dgc-compressed":{"source":"apache","extensions":["dgc"]},"application/x-director":{"source":"apache","extensions":["dir","dcr","dxr","cst","cct","cxt","w3d","fgd","swa"]},"application/x-doom":{"source":"apache","extensions":["wad"]},"application/x-dtbncx+xml":{"source":"apache","compressible":true,"extensions":["ncx"]},"application/x-dtbook+xml":{"source":"apache","compressible":true,"extensions":["dtb"]},"application/x-dtbresource+xml":{"source":"apache","compressible":true,"extensions":["res"]},"application/x-dvi":{"source":"apache","compressible":false,"extensions":["dvi"]},"application/x-envoy":{"source":"apache","extensions":["evy"]},"application/x-eva":{"source":"apache","extensions":["eva"]},"application/x-font-bdf":{"source":"apache","extensions":["bdf"]},"application/x-font-dos":{"source":"apache"},"application/x-font-framemaker":{"source":"apache"},"application/x-font-ghostscript":{"source":"apache","extensions":["gsf"]},"application/x-font-libgrx":{"source":"apache"},"application/x-font-linux-psf":{"source":"apache","extensions":["psf"]},"application/x-font-pcf":{"source":"apache","extensions":["pcf"]},"application/x-font-snf":{"source":"apache","extensions":["snf"]},"application/x-font-speedo":{"source":"apache"},"application/x-font-sunos-news":{"source":"apache"},"application/x-font-type1":{"source":"apache","extensions":["pfa","pfb","pfm","afm"]},"application/x-font-vfont":{"source":"apache"},"application/x-freearc":{"source":"apache","extensions":["arc"]},"application/x-futuresplash":{"source":"apache","extensions":["spl"]},"application/x-gca-compressed":{"source":"apache","extensions":["gca"]},"application/x-glulx":{"source":"apache","extensions":["ulx"]},"application/x-gnumeric":{"source":"apache","extensions":["gnumeric"]},"application/x-gramps-xml":{"source":"apache","extensions":["gramps"]},"application/x-gtar":{"source":"apache","extensions":["gtar"]},"application/x-gzip":{"source":"apache"},"application/x-hdf":{"source":"apache","extensions":["hdf"]},"application/x-httpd-php":{"compressible":true,"extensions":["php"]},"application/x-install-instructions":{"source":"apache","extensions":["install"]},"application/x-iso9660-image":{"source":"apache","extensions":["iso"]},"application/x-iwork-keynote-sffkey":{"extensions":["key"]},"application/x-iwork-numbers-sffnumbers":{"extensions":["numbers"]},"application/x-iwork-pages-sffpages":{"extensions":["pages"]},"application/x-java-archive-diff":{"source":"nginx","extensions":["jardiff"]},"application/x-java-jnlp-file":{"source":"apache","compressible":false,"extensions":["jnlp"]},"application/x-javascript":{"compressible":true},"application/x-keepass2":{"extensions":["kdbx"]},"application/x-latex":{"source":"apache","compressible":false,"extensions":["latex"]},"application/x-lua-bytecode":{"extensions":["luac"]},"application/x-lzh-compressed":{"source":"apache","extensions":["lzh","lha"]},"application/x-makeself":{"source":"nginx","extensions":["run"]},"application/x-mie":{"source":"apache","extensions":["mie"]},"application/x-mobipocket-ebook":{"source":"apache","extensions":["prc","mobi"]},"application/x-mpegurl":{"compressible":false},"application/x-ms-application":{"source":"apache","extensions":["application"]},"application/x-ms-shortcut":{"source":"apache","extensions":["lnk"]},"application/x-ms-wmd":{"source":"apache","extensions":["wmd"]},"application/x-ms-wmz":{"source":"apache","extensions":["wmz"]},"application/x-ms-xbap":{"source":"apache","extensions":["xbap"]},"application/x-msaccess":{"source":"apache","extensions":["mdb"]},"application/x-msbinder":{"source":"apache","extensions":["obd"]},"application/x-mscardfile":{"source":"apache","extensions":["crd"]},"application/x-msclip":{"source":"apache","extensions":["clp"]},"application/x-msdos-program":{"extensions":["exe"]},"application/x-msdownload":{"source":"apache","extensions":["exe","dll","com","bat","msi"]},"application/x-msmediaview":{"source":"apache","extensions":["mvb","m13","m14"]},"application/x-msmetafile":{"source":"apache","extensions":["wmf","wmz","emf","emz"]},"application/x-msmoney":{"source":"apache","extensions":["mny"]},"application/x-mspublisher":{"source":"apache","extensions":["pub"]},"application/x-msschedule":{"source":"apache","extensions":["scd"]},"application/x-msterminal":{"source":"apache","extensions":["trm"]},"application/x-mswrite":{"source":"apache","extensions":["wri"]},"application/x-netcdf":{"source":"apache","extensions":["nc","cdf"]},"application/x-ns-proxy-autoconfig":{"compressible":true,"extensions":["pac"]},"application/x-nzb":{"source":"apache","extensions":["nzb"]},"application/x-perl":{"source":"nginx","extensions":["pl","pm"]},"application/x-pilot":{"source":"nginx","extensions":["prc","pdb"]},"application/x-pkcs12":{"source":"apache","compressible":false,"extensions":["p12","pfx"]},"application/x-pkcs7-certificates":{"source":"apache","extensions":["p7b","spc"]},"application/x-pkcs7-certreqresp":{"source":"apache","extensions":["p7r"]},"application/x-pki-message":{"source":"iana"},"application/x-rar-compressed":{"source":"apache","compressible":false,"extensions":["rar"]},"application/x-redhat-package-manager":{"source":"nginx","extensions":["rpm"]},"application/x-research-info-systems":{"source":"apache","extensions":["ris"]},"application/x-sea":{"source":"nginx","extensions":["sea"]},"application/x-sh":{"source":"apache","compressible":true,"extensions":["sh"]},"application/x-shar":{"source":"apache","extensions":["shar"]},"application/x-shockwave-flash":{"source":"apache","compressible":false,"extensions":["swf"]},"application/x-silverlight-app":{"source":"apache","extensions":["xap"]},"application/x-sql":{"source":"apache","extensions":["sql"]},"application/x-stuffit":{"source":"apache","compressible":false,"extensions":["sit"]},"application/x-stuffitx":{"source":"apache","extensions":["sitx"]},"application/x-subrip":{"source":"apache","extensions":["srt"]},"application/x-sv4cpio":{"source":"apache","extensions":["sv4cpio"]},"application/x-sv4crc":{"source":"apache","extensions":["sv4crc"]},"application/x-t3vm-image":{"source":"apache","extensions":["t3"]},"application/x-tads":{"source":"apache","extensions":["gam"]},"application/x-tar":{"source":"apache","compressible":true,"extensions":["tar"]},"application/x-tcl":{"source":"apache","extensions":["tcl","tk"]},"application/x-tex":{"source":"apache","extensions":["tex"]},"application/x-tex-tfm":{"source":"apache","extensions":["tfm"]},"application/x-texinfo":{"source":"apache","extensions":["texinfo","texi"]},"application/x-tgif":{"source":"apache","extensions":["obj"]},"application/x-ustar":{"source":"apache","extensions":["ustar"]},"application/x-virtualbox-hdd":{"compressible":true,"extensions":["hdd"]},"application/x-virtualbox-ova":{"compressible":true,"extensions":["ova"]},"application/x-virtualbox-ovf":{"compressible":true,"extensions":["ovf"]},"application/x-virtualbox-vbox":{"compressible":true,"extensions":["vbox"]},"application/x-virtualbox-vbox-extpack":{"compressible":false,"extensions":["vbox-extpack"]},"application/x-virtualbox-vdi":{"compressible":true,"extensions":["vdi"]},"application/x-virtualbox-vhd":{"compressible":true,"extensions":["vhd"]},"application/x-virtualbox-vmdk":{"compressible":true,"extensions":["vmdk"]},"application/x-wais-source":{"source":"apache","extensions":["src"]},"application/x-web-app-manifest+json":{"compressible":true,"extensions":["webapp"]},"application/x-www-form-urlencoded":{"source":"iana","compressible":true},"application/x-x509-ca-cert":{"source":"iana","extensions":["der","crt","pem"]},"application/x-x509-ca-ra-cert":{"source":"iana"},"application/x-x509-next-ca-cert":{"source":"iana"},"application/x-xfig":{"source":"apache","extensions":["fig"]},"application/x-xliff+xml":{"source":"apache","compressible":true,"extensions":["xlf"]},"application/x-xpinstall":{"source":"apache","compressible":false,"extensions":["xpi"]},"application/x-xz":{"source":"apache","extensions":["xz"]},"application/x-zmachine":{"source":"apache","extensions":["z1","z2","z3","z4","z5","z6","z7","z8"]},"application/x400-bp":{"source":"iana"},"application/xacml+xml":{"source":"iana","compressible":true},"application/xaml+xml":{"source":"apache","compressible":true,"extensions":["xaml"]},"application/xcap-att+xml":{"source":"iana","compressible":true,"extensions":["xav"]},"application/xcap-caps+xml":{"source":"iana","compressible":true,"extensions":["xca"]},"application/xcap-diff+xml":{"source":"iana","compressible":true,"extensions":["xdf"]},"application/xcap-el+xml":{"source":"iana","compressible":true,"extensions":["xel"]},"application/xcap-error+xml":{"source":"iana","compressible":true},"application/xcap-ns+xml":{"source":"iana","compressible":true,"extensions":["xns"]},"application/xcon-conference-info+xml":{"source":"iana","compressible":true},"application/xcon-conference-info-diff+xml":{"source":"iana","compressible":true},"application/xenc+xml":{"source":"iana","compressible":true,"extensions":["xenc"]},"application/xhtml+xml":{"source":"iana","compressible":true,"extensions":["xhtml","xht"]},"application/xhtml-voice+xml":{"source":"apache","compressible":true},"application/xliff+xml":{"source":"iana","compressible":true,"extensions":["xlf"]},"application/xml":{"source":"iana","compressible":true,"extensions":["xml","xsl","xsd","rng"]},"application/xml-dtd":{"source":"iana","compressible":true,"extensions":["dtd"]},"application/xml-external-parsed-entity":{"source":"iana"},"application/xml-patch+xml":{"source":"iana","compressible":true},"application/xmpp+xml":{"source":"iana","compressible":true},"application/xop+xml":{"source":"iana","compressible":true,"extensions":["xop"]},"application/xproc+xml":{"source":"apache","compressible":true,"extensions":["xpl"]},"application/xslt+xml":{"source":"iana","compressible":true,"extensions":["xsl","xslt"]},"application/xspf+xml":{"source":"apache","compressible":true,"extensions":["xspf"]},"application/xv+xml":{"source":"iana","compressible":true,"extensions":["mxml","xhvml","xvml","xvm"]},"application/yang":{"source":"iana","extensions":["yang"]},"application/yang-data+json":{"source":"iana","compressible":true},"application/yang-data+xml":{"source":"iana","compressible":true},"application/yang-patch+json":{"source":"iana","compressible":true},"application/yang-patch+xml":{"source":"iana","compressible":true},"application/yin+xml":{"source":"iana","compressible":true,"extensions":["yin"]},"application/zip":{"source":"iana","compressible":false,"extensions":["zip"]},"application/zlib":{"source":"iana"},"application/zstd":{"source":"iana"},"audio/1d-interleaved-parityfec":{"source":"iana"},"audio/32kadpcm":{"source":"iana"},"audio/3gpp":{"source":"iana","compressible":false,"extensions":["3gpp"]},"audio/3gpp2":{"source":"iana"},"audio/aac":{"source":"iana"},"audio/ac3":{"source":"iana"},"audio/adpcm":{"source":"apache","extensions":["adp"]},"audio/amr":{"source":"iana","extensions":["amr"]},"audio/amr-wb":{"source":"iana"},"audio/amr-wb+":{"source":"iana"},"audio/aptx":{"source":"iana"},"audio/asc":{"source":"iana"},"audio/atrac-advanced-lossless":{"source":"iana"},"audio/atrac-x":{"source":"iana"},"audio/atrac3":{"source":"iana"},"audio/basic":{"source":"iana","compressible":false,"extensions":["au","snd"]},"audio/bv16":{"source":"iana"},"audio/bv32":{"source":"iana"},"audio/clearmode":{"source":"iana"},"audio/cn":{"source":"iana"},"audio/dat12":{"source":"iana"},"audio/dls":{"source":"iana"},"audio/dsr-es201108":{"source":"iana"},"audio/dsr-es202050":{"source":"iana"},"audio/dsr-es202211":{"source":"iana"},"audio/dsr-es202212":{"source":"iana"},"audio/dv":{"source":"iana"},"audio/dvi4":{"source":"iana"},"audio/eac3":{"source":"iana"},"audio/encaprtp":{"source":"iana"},"audio/evrc":{"source":"iana"},"audio/evrc-qcp":{"source":"iana"},"audio/evrc0":{"source":"iana"},"audio/evrc1":{"source":"iana"},"audio/evrcb":{"source":"iana"},"audio/evrcb0":{"source":"iana"},"audio/evrcb1":{"source":"iana"},"audio/evrcnw":{"source":"iana"},"audio/evrcnw0":{"source":"iana"},"audio/evrcnw1":{"source":"iana"},"audio/evrcwb":{"source":"iana"},"audio/evrcwb0":{"source":"iana"},"audio/evrcwb1":{"source":"iana"},"audio/evs":{"source":"iana"},"audio/flexfec":{"source":"iana"},"audio/fwdred":{"source":"iana"},"audio/g711-0":{"source":"iana"},"audio/g719":{"source":"iana"},"audio/g722":{"source":"iana"},"audio/g7221":{"source":"iana"},"audio/g723":{"source":"iana"},"audio/g726-16":{"source":"iana"},"audio/g726-24":{"source":"iana"},"audio/g726-32":{"source":"iana"},"audio/g726-40":{"source":"iana"},"audio/g728":{"source":"iana"},"audio/g729":{"source":"iana"},"audio/g7291":{"source":"iana"},"audio/g729d":{"source":"iana"},"audio/g729e":{"source":"iana"},"audio/gsm":{"source":"iana"},"audio/gsm-efr":{"source":"iana"},"audio/gsm-hr-08":{"source":"iana"},"audio/ilbc":{"source":"iana"},"audio/ip-mr_v2.5":{"source":"iana"},"audio/isac":{"source":"apache"},"audio/l16":{"source":"iana"},"audio/l20":{"source":"iana"},"audio/l24":{"source":"iana","compressible":false},"audio/l8":{"source":"iana"},"audio/lpc":{"source":"iana"},"audio/melp":{"source":"iana"},"audio/melp1200":{"source":"iana"},"audio/melp2400":{"source":"iana"},"audio/melp600":{"source":"iana"},"audio/mhas":{"source":"iana"},"audio/midi":{"source":"apache","extensions":["mid","midi","kar","rmi"]},"audio/mobile-xmf":{"source":"iana","extensions":["mxmf"]},"audio/mp3":{"compressible":false,"extensions":["mp3"]},"audio/mp4":{"source":"iana","compressible":false,"extensions":["m4a","mp4a"]},"audio/mp4a-latm":{"source":"iana"},"audio/mpa":{"source":"iana"},"audio/mpa-robust":{"source":"iana"},"audio/mpeg":{"source":"iana","compressible":false,"extensions":["mpga","mp2","mp2a","mp3","m2a","m3a"]},"audio/mpeg4-generic":{"source":"iana"},"audio/musepack":{"source":"apache"},"audio/ogg":{"source":"iana","compressible":false,"extensions":["oga","ogg","spx","opus"]},"audio/opus":{"source":"iana"},"audio/parityfec":{"source":"iana"},"audio/pcma":{"source":"iana"},"audio/pcma-wb":{"source":"iana"},"audio/pcmu":{"source":"iana"},"audio/pcmu-wb":{"source":"iana"},"audio/prs.sid":{"source":"iana"},"audio/qcelp":{"source":"iana"},"audio/raptorfec":{"source":"iana"},"audio/red":{"source":"iana"},"audio/rtp-enc-aescm128":{"source":"iana"},"audio/rtp-midi":{"source":"iana"},"audio/rtploopback":{"source":"iana"},"audio/rtx":{"source":"iana"},"audio/s3m":{"source":"apache","extensions":["s3m"]},"audio/scip":{"source":"iana"},"audio/silk":{"source":"apache","extensions":["sil"]},"audio/smv":{"source":"iana"},"audio/smv-qcp":{"source":"iana"},"audio/smv0":{"source":"iana"},"audio/sofa":{"source":"iana"},"audio/sp-midi":{"source":"iana"},"audio/speex":{"source":"iana"},"audio/t140c":{"source":"iana"},"audio/t38":{"source":"iana"},"audio/telephone-event":{"source":"iana"},"audio/tetra_acelp":{"source":"iana"},"audio/tetra_acelp_bb":{"source":"iana"},"audio/tone":{"source":"iana"},"audio/tsvcis":{"source":"iana"},"audio/uemclip":{"source":"iana"},"audio/ulpfec":{"source":"iana"},"audio/usac":{"source":"iana"},"audio/vdvi":{"source":"iana"},"audio/vmr-wb":{"source":"iana"},"audio/vnd.3gpp.iufp":{"source":"iana"},"audio/vnd.4sb":{"source":"iana"},"audio/vnd.audiokoz":{"source":"iana"},"audio/vnd.celp":{"source":"iana"},"audio/vnd.cisco.nse":{"source":"iana"},"audio/vnd.cmles.radio-events":{"source":"iana"},"audio/vnd.cns.anp1":{"source":"iana"},"audio/vnd.cns.inf1":{"source":"iana"},"audio/vnd.dece.audio":{"source":"iana","extensions":["uva","uvva"]},"audio/vnd.digital-winds":{"source":"iana","extensions":["eol"]},"audio/vnd.dlna.adts":{"source":"iana"},"audio/vnd.dolby.heaac.1":{"source":"iana"},"audio/vnd.dolby.heaac.2":{"source":"iana"},"audio/vnd.dolby.mlp":{"source":"iana"},"audio/vnd.dolby.mps":{"source":"iana"},"audio/vnd.dolby.pl2":{"source":"iana"},"audio/vnd.dolby.pl2x":{"source":"iana"},"audio/vnd.dolby.pl2z":{"source":"iana"},"audio/vnd.dolby.pulse.1":{"source":"iana"},"audio/vnd.dra":{"source":"iana","extensions":["dra"]},"audio/vnd.dts":{"source":"iana","extensions":["dts"]},"audio/vnd.dts.hd":{"source":"iana","extensions":["dtshd"]},"audio/vnd.dts.uhd":{"source":"iana"},"audio/vnd.dvb.file":{"source":"iana"},"audio/vnd.everad.plj":{"source":"iana"},"audio/vnd.hns.audio":{"source":"iana"},"audio/vnd.lucent.voice":{"source":"iana","extensions":["lvp"]},"audio/vnd.ms-playready.media.pya":{"source":"iana","extensions":["pya"]},"audio/vnd.nokia.mobile-xmf":{"source":"iana"},"audio/vnd.nortel.vbk":{"source":"iana"},"audio/vnd.nuera.ecelp4800":{"source":"iana","extensions":["ecelp4800"]},"audio/vnd.nuera.ecelp7470":{"source":"iana","extensions":["ecelp7470"]},"audio/vnd.nuera.ecelp9600":{"source":"iana","extensions":["ecelp9600"]},"audio/vnd.octel.sbc":{"source":"iana"},"audio/vnd.presonus.multitrack":{"source":"iana"},"audio/vnd.qcelp":{"source":"iana"},"audio/vnd.rhetorex.32kadpcm":{"source":"iana"},"audio/vnd.rip":{"source":"iana","extensions":["rip"]},"audio/vnd.rn-realaudio":{"compressible":false},"audio/vnd.sealedmedia.softseal.mpeg":{"source":"iana"},"audio/vnd.vmx.cvsd":{"source":"iana"},"audio/vnd.wave":{"compressible":false},"audio/vorbis":{"source":"iana","compressible":false},"audio/vorbis-config":{"source":"iana"},"audio/wav":{"compressible":false,"extensions":["wav"]},"audio/wave":{"compressible":false,"extensions":["wav"]},"audio/webm":{"source":"apache","compressible":false,"extensions":["weba"]},"audio/x-aac":{"source":"apache","compressible":false,"extensions":["aac"]},"audio/x-aiff":{"source":"apache","extensions":["aif","aiff","aifc"]},"audio/x-caf":{"source":"apache","compressible":false,"extensions":["caf"]},"audio/x-flac":{"source":"apache","extensions":["flac"]},"audio/x-m4a":{"source":"nginx","extensions":["m4a"]},"audio/x-matroska":{"source":"apache","extensions":["mka"]},"audio/x-mpegurl":{"source":"apache","extensions":["m3u"]},"audio/x-ms-wax":{"source":"apache","extensions":["wax"]},"audio/x-ms-wma":{"source":"apache","extensions":["wma"]},"audio/x-pn-realaudio":{"source":"apache","extensions":["ram","ra"]},"audio/x-pn-realaudio-plugin":{"source":"apache","extensions":["rmp"]},"audio/x-realaudio":{"source":"nginx","extensions":["ra"]},"audio/x-tta":{"source":"apache"},"audio/x-wav":{"source":"apache","extensions":["wav"]},"audio/xm":{"source":"apache","extensions":["xm"]},"chemical/x-cdx":{"source":"apache","extensions":["cdx"]},"chemical/x-cif":{"source":"apache","extensions":["cif"]},"chemical/x-cmdf":{"source":"apache","extensions":["cmdf"]},"chemical/x-cml":{"source":"apache","extensions":["cml"]},"chemical/x-csml":{"source":"apache","extensions":["csml"]},"chemical/x-pdb":{"source":"apache"},"chemical/x-xyz":{"source":"apache","extensions":["xyz"]},"font/collection":{"source":"iana","extensions":["ttc"]},"font/otf":{"source":"iana","compressible":true,"extensions":["otf"]},"font/sfnt":{"source":"iana"},"font/ttf":{"source":"iana","compressible":true,"extensions":["ttf"]},"font/woff":{"source":"iana","extensions":["woff"]},"font/woff2":{"source":"iana","extensions":["woff2"]},"image/aces":{"source":"iana","extensions":["exr"]},"image/apng":{"compressible":false,"extensions":["apng"]},"image/avci":{"source":"iana","extensions":["avci"]},"image/avcs":{"source":"iana","extensions":["avcs"]},"image/avif":{"source":"iana","compressible":false,"extensions":["avif"]},"image/bmp":{"source":"iana","compressible":true,"extensions":["bmp"]},"image/cgm":{"source":"iana","extensions":["cgm"]},"image/dicom-rle":{"source":"iana","extensions":["drle"]},"image/emf":{"source":"iana","extensions":["emf"]},"image/fits":{"source":"iana","extensions":["fits"]},"image/g3fax":{"source":"iana","extensions":["g3"]},"image/gif":{"source":"iana","compressible":false,"extensions":["gif"]},"image/heic":{"source":"iana","extensions":["heic"]},"image/heic-sequence":{"source":"iana","extensions":["heics"]},"image/heif":{"source":"iana","extensions":["heif"]},"image/heif-sequence":{"source":"iana","extensions":["heifs"]},"image/hej2k":{"source":"iana","extensions":["hej2"]},"image/hsj2":{"source":"iana","extensions":["hsj2"]},"image/ief":{"source":"iana","extensions":["ief"]},"image/jls":{"source":"iana","extensions":["jls"]},"image/jp2":{"source":"iana","compressible":false,"extensions":["jp2","jpg2"]},"image/jpeg":{"source":"iana","compressible":false,"extensions":["jpeg","jpg","jpe"]},"image/jph":{"source":"iana","extensions":["jph"]},"image/jphc":{"source":"iana","extensions":["jhc"]},"image/jpm":{"source":"iana","compressible":false,"extensions":["jpm"]},"image/jpx":{"source":"iana","compressible":false,"extensions":["jpx","jpf"]},"image/jxr":{"source":"iana","extensions":["jxr"]},"image/jxra":{"source":"iana","extensions":["jxra"]},"image/jxrs":{"source":"iana","extensions":["jxrs"]},"image/jxs":{"source":"iana","extensions":["jxs"]},"image/jxsc":{"source":"iana","extensions":["jxsc"]},"image/jxsi":{"source":"iana","extensions":["jxsi"]},"image/jxss":{"source":"iana","extensions":["jxss"]},"image/ktx":{"source":"iana","extensions":["ktx"]},"image/ktx2":{"source":"iana","extensions":["ktx2"]},"image/naplps":{"source":"iana"},"image/pjpeg":{"compressible":false},"image/png":{"source":"iana","compressible":false,"extensions":["png"]},"image/prs.btif":{"source":"iana","extensions":["btif"]},"image/prs.pti":{"source":"iana","extensions":["pti"]},"image/pwg-raster":{"source":"iana"},"image/sgi":{"source":"apache","extensions":["sgi"]},"image/svg+xml":{"source":"iana","compressible":true,"extensions":["svg","svgz"]},"image/t38":{"source":"iana","extensions":["t38"]},"image/tiff":{"source":"iana","compressible":false,"extensions":["tif","tiff"]},"image/tiff-fx":{"source":"iana","extensions":["tfx"]},"image/vnd.adobe.photoshop":{"source":"iana","compressible":true,"extensions":["psd"]},"image/vnd.airzip.accelerator.azv":{"source":"iana","extensions":["azv"]},"image/vnd.cns.inf2":{"source":"iana"},"image/vnd.dece.graphic":{"source":"iana","extensions":["uvi","uvvi","uvg","uvvg"]},"image/vnd.djvu":{"source":"iana","extensions":["djvu","djv"]},"image/vnd.dvb.subtitle":{"source":"iana","extensions":["sub"]},"image/vnd.dwg":{"source":"iana","extensions":["dwg"]},"image/vnd.dxf":{"source":"iana","extensions":["dxf"]},"image/vnd.fastbidsheet":{"source":"iana","extensions":["fbs"]},"image/vnd.fpx":{"source":"iana","extensions":["fpx"]},"image/vnd.fst":{"source":"iana","extensions":["fst"]},"image/vnd.fujixerox.edmics-mmr":{"source":"iana","extensions":["mmr"]},"image/vnd.fujixerox.edmics-rlc":{"source":"iana","extensions":["rlc"]},"image/vnd.globalgraphics.pgb":{"source":"iana"},"image/vnd.microsoft.icon":{"source":"iana","compressible":true,"extensions":["ico"]},"image/vnd.mix":{"source":"iana"},"image/vnd.mozilla.apng":{"source":"iana"},"image/vnd.ms-dds":{"compressible":true,"extensions":["dds"]},"image/vnd.ms-modi":{"source":"iana","extensions":["mdi"]},"image/vnd.ms-photo":{"source":"apache","extensions":["wdp"]},"image/vnd.net-fpx":{"source":"iana","extensions":["npx"]},"image/vnd.pco.b16":{"source":"iana","extensions":["b16"]},"image/vnd.radiance":{"source":"iana"},"image/vnd.sealed.png":{"source":"iana"},"image/vnd.sealedmedia.softseal.gif":{"source":"iana"},"image/vnd.sealedmedia.softseal.jpg":{"source":"iana"},"image/vnd.svf":{"source":"iana"},"image/vnd.tencent.tap":{"source":"iana","extensions":["tap"]},"image/vnd.valve.source.texture":{"source":"iana","extensions":["vtf"]},"image/vnd.wap.wbmp":{"source":"iana","extensions":["wbmp"]},"image/vnd.xiff":{"source":"iana","extensions":["xif"]},"image/vnd.zbrush.pcx":{"source":"iana","extensions":["pcx"]},"image/webp":{"source":"apache","extensions":["webp"]},"image/wmf":{"source":"iana","extensions":["wmf"]},"image/x-3ds":{"source":"apache","extensions":["3ds"]},"image/x-cmu-raster":{"source":"apache","extensions":["ras"]},"image/x-cmx":{"source":"apache","extensions":["cmx"]},"image/x-freehand":{"source":"apache","extensions":["fh","fhc","fh4","fh5","fh7"]},"image/x-icon":{"source":"apache","compressible":true,"extensions":["ico"]},"image/x-jng":{"source":"nginx","extensions":["jng"]},"image/x-mrsid-image":{"source":"apache","extensions":["sid"]},"image/x-ms-bmp":{"source":"nginx","compressible":true,"extensions":["bmp"]},"image/x-pcx":{"source":"apache","extensions":["pcx"]},"image/x-pict":{"source":"apache","extensions":["pic","pct"]},"image/x-portable-anymap":{"source":"apache","extensions":["pnm"]},"image/x-portable-bitmap":{"source":"apache","extensions":["pbm"]},"image/x-portable-graymap":{"source":"apache","extensions":["pgm"]},"image/x-portable-pixmap":{"source":"apache","extensions":["ppm"]},"image/x-rgb":{"source":"apache","extensions":["rgb"]},"image/x-tga":{"source":"apache","extensions":["tga"]},"image/x-xbitmap":{"source":"apache","extensions":["xbm"]},"image/x-xcf":{"compressible":false},"image/x-xpixmap":{"source":"apache","extensions":["xpm"]},"image/x-xwindowdump":{"source":"apache","extensions":["xwd"]},"message/cpim":{"source":"iana"},"message/delivery-status":{"source":"iana"},"message/disposition-notification":{"source":"iana","extensions":["disposition-notification"]},"message/external-body":{"source":"iana"},"message/feedback-report":{"source":"iana"},"message/global":{"source":"iana","extensions":["u8msg"]},"message/global-delivery-status":{"source":"iana","extensions":["u8dsn"]},"message/global-disposition-notification":{"source":"iana","extensions":["u8mdn"]},"message/global-headers":{"source":"iana","extensions":["u8hdr"]},"message/http":{"source":"iana","compressible":false},"message/imdn+xml":{"source":"iana","compressible":true},"message/news":{"source":"iana"},"message/partial":{"source":"iana","compressible":false},"message/rfc822":{"source":"iana","compressible":true,"extensions":["eml","mime"]},"message/s-http":{"source":"iana"},"message/sip":{"source":"iana"},"message/sipfrag":{"source":"iana"},"message/tracking-status":{"source":"iana"},"message/vnd.si.simp":{"source":"iana"},"message/vnd.wfa.wsc":{"source":"iana","extensions":["wsc"]},"model/3mf":{"source":"iana","extensions":["3mf"]},"model/e57":{"source":"iana"},"model/gltf+json":{"source":"iana","compressible":true,"extensions":["gltf"]},"model/gltf-binary":{"source":"iana","compressible":true,"extensions":["glb"]},"model/iges":{"source":"iana","compressible":false,"extensions":["igs","iges"]},"model/mesh":{"source":"iana","compressible":false,"extensions":["msh","mesh","silo"]},"model/mtl":{"source":"iana","extensions":["mtl"]},"model/obj":{"source":"iana","extensions":["obj"]},"model/step":{"source":"iana"},"model/step+xml":{"source":"iana","compressible":true,"extensions":["stpx"]},"model/step+zip":{"source":"iana","compressible":false,"extensions":["stpz"]},"model/step-xml+zip":{"source":"iana","compressible":false,"extensions":["stpxz"]},"model/stl":{"source":"iana","extensions":["stl"]},"model/vnd.collada+xml":{"source":"iana","compressible":true,"extensions":["dae"]},"model/vnd.dwf":{"source":"iana","extensions":["dwf"]},"model/vnd.flatland.3dml":{"source":"iana"},"model/vnd.gdl":{"source":"iana","extensions":["gdl"]},"model/vnd.gs-gdl":{"source":"apache"},"model/vnd.gs.gdl":{"source":"iana"},"model/vnd.gtw":{"source":"iana","extensions":["gtw"]},"model/vnd.moml+xml":{"source":"iana","compressible":true},"model/vnd.mts":{"source":"iana","extensions":["mts"]},"model/vnd.opengex":{"source":"iana","extensions":["ogex"]},"model/vnd.parasolid.transmit.binary":{"source":"iana","extensions":["x_b"]},"model/vnd.parasolid.transmit.text":{"source":"iana","extensions":["x_t"]},"model/vnd.pytha.pyox":{"source":"iana"},"model/vnd.rosette.annotated-data-model":{"source":"iana"},"model/vnd.sap.vds":{"source":"iana","extensions":["vds"]},"model/vnd.usdz+zip":{"source":"iana","compressible":false,"extensions":["usdz"]},"model/vnd.valve.source.compiled-map":{"source":"iana","extensions":["bsp"]},"model/vnd.vtu":{"source":"iana","extensions":["vtu"]},"model/vrml":{"source":"iana","compressible":false,"extensions":["wrl","vrml"]},"model/x3d+binary":{"source":"apache","compressible":false,"extensions":["x3db","x3dbz"]},"model/x3d+fastinfoset":{"source":"iana","extensions":["x3db"]},"model/x3d+vrml":{"source":"apache","compressible":false,"extensions":["x3dv","x3dvz"]},"model/x3d+xml":{"source":"iana","compressible":true,"extensions":["x3d","x3dz"]},"model/x3d-vrml":{"source":"iana","extensions":["x3dv"]},"multipart/alternative":{"source":"iana","compressible":false},"multipart/appledouble":{"source":"iana"},"multipart/byteranges":{"source":"iana"},"multipart/digest":{"source":"iana"},"multipart/encrypted":{"source":"iana","compressible":false},"multipart/form-data":{"source":"iana","compressible":false},"multipart/header-set":{"source":"iana"},"multipart/mixed":{"source":"iana"},"multipart/multilingual":{"source":"iana"},"multipart/parallel":{"source":"iana"},"multipart/related":{"source":"iana","compressible":false},"multipart/report":{"source":"iana"},"multipart/signed":{"source":"iana","compressible":false},"multipart/vnd.bint.med-plus":{"source":"iana"},"multipart/voice-message":{"source":"iana"},"multipart/x-mixed-replace":{"source":"iana"},"text/1d-interleaved-parityfec":{"source":"iana"},"text/cache-manifest":{"source":"iana","compressible":true,"extensions":["appcache","manifest"]},"text/calendar":{"source":"iana","extensions":["ics","ifb"]},"text/calender":{"compressible":true},"text/cmd":{"compressible":true},"text/coffeescript":{"extensions":["coffee","litcoffee"]},"text/cql":{"source":"iana"},"text/cql-expression":{"source":"iana"},"text/cql-identifier":{"source":"iana"},"text/css":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["css"]},"text/csv":{"source":"iana","compressible":true,"extensions":["csv"]},"text/csv-schema":{"source":"iana"},"text/directory":{"source":"iana"},"text/dns":{"source":"iana"},"text/ecmascript":{"source":"iana"},"text/encaprtp":{"source":"iana"},"text/enriched":{"source":"iana"},"text/fhirpath":{"source":"iana"},"text/flexfec":{"source":"iana"},"text/fwdred":{"source":"iana"},"text/gff3":{"source":"iana"},"text/grammar-ref-list":{"source":"iana"},"text/html":{"source":"iana","compressible":true,"extensions":["html","htm","shtml"]},"text/jade":{"extensions":["jade"]},"text/javascript":{"source":"iana","compressible":true},"text/jcr-cnd":{"source":"iana"},"text/jsx":{"compressible":true,"extensions":["jsx"]},"text/less":{"compressible":true,"extensions":["less"]},"text/markdown":{"source":"iana","compressible":true,"extensions":["markdown","md"]},"text/mathml":{"source":"nginx","extensions":["mml"]},"text/mdx":{"compressible":true,"extensions":["mdx"]},"text/mizar":{"source":"iana"},"text/n3":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["n3"]},"text/parameters":{"source":"iana","charset":"UTF-8"},"text/parityfec":{"source":"iana"},"text/plain":{"source":"iana","compressible":true,"extensions":["txt","text","conf","def","list","log","in","ini"]},"text/provenance-notation":{"source":"iana","charset":"UTF-8"},"text/prs.fallenstein.rst":{"source":"iana"},"text/prs.lines.tag":{"source":"iana","extensions":["dsc"]},"text/prs.prop.logic":{"source":"iana"},"text/raptorfec":{"source":"iana"},"text/red":{"source":"iana"},"text/rfc822-headers":{"source":"iana"},"text/richtext":{"source":"iana","compressible":true,"extensions":["rtx"]},"text/rtf":{"source":"iana","compressible":true,"extensions":["rtf"]},"text/rtp-enc-aescm128":{"source":"iana"},"text/rtploopback":{"source":"iana"},"text/rtx":{"source":"iana"},"text/sgml":{"source":"iana","extensions":["sgml","sgm"]},"text/shaclc":{"source":"iana"},"text/shex":{"source":"iana","extensions":["shex"]},"text/slim":{"extensions":["slim","slm"]},"text/spdx":{"source":"iana","extensions":["spdx"]},"text/strings":{"source":"iana"},"text/stylus":{"extensions":["stylus","styl"]},"text/t140":{"source":"iana"},"text/tab-separated-values":{"source":"iana","compressible":true,"extensions":["tsv"]},"text/troff":{"source":"iana","extensions":["t","tr","roff","man","me","ms"]},"text/turtle":{"source":"iana","charset":"UTF-8","extensions":["ttl"]},"text/ulpfec":{"source":"iana"},"text/uri-list":{"source":"iana","compressible":true,"extensions":["uri","uris","urls"]},"text/vcard":{"source":"iana","compressible":true,"extensions":["vcard"]},"text/vnd.a":{"source":"iana"},"text/vnd.abc":{"source":"iana"},"text/vnd.ascii-art":{"source":"iana"},"text/vnd.curl":{"source":"iana","extensions":["curl"]},"text/vnd.curl.dcurl":{"source":"apache","extensions":["dcurl"]},"text/vnd.curl.mcurl":{"source":"apache","extensions":["mcurl"]},"text/vnd.curl.scurl":{"source":"apache","extensions":["scurl"]},"text/vnd.debian.copyright":{"source":"iana","charset":"UTF-8"},"text/vnd.dmclientscript":{"source":"iana"},"text/vnd.dvb.subtitle":{"source":"iana","extensions":["sub"]},"text/vnd.esmertec.theme-descriptor":{"source":"iana","charset":"UTF-8"},"text/vnd.familysearch.gedcom":{"source":"iana","extensions":["ged"]},"text/vnd.ficlab.flt":{"source":"iana"},"text/vnd.fly":{"source":"iana","extensions":["fly"]},"text/vnd.fmi.flexstor":{"source":"iana","extensions":["flx"]},"text/vnd.gml":{"source":"iana"},"text/vnd.graphviz":{"source":"iana","extensions":["gv"]},"text/vnd.hans":{"source":"iana"},"text/vnd.hgl":{"source":"iana"},"text/vnd.in3d.3dml":{"source":"iana","extensions":["3dml"]},"text/vnd.in3d.spot":{"source":"iana","extensions":["spot"]},"text/vnd.iptc.newsml":{"source":"iana"},"text/vnd.iptc.nitf":{"source":"iana"},"text/vnd.latex-z":{"source":"iana"},"text/vnd.motorola.reflex":{"source":"iana"},"text/vnd.ms-mediapackage":{"source":"iana"},"text/vnd.net2phone.commcenter.command":{"source":"iana"},"text/vnd.radisys.msml-basic-layout":{"source":"iana"},"text/vnd.senx.warpscript":{"source":"iana"},"text/vnd.si.uricatalogue":{"source":"iana"},"text/vnd.sosi":{"source":"iana"},"text/vnd.sun.j2me.app-descriptor":{"source":"iana","charset":"UTF-8","extensions":["jad"]},"text/vnd.trolltech.linguist":{"source":"iana","charset":"UTF-8"},"text/vnd.wap.si":{"source":"iana"},"text/vnd.wap.sl":{"source":"iana"},"text/vnd.wap.wml":{"source":"iana","extensions":["wml"]},"text/vnd.wap.wmlscript":{"source":"iana","extensions":["wmls"]},"text/vtt":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["vtt"]},"text/x-asm":{"source":"apache","extensions":["s","asm"]},"text/x-c":{"source":"apache","extensions":["c","cc","cxx","cpp","h","hh","dic"]},"text/x-component":{"source":"nginx","extensions":["htc"]},"text/x-fortran":{"source":"apache","extensions":["f","for","f77","f90"]},"text/x-gwt-rpc":{"compressible":true},"text/x-handlebars-template":{"extensions":["hbs"]},"text/x-java-source":{"source":"apache","extensions":["java"]},"text/x-jquery-tmpl":{"compressible":true},"text/x-lua":{"extensions":["lua"]},"text/x-markdown":{"compressible":true,"extensions":["mkd"]},"text/x-nfo":{"source":"apache","extensions":["nfo"]},"text/x-opml":{"source":"apache","extensions":["opml"]},"text/x-org":{"compressible":true,"extensions":["org"]},"text/x-pascal":{"source":"apache","extensions":["p","pas"]},"text/x-processing":{"compressible":true,"extensions":["pde"]},"text/x-sass":{"extensions":["sass"]},"text/x-scss":{"extensions":["scss"]},"text/x-setext":{"source":"apache","extensions":["etx"]},"text/x-sfv":{"source":"apache","extensions":["sfv"]},"text/x-suse-ymp":{"compressible":true,"extensions":["ymp"]},"text/x-uuencode":{"source":"apache","extensions":["uu"]},"text/x-vcalendar":{"source":"apache","extensions":["vcs"]},"text/x-vcard":{"source":"apache","extensions":["vcf"]},"text/xml":{"source":"iana","compressible":true,"extensions":["xml"]},"text/xml-external-parsed-entity":{"source":"iana"},"text/yaml":{"compressible":true,"extensions":["yaml","yml"]},"video/1d-interleaved-parityfec":{"source":"iana"},"video/3gpp":{"source":"iana","extensions":["3gp","3gpp"]},"video/3gpp-tt":{"source":"iana"},"video/3gpp2":{"source":"iana","extensions":["3g2"]},"video/av1":{"source":"iana"},"video/bmpeg":{"source":"iana"},"video/bt656":{"source":"iana"},"video/celb":{"source":"iana"},"video/dv":{"source":"iana"},"video/encaprtp":{"source":"iana"},"video/ffv1":{"source":"iana"},"video/flexfec":{"source":"iana"},"video/h261":{"source":"iana","extensions":["h261"]},"video/h263":{"source":"iana","extensions":["h263"]},"video/h263-1998":{"source":"iana"},"video/h263-2000":{"source":"iana"},"video/h264":{"source":"iana","extensions":["h264"]},"video/h264-rcdo":{"source":"iana"},"video/h264-svc":{"source":"iana"},"video/h265":{"source":"iana"},"video/iso.segment":{"source":"iana","extensions":["m4s"]},"video/jpeg":{"source":"iana","extensions":["jpgv"]},"video/jpeg2000":{"source":"iana"},"video/jpm":{"source":"apache","extensions":["jpm","jpgm"]},"video/jxsv":{"source":"iana"},"video/mj2":{"source":"iana","extensions":["mj2","mjp2"]},"video/mp1s":{"source":"iana"},"video/mp2p":{"source":"iana"},"video/mp2t":{"source":"iana","extensions":["ts"]},"video/mp4":{"source":"iana","compressible":false,"extensions":["mp4","mp4v","mpg4"]},"video/mp4v-es":{"source":"iana"},"video/mpeg":{"source":"iana","compressible":false,"extensions":["mpeg","mpg","mpe","m1v","m2v"]},"video/mpeg4-generic":{"source":"iana"},"video/mpv":{"source":"iana"},"video/nv":{"source":"iana"},"video/ogg":{"source":"iana","compressible":false,"extensions":["ogv"]},"video/parityfec":{"source":"iana"},"video/pointer":{"source":"iana"},"video/quicktime":{"source":"iana","compressible":false,"extensions":["qt","mov"]},"video/raptorfec":{"source":"iana"},"video/raw":{"source":"iana"},"video/rtp-enc-aescm128":{"source":"iana"},"video/rtploopback":{"source":"iana"},"video/rtx":{"source":"iana"},"video/scip":{"source":"iana"},"video/smpte291":{"source":"iana"},"video/smpte292m":{"source":"iana"},"video/ulpfec":{"source":"iana"},"video/vc1":{"source":"iana"},"video/vc2":{"source":"iana"},"video/vnd.cctv":{"source":"iana"},"video/vnd.dece.hd":{"source":"iana","extensions":["uvh","uvvh"]},"video/vnd.dece.mobile":{"source":"iana","extensions":["uvm","uvvm"]},"video/vnd.dece.mp4":{"source":"iana"},"video/vnd.dece.pd":{"source":"iana","extensions":["uvp","uvvp"]},"video/vnd.dece.sd":{"source":"iana","extensions":["uvs","uvvs"]},"video/vnd.dece.video":{"source":"iana","extensions":["uvv","uvvv"]},"video/vnd.directv.mpeg":{"source":"iana"},"video/vnd.directv.mpeg-tts":{"source":"iana"},"video/vnd.dlna.mpeg-tts":{"source":"iana"},"video/vnd.dvb.file":{"source":"iana","extensions":["dvb"]},"video/vnd.fvt":{"source":"iana","extensions":["fvt"]},"video/vnd.hns.video":{"source":"iana"},"video/vnd.iptvforum.1dparityfec-1010":{"source":"iana"},"video/vnd.iptvforum.1dparityfec-2005":{"source":"iana"},"video/vnd.iptvforum.2dparityfec-1010":{"source":"iana"},"video/vnd.iptvforum.2dparityfec-2005":{"source":"iana"},"video/vnd.iptvforum.ttsavc":{"source":"iana"},"video/vnd.iptvforum.ttsmpeg2":{"source":"iana"},"video/vnd.motorola.video":{"source":"iana"},"video/vnd.motorola.videop":{"source":"iana"},"video/vnd.mpegurl":{"source":"iana","extensions":["mxu","m4u"]},"video/vnd.ms-playready.media.pyv":{"source":"iana","extensions":["pyv"]},"video/vnd.nokia.interleaved-multimedia":{"source":"iana"},"video/vnd.nokia.mp4vr":{"source":"iana"},"video/vnd.nokia.videovoip":{"source":"iana"},"video/vnd.objectvideo":{"source":"iana"},"video/vnd.radgamettools.bink":{"source":"iana"},"video/vnd.radgamettools.smacker":{"source":"iana"},"video/vnd.sealed.mpeg1":{"source":"iana"},"video/vnd.sealed.mpeg4":{"source":"iana"},"video/vnd.sealed.swf":{"source":"iana"},"video/vnd.sealedmedia.softseal.mov":{"source":"iana"},"video/vnd.uvvu.mp4":{"source":"iana","extensions":["uvu","uvvu"]},"video/vnd.vivo":{"source":"iana","extensions":["viv"]},"video/vnd.youtube.yt":{"source":"iana"},"video/vp8":{"source":"iana"},"video/vp9":{"source":"iana"},"video/webm":{"source":"apache","compressible":false,"extensions":["webm"]},"video/x-f4v":{"source":"apache","extensions":["f4v"]},"video/x-fli":{"source":"apache","extensions":["fli"]},"video/x-flv":{"source":"apache","compressible":false,"extensions":["flv"]},"video/x-m4v":{"source":"apache","extensions":["m4v"]},"video/x-matroska":{"source":"apache","compressible":false,"extensions":["mkv","mk3d","mks"]},"video/x-mng":{"source":"apache","extensions":["mng"]},"video/x-ms-asf":{"source":"apache","extensions":["asf","asx"]},"video/x-ms-vob":{"source":"apache","extensions":["vob"]},"video/x-ms-wm":{"source":"apache","extensions":["wm"]},"video/x-ms-wmv":{"source":"apache","compressible":false,"extensions":["wmv"]},"video/x-ms-wmx":{"source":"apache","extensions":["wmx"]},"video/x-ms-wvx":{"source":"apache","extensions":["wvx"]},"video/x-msvideo":{"source":"apache","extensions":["avi"]},"video/x-sgi-movie":{"source":"apache","extensions":["movie"]},"video/x-smv":{"source":"apache","extensions":["smv"]},"x-conference/x-cooltalk":{"source":"apache","extensions":["ice"]},"x-shader/x-fragment":{"compressible":true},"x-shader/x-vertex":{"compressible":true}}');
+
+/***/ }),
+
 /***/ 3267:
 /***/ ((module) => {
 
@@ -59672,7 +55770,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"uChars":[128,165,169,178,184,216,226
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('[["a140","",62],["a180","",32],["a240","",62],["a280","",32],["a2ab","",5],["a2e3","€"],["a2ef",""],["a2fd",""],["a340","",62],["a380","",31,"　"],["a440","",62],["a480","",32],["a4f4","",10],["a540","",62],["a580","",32],["a5f7","",7],["a640","",62],["a680","",32],["a6b9","",7],["a6d9","",6],["a6ec",""],["a6f3",""],["a6f6","",8],["a740","",62],["a780","",32],["a7c2","",14],["a7f2","",12],["a896","",10],["a8bc",""],["a8bf","ǹ"],["a8c1",""],["a8ea","",20],["a958",""],["a95b",""],["a95d",""],["a989","〾⿰",11],["a997","",12],["a9f0","",14],["aaa1","",93],["aba1","",93],["aca1","",93],["ada1","",93],["aea1","",93],["afa1","",93],["d7fa","",4],["f8a1","",93],["f9a1","",93],["faa1","",93],["fba1","",93],["fca1","",93],["fda1","",93],["fe50","⺁⺄㑳㑇⺈⺋㖞㘚㘎⺌⺗㥮㤘㧏㧟㩳㧐㭎㱮㳠⺧⺪䁖䅟⺮䌷⺳⺶⺷䎱䎬⺻䏝䓖䙡䙌"],["fe80","䜣䜩䝼䞍⻊䥇䥺䥽䦂䦃䦅䦆䦟䦛䦷䦶䲣䲟䲠䲡䱷䲢䴓",6,"䶮",93]]');
+module.exports = /*#__PURE__*/JSON.parse('[["a140","",62],["a180","",32],["a240","",62],["a280","",32],["a2ab","",5],["a2e3","€"],["a2ef",""],["a2fd",""],["a340","",62],["a380","",31,"　"],["a440","",62],["a480","",32],["a4f4","",10],["a540","",62],["a580","",32],["a5f7","",7],["a640","",62],["a680","",32],["a6b9","",7],["a6d9","",6],["a6ec",""],["a6f3",""],["a6f6","",8],["a740","",62],["a780","",32],["a7c2","",14],["a7f2","",12],["a896","",10],["a8bc","ḿ"],["a8bf","ǹ"],["a8c1",""],["a8ea","",20],["a958",""],["a95b",""],["a95d",""],["a989","〾⿰",11],["a997","",12],["a9f0","",14],["aaa1","",93],["aba1","",93],["aca1","",93],["ada1","",93],["aea1","",93],["afa1","",93],["d7fa","",4],["f8a1","",93],["f9a1","",93],["faa1","",93],["fba1","",93],["fca1","",93],["fda1","",93],["fe50","⺁⺄㑳㑇⺈⺋㖞㘚㘎⺌⺗㥮㤘㧏㧟㩳㧐㭎㱮㳠⺧⺪䁖䅟⺮䌷⺳⺶⺷䎱䎬⺻䏝䓖䙡䙌"],["fe80","䜣䜩䝼䞍⻊䥇䥺䥽䦂䦃䦅䦆䦟䦛䦷䦶䲣䲟䲠䲡䱷䲢䴓",6,"䶮",93],["8135f437",""]]');
 
 /***/ }),
 
@@ -59688,15 +55786,7 @@ module.exports = /*#__PURE__*/JSON.parse('[["0","\\u0000",128],["a1","｡",62],[
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"application/1d-interleaved-parityfec":{"source":"iana"},"application/3gpdash-qoe-report+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/3gpp-ims+xml":{"source":"iana","compressible":true},"application/3gpphal+json":{"source":"iana","compressible":true},"application/3gpphalforms+json":{"source":"iana","compressible":true},"application/a2l":{"source":"iana"},"application/ace+cbor":{"source":"iana"},"application/activemessage":{"source":"iana"},"application/activity+json":{"source":"iana","compressible":true},"application/alto-costmap+json":{"source":"iana","compressible":true},"application/alto-costmapfilter+json":{"source":"iana","compressible":true},"application/alto-directory+json":{"source":"iana","compressible":true},"application/alto-endpointcost+json":{"source":"iana","compressible":true},"application/alto-endpointcostparams+json":{"source":"iana","compressible":true},"application/alto-endpointprop+json":{"source":"iana","compressible":true},"application/alto-endpointpropparams+json":{"source":"iana","compressible":true},"application/alto-error+json":{"source":"iana","compressible":true},"application/alto-networkmap+json":{"source":"iana","compressible":true},"application/alto-networkmapfilter+json":{"source":"iana","compressible":true},"application/alto-updatestreamcontrol+json":{"source":"iana","compressible":true},"application/alto-updatestreamparams+json":{"source":"iana","compressible":true},"application/aml":{"source":"iana"},"application/andrew-inset":{"source":"iana","extensions":["ez"]},"application/applefile":{"source":"iana"},"application/applixware":{"source":"apache","extensions":["aw"]},"application/at+jwt":{"source":"iana"},"application/atf":{"source":"iana"},"application/atfx":{"source":"iana"},"application/atom+xml":{"source":"iana","compressible":true,"extensions":["atom"]},"application/atomcat+xml":{"source":"iana","compressible":true,"extensions":["atomcat"]},"application/atomdeleted+xml":{"source":"iana","compressible":true,"extensions":["atomdeleted"]},"application/atomicmail":{"source":"iana"},"application/atomsvc+xml":{"source":"iana","compressible":true,"extensions":["atomsvc"]},"application/atsc-dwd+xml":{"source":"iana","compressible":true,"extensions":["dwd"]},"application/atsc-dynamic-event-message":{"source":"iana"},"application/atsc-held+xml":{"source":"iana","compressible":true,"extensions":["held"]},"application/atsc-rdt+json":{"source":"iana","compressible":true},"application/atsc-rsat+xml":{"source":"iana","compressible":true,"extensions":["rsat"]},"application/atxml":{"source":"iana"},"application/auth-policy+xml":{"source":"iana","compressible":true},"application/bacnet-xdd+zip":{"source":"iana","compressible":false},"application/batch-smtp":{"source":"iana"},"application/bdoc":{"compressible":false,"extensions":["bdoc"]},"application/beep+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/calendar+json":{"source":"iana","compressible":true},"application/calendar+xml":{"source":"iana","compressible":true,"extensions":["xcs"]},"application/call-completion":{"source":"iana"},"application/cals-1840":{"source":"iana"},"application/captive+json":{"source":"iana","compressible":true},"application/cbor":{"source":"iana"},"application/cbor-seq":{"source":"iana"},"application/cccex":{"source":"iana"},"application/ccmp+xml":{"source":"iana","compressible":true},"application/ccxml+xml":{"source":"iana","compressible":true,"extensions":["ccxml"]},"application/cdfx+xml":{"source":"iana","compressible":true,"extensions":["cdfx"]},"application/cdmi-capability":{"source":"iana","extensions":["cdmia"]},"application/cdmi-container":{"source":"iana","extensions":["cdmic"]},"application/cdmi-domain":{"source":"iana","extensions":["cdmid"]},"application/cdmi-object":{"source":"iana","extensions":["cdmio"]},"application/cdmi-queue":{"source":"iana","extensions":["cdmiq"]},"application/cdni":{"source":"iana"},"application/cea":{"source":"iana"},"application/cea-2018+xml":{"source":"iana","compressible":true},"application/cellml+xml":{"source":"iana","compressible":true},"application/cfw":{"source":"iana"},"application/city+json":{"source":"iana","compressible":true},"application/clr":{"source":"iana"},"application/clue+xml":{"source":"iana","compressible":true},"application/clue_info+xml":{"source":"iana","compressible":true},"application/cms":{"source":"iana"},"application/cnrp+xml":{"source":"iana","compressible":true},"application/coap-group+json":{"source":"iana","compressible":true},"application/coap-payload":{"source":"iana"},"application/commonground":{"source":"iana"},"application/conference-info+xml":{"source":"iana","compressible":true},"application/cose":{"source":"iana"},"application/cose-key":{"source":"iana"},"application/cose-key-set":{"source":"iana"},"application/cpl+xml":{"source":"iana","compressible":true,"extensions":["cpl"]},"application/csrattrs":{"source":"iana"},"application/csta+xml":{"source":"iana","compressible":true},"application/cstadata+xml":{"source":"iana","compressible":true},"application/csvm+json":{"source":"iana","compressible":true},"application/cu-seeme":{"source":"apache","extensions":["cu"]},"application/cwt":{"source":"iana"},"application/cybercash":{"source":"iana"},"application/dart":{"compressible":true},"application/dash+xml":{"source":"iana","compressible":true,"extensions":["mpd"]},"application/dash-patch+xml":{"source":"iana","compressible":true,"extensions":["mpp"]},"application/dashdelta":{"source":"iana"},"application/davmount+xml":{"source":"iana","compressible":true,"extensions":["davmount"]},"application/dca-rft":{"source":"iana"},"application/dcd":{"source":"iana"},"application/dec-dx":{"source":"iana"},"application/dialog-info+xml":{"source":"iana","compressible":true},"application/dicom":{"source":"iana"},"application/dicom+json":{"source":"iana","compressible":true},"application/dicom+xml":{"source":"iana","compressible":true},"application/dii":{"source":"iana"},"application/dit":{"source":"iana"},"application/dns":{"source":"iana"},"application/dns+json":{"source":"iana","compressible":true},"application/dns-message":{"source":"iana"},"application/docbook+xml":{"source":"apache","compressible":true,"extensions":["dbk"]},"application/dots+cbor":{"source":"iana"},"application/dskpp+xml":{"source":"iana","compressible":true},"application/dssc+der":{"source":"iana","extensions":["dssc"]},"application/dssc+xml":{"source":"iana","compressible":true,"extensions":["xdssc"]},"application/dvcs":{"source":"iana"},"application/ecmascript":{"source":"iana","compressible":true,"extensions":["es","ecma"]},"application/edi-consent":{"source":"iana"},"application/edi-x12":{"source":"iana","compressible":false},"application/edifact":{"source":"iana","compressible":false},"application/efi":{"source":"iana"},"application/elm+json":{"source":"iana","charset":"UTF-8","compressible":true},"application/elm+xml":{"source":"iana","compressible":true},"application/emergencycalldata.cap+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/emergencycalldata.comment+xml":{"source":"iana","compressible":true},"application/emergencycalldata.control+xml":{"source":"iana","compressible":true},"application/emergencycalldata.deviceinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.ecall.msd":{"source":"iana"},"application/emergencycalldata.providerinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.serviceinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.subscriberinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.veds+xml":{"source":"iana","compressible":true},"application/emma+xml":{"source":"iana","compressible":true,"extensions":["emma"]},"application/emotionml+xml":{"source":"iana","compressible":true,"extensions":["emotionml"]},"application/encaprtp":{"source":"iana"},"application/epp+xml":{"source":"iana","compressible":true},"application/epub+zip":{"source":"iana","compressible":false,"extensions":["epub"]},"application/eshop":{"source":"iana"},"application/exi":{"source":"iana","extensions":["exi"]},"application/expect-ct-report+json":{"source":"iana","compressible":true},"application/express":{"source":"iana","extensions":["exp"]},"application/fastinfoset":{"source":"iana"},"application/fastsoap":{"source":"iana"},"application/fdt+xml":{"source":"iana","compressible":true,"extensions":["fdt"]},"application/fhir+json":{"source":"iana","charset":"UTF-8","compressible":true},"application/fhir+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/fido.trusted-apps+json":{"compressible":true},"application/fits":{"source":"iana"},"application/flexfec":{"source":"iana"},"application/font-sfnt":{"source":"iana"},"application/font-tdpfr":{"source":"iana","extensions":["pfr"]},"application/font-woff":{"source":"iana","compressible":false},"application/framework-attributes+xml":{"source":"iana","compressible":true},"application/geo+json":{"source":"iana","compressible":true,"extensions":["geojson"]},"application/geo+json-seq":{"source":"iana"},"application/geopackage+sqlite3":{"source":"iana"},"application/geoxacml+xml":{"source":"iana","compressible":true},"application/gltf-buffer":{"source":"iana"},"application/gml+xml":{"source":"iana","compressible":true,"extensions":["gml"]},"application/gpx+xml":{"source":"apache","compressible":true,"extensions":["gpx"]},"application/gxf":{"source":"apache","extensions":["gxf"]},"application/gzip":{"source":"iana","compressible":false,"extensions":["gz"]},"application/h224":{"source":"iana"},"application/held+xml":{"source":"iana","compressible":true},"application/hjson":{"extensions":["hjson"]},"application/http":{"source":"iana"},"application/hyperstudio":{"source":"iana","extensions":["stk"]},"application/ibe-key-request+xml":{"source":"iana","compressible":true},"application/ibe-pkg-reply+xml":{"source":"iana","compressible":true},"application/ibe-pp-data":{"source":"iana"},"application/iges":{"source":"iana"},"application/im-iscomposing+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/index":{"source":"iana"},"application/index.cmd":{"source":"iana"},"application/index.obj":{"source":"iana"},"application/index.response":{"source":"iana"},"application/index.vnd":{"source":"iana"},"application/inkml+xml":{"source":"iana","compressible":true,"extensions":["ink","inkml"]},"application/iotp":{"source":"iana"},"application/ipfix":{"source":"iana","extensions":["ipfix"]},"application/ipp":{"source":"iana"},"application/isup":{"source":"iana"},"application/its+xml":{"source":"iana","compressible":true,"extensions":["its"]},"application/java-archive":{"source":"apache","compressible":false,"extensions":["jar","war","ear"]},"application/java-serialized-object":{"source":"apache","compressible":false,"extensions":["ser"]},"application/java-vm":{"source":"apache","compressible":false,"extensions":["class"]},"application/javascript":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["js","mjs"]},"application/jf2feed+json":{"source":"iana","compressible":true},"application/jose":{"source":"iana"},"application/jose+json":{"source":"iana","compressible":true},"application/jrd+json":{"source":"iana","compressible":true},"application/jscalendar+json":{"source":"iana","compressible":true},"application/json":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["json","map"]},"application/json-patch+json":{"source":"iana","compressible":true},"application/json-seq":{"source":"iana"},"application/json5":{"extensions":["json5"]},"application/jsonml+json":{"source":"apache","compressible":true,"extensions":["jsonml"]},"application/jwk+json":{"source":"iana","compressible":true},"application/jwk-set+json":{"source":"iana","compressible":true},"application/jwt":{"source":"iana"},"application/kpml-request+xml":{"source":"iana","compressible":true},"application/kpml-response+xml":{"source":"iana","compressible":true},"application/ld+json":{"source":"iana","compressible":true,"extensions":["jsonld"]},"application/lgr+xml":{"source":"iana","compressible":true,"extensions":["lgr"]},"application/link-format":{"source":"iana"},"application/load-control+xml":{"source":"iana","compressible":true},"application/lost+xml":{"source":"iana","compressible":true,"extensions":["lostxml"]},"application/lostsync+xml":{"source":"iana","compressible":true},"application/lpf+zip":{"source":"iana","compressible":false},"application/lxf":{"source":"iana"},"application/mac-binhex40":{"source":"iana","extensions":["hqx"]},"application/mac-compactpro":{"source":"apache","extensions":["cpt"]},"application/macwriteii":{"source":"iana"},"application/mads+xml":{"source":"iana","compressible":true,"extensions":["mads"]},"application/manifest+json":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["webmanifest"]},"application/marc":{"source":"iana","extensions":["mrc"]},"application/marcxml+xml":{"source":"iana","compressible":true,"extensions":["mrcx"]},"application/mathematica":{"source":"iana","extensions":["ma","nb","mb"]},"application/mathml+xml":{"source":"iana","compressible":true,"extensions":["mathml"]},"application/mathml-content+xml":{"source":"iana","compressible":true},"application/mathml-presentation+xml":{"source":"iana","compressible":true},"application/mbms-associated-procedure-description+xml":{"source":"iana","compressible":true},"application/mbms-deregister+xml":{"source":"iana","compressible":true},"application/mbms-envelope+xml":{"source":"iana","compressible":true},"application/mbms-msk+xml":{"source":"iana","compressible":true},"application/mbms-msk-response+xml":{"source":"iana","compressible":true},"application/mbms-protection-description+xml":{"source":"iana","compressible":true},"application/mbms-reception-report+xml":{"source":"iana","compressible":true},"application/mbms-register+xml":{"source":"iana","compressible":true},"application/mbms-register-response+xml":{"source":"iana","compressible":true},"application/mbms-schedule+xml":{"source":"iana","compressible":true},"application/mbms-user-service-description+xml":{"source":"iana","compressible":true},"application/mbox":{"source":"iana","extensions":["mbox"]},"application/media-policy-dataset+xml":{"source":"iana","compressible":true,"extensions":["mpf"]},"application/media_control+xml":{"source":"iana","compressible":true},"application/mediaservercontrol+xml":{"source":"iana","compressible":true,"extensions":["mscml"]},"application/merge-patch+json":{"source":"iana","compressible":true},"application/metalink+xml":{"source":"apache","compressible":true,"extensions":["metalink"]},"application/metalink4+xml":{"source":"iana","compressible":true,"extensions":["meta4"]},"application/mets+xml":{"source":"iana","compressible":true,"extensions":["mets"]},"application/mf4":{"source":"iana"},"application/mikey":{"source":"iana"},"application/mipc":{"source":"iana"},"application/missing-blocks+cbor-seq":{"source":"iana"},"application/mmt-aei+xml":{"source":"iana","compressible":true,"extensions":["maei"]},"application/mmt-usd+xml":{"source":"iana","compressible":true,"extensions":["musd"]},"application/mods+xml":{"source":"iana","compressible":true,"extensions":["mods"]},"application/moss-keys":{"source":"iana"},"application/moss-signature":{"source":"iana"},"application/mosskey-data":{"source":"iana"},"application/mosskey-request":{"source":"iana"},"application/mp21":{"source":"iana","extensions":["m21","mp21"]},"application/mp4":{"source":"iana","extensions":["mp4s","m4p"]},"application/mpeg4-generic":{"source":"iana"},"application/mpeg4-iod":{"source":"iana"},"application/mpeg4-iod-xmt":{"source":"iana"},"application/mrb-consumer+xml":{"source":"iana","compressible":true},"application/mrb-publish+xml":{"source":"iana","compressible":true},"application/msc-ivr+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/msc-mixer+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/msword":{"source":"iana","compressible":false,"extensions":["doc","dot"]},"application/mud+json":{"source":"iana","compressible":true},"application/multipart-core":{"source":"iana"},"application/mxf":{"source":"iana","extensions":["mxf"]},"application/n-quads":{"source":"iana","extensions":["nq"]},"application/n-triples":{"source":"iana","extensions":["nt"]},"application/nasdata":{"source":"iana"},"application/news-checkgroups":{"source":"iana","charset":"US-ASCII"},"application/news-groupinfo":{"source":"iana","charset":"US-ASCII"},"application/news-transmission":{"source":"iana"},"application/nlsml+xml":{"source":"iana","compressible":true},"application/node":{"source":"iana","extensions":["cjs"]},"application/nss":{"source":"iana"},"application/oauth-authz-req+jwt":{"source":"iana"},"application/oblivious-dns-message":{"source":"iana"},"application/ocsp-request":{"source":"iana"},"application/ocsp-response":{"source":"iana"},"application/octet-stream":{"source":"iana","compressible":false,"extensions":["bin","dms","lrf","mar","so","dist","distz","pkg","bpk","dump","elc","deploy","exe","dll","deb","dmg","iso","img","msi","msp","msm","buffer"]},"application/oda":{"source":"iana","extensions":["oda"]},"application/odm+xml":{"source":"iana","compressible":true},"application/odx":{"source":"iana"},"application/oebps-package+xml":{"source":"iana","compressible":true,"extensions":["opf"]},"application/ogg":{"source":"iana","compressible":false,"extensions":["ogx"]},"application/omdoc+xml":{"source":"apache","compressible":true,"extensions":["omdoc"]},"application/onenote":{"source":"apache","extensions":["onetoc","onetoc2","onetmp","onepkg"]},"application/opc-nodeset+xml":{"source":"iana","compressible":true},"application/oscore":{"source":"iana"},"application/oxps":{"source":"iana","extensions":["oxps"]},"application/p21":{"source":"iana"},"application/p21+zip":{"source":"iana","compressible":false},"application/p2p-overlay+xml":{"source":"iana","compressible":true,"extensions":["relo"]},"application/parityfec":{"source":"iana"},"application/passport":{"source":"iana"},"application/patch-ops-error+xml":{"source":"iana","compressible":true,"extensions":["xer"]},"application/pdf":{"source":"iana","compressible":false,"extensions":["pdf"]},"application/pdx":{"source":"iana"},"application/pem-certificate-chain":{"source":"iana"},"application/pgp-encrypted":{"source":"iana","compressible":false,"extensions":["pgp"]},"application/pgp-keys":{"source":"iana","extensions":["asc"]},"application/pgp-signature":{"source":"iana","extensions":["asc","sig"]},"application/pics-rules":{"source":"apache","extensions":["prf"]},"application/pidf+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/pidf-diff+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/pkcs10":{"source":"iana","extensions":["p10"]},"application/pkcs12":{"source":"iana"},"application/pkcs7-mime":{"source":"iana","extensions":["p7m","p7c"]},"application/pkcs7-signature":{"source":"iana","extensions":["p7s"]},"application/pkcs8":{"source":"iana","extensions":["p8"]},"application/pkcs8-encrypted":{"source":"iana"},"application/pkix-attr-cert":{"source":"iana","extensions":["ac"]},"application/pkix-cert":{"source":"iana","extensions":["cer"]},"application/pkix-crl":{"source":"iana","extensions":["crl"]},"application/pkix-pkipath":{"source":"iana","extensions":["pkipath"]},"application/pkixcmp":{"source":"iana","extensions":["pki"]},"application/pls+xml":{"source":"iana","compressible":true,"extensions":["pls"]},"application/poc-settings+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/postscript":{"source":"iana","compressible":true,"extensions":["ai","eps","ps"]},"application/ppsp-tracker+json":{"source":"iana","compressible":true},"application/problem+json":{"source":"iana","compressible":true},"application/problem+xml":{"source":"iana","compressible":true},"application/provenance+xml":{"source":"iana","compressible":true,"extensions":["provx"]},"application/prs.alvestrand.titrax-sheet":{"source":"iana"},"application/prs.cww":{"source":"iana","extensions":["cww"]},"application/prs.cyn":{"source":"iana","charset":"7-BIT"},"application/prs.hpub+zip":{"source":"iana","compressible":false},"application/prs.nprend":{"source":"iana"},"application/prs.plucker":{"source":"iana"},"application/prs.rdf-xml-crypt":{"source":"iana"},"application/prs.xsf+xml":{"source":"iana","compressible":true},"application/pskc+xml":{"source":"iana","compressible":true,"extensions":["pskcxml"]},"application/pvd+json":{"source":"iana","compressible":true},"application/qsig":{"source":"iana"},"application/raml+yaml":{"compressible":true,"extensions":["raml"]},"application/raptorfec":{"source":"iana"},"application/rdap+json":{"source":"iana","compressible":true},"application/rdf+xml":{"source":"iana","compressible":true,"extensions":["rdf","owl"]},"application/reginfo+xml":{"source":"iana","compressible":true,"extensions":["rif"]},"application/relax-ng-compact-syntax":{"source":"iana","extensions":["rnc"]},"application/remote-printing":{"source":"iana"},"application/reputon+json":{"source":"iana","compressible":true},"application/resource-lists+xml":{"source":"iana","compressible":true,"extensions":["rl"]},"application/resource-lists-diff+xml":{"source":"iana","compressible":true,"extensions":["rld"]},"application/rfc+xml":{"source":"iana","compressible":true},"application/riscos":{"source":"iana"},"application/rlmi+xml":{"source":"iana","compressible":true},"application/rls-services+xml":{"source":"iana","compressible":true,"extensions":["rs"]},"application/route-apd+xml":{"source":"iana","compressible":true,"extensions":["rapd"]},"application/route-s-tsid+xml":{"source":"iana","compressible":true,"extensions":["sls"]},"application/route-usd+xml":{"source":"iana","compressible":true,"extensions":["rusd"]},"application/rpki-ghostbusters":{"source":"iana","extensions":["gbr"]},"application/rpki-manifest":{"source":"iana","extensions":["mft"]},"application/rpki-publication":{"source":"iana"},"application/rpki-roa":{"source":"iana","extensions":["roa"]},"application/rpki-updown":{"source":"iana"},"application/rsd+xml":{"source":"apache","compressible":true,"extensions":["rsd"]},"application/rss+xml":{"source":"apache","compressible":true,"extensions":["rss"]},"application/rtf":{"source":"iana","compressible":true,"extensions":["rtf"]},"application/rtploopback":{"source":"iana"},"application/rtx":{"source":"iana"},"application/samlassertion+xml":{"source":"iana","compressible":true},"application/samlmetadata+xml":{"source":"iana","compressible":true},"application/sarif+json":{"source":"iana","compressible":true},"application/sarif-external-properties+json":{"source":"iana","compressible":true},"application/sbe":{"source":"iana"},"application/sbml+xml":{"source":"iana","compressible":true,"extensions":["sbml"]},"application/scaip+xml":{"source":"iana","compressible":true},"application/scim+json":{"source":"iana","compressible":true},"application/scvp-cv-request":{"source":"iana","extensions":["scq"]},"application/scvp-cv-response":{"source":"iana","extensions":["scs"]},"application/scvp-vp-request":{"source":"iana","extensions":["spq"]},"application/scvp-vp-response":{"source":"iana","extensions":["spp"]},"application/sdp":{"source":"iana","extensions":["sdp"]},"application/secevent+jwt":{"source":"iana"},"application/senml+cbor":{"source":"iana"},"application/senml+json":{"source":"iana","compressible":true},"application/senml+xml":{"source":"iana","compressible":true,"extensions":["senmlx"]},"application/senml-etch+cbor":{"source":"iana"},"application/senml-etch+json":{"source":"iana","compressible":true},"application/senml-exi":{"source":"iana"},"application/sensml+cbor":{"source":"iana"},"application/sensml+json":{"source":"iana","compressible":true},"application/sensml+xml":{"source":"iana","compressible":true,"extensions":["sensmlx"]},"application/sensml-exi":{"source":"iana"},"application/sep+xml":{"source":"iana","compressible":true},"application/sep-exi":{"source":"iana"},"application/session-info":{"source":"iana"},"application/set-payment":{"source":"iana"},"application/set-payment-initiation":{"source":"iana","extensions":["setpay"]},"application/set-registration":{"source":"iana"},"application/set-registration-initiation":{"source":"iana","extensions":["setreg"]},"application/sgml":{"source":"iana"},"application/sgml-open-catalog":{"source":"iana"},"application/shf+xml":{"source":"iana","compressible":true,"extensions":["shf"]},"application/sieve":{"source":"iana","extensions":["siv","sieve"]},"application/simple-filter+xml":{"source":"iana","compressible":true},"application/simple-message-summary":{"source":"iana"},"application/simplesymbolcontainer":{"source":"iana"},"application/sipc":{"source":"iana"},"application/slate":{"source":"iana"},"application/smil":{"source":"iana"},"application/smil+xml":{"source":"iana","compressible":true,"extensions":["smi","smil"]},"application/smpte336m":{"source":"iana"},"application/soap+fastinfoset":{"source":"iana"},"application/soap+xml":{"source":"iana","compressible":true},"application/sparql-query":{"source":"iana","extensions":["rq"]},"application/sparql-results+xml":{"source":"iana","compressible":true,"extensions":["srx"]},"application/spdx+json":{"source":"iana","compressible":true},"application/spirits-event+xml":{"source":"iana","compressible":true},"application/sql":{"source":"iana"},"application/srgs":{"source":"iana","extensions":["gram"]},"application/srgs+xml":{"source":"iana","compressible":true,"extensions":["grxml"]},"application/sru+xml":{"source":"iana","compressible":true,"extensions":["sru"]},"application/ssdl+xml":{"source":"apache","compressible":true,"extensions":["ssdl"]},"application/ssml+xml":{"source":"iana","compressible":true,"extensions":["ssml"]},"application/stix+json":{"source":"iana","compressible":true},"application/swid+xml":{"source":"iana","compressible":true,"extensions":["swidtag"]},"application/tamp-apex-update":{"source":"iana"},"application/tamp-apex-update-confirm":{"source":"iana"},"application/tamp-community-update":{"source":"iana"},"application/tamp-community-update-confirm":{"source":"iana"},"application/tamp-error":{"source":"iana"},"application/tamp-sequence-adjust":{"source":"iana"},"application/tamp-sequence-adjust-confirm":{"source":"iana"},"application/tamp-status-query":{"source":"iana"},"application/tamp-status-response":{"source":"iana"},"application/tamp-update":{"source":"iana"},"application/tamp-update-confirm":{"source":"iana"},"application/tar":{"compressible":true},"application/taxii+json":{"source":"iana","compressible":true},"application/td+json":{"source":"iana","compressible":true},"application/tei+xml":{"source":"iana","compressible":true,"extensions":["tei","teicorpus"]},"application/tetra_isi":{"source":"iana"},"application/thraud+xml":{"source":"iana","compressible":true,"extensions":["tfi"]},"application/timestamp-query":{"source":"iana"},"application/timestamp-reply":{"source":"iana"},"application/timestamped-data":{"source":"iana","extensions":["tsd"]},"application/tlsrpt+gzip":{"source":"iana"},"application/tlsrpt+json":{"source":"iana","compressible":true},"application/tnauthlist":{"source":"iana"},"application/token-introspection+jwt":{"source":"iana"},"application/toml":{"compressible":true,"extensions":["toml"]},"application/trickle-ice-sdpfrag":{"source":"iana"},"application/trig":{"source":"iana","extensions":["trig"]},"application/ttml+xml":{"source":"iana","compressible":true,"extensions":["ttml"]},"application/tve-trigger":{"source":"iana"},"application/tzif":{"source":"iana"},"application/tzif-leap":{"source":"iana"},"application/ubjson":{"compressible":false,"extensions":["ubj"]},"application/ulpfec":{"source":"iana"},"application/urc-grpsheet+xml":{"source":"iana","compressible":true},"application/urc-ressheet+xml":{"source":"iana","compressible":true,"extensions":["rsheet"]},"application/urc-targetdesc+xml":{"source":"iana","compressible":true,"extensions":["td"]},"application/urc-uisocketdesc+xml":{"source":"iana","compressible":true},"application/vcard+json":{"source":"iana","compressible":true},"application/vcard+xml":{"source":"iana","compressible":true},"application/vemmi":{"source":"iana"},"application/vividence.scriptfile":{"source":"apache"},"application/vnd.1000minds.decision-model+xml":{"source":"iana","compressible":true,"extensions":["1km"]},"application/vnd.3gpp-prose+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-prose-pc3ch+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-v2x-local-service-information":{"source":"iana"},"application/vnd.3gpp.5gnas":{"source":"iana"},"application/vnd.3gpp.access-transfer-events+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.bsf+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.gmop+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.gtpc":{"source":"iana"},"application/vnd.3gpp.interworking-data":{"source":"iana"},"application/vnd.3gpp.lpp":{"source":"iana"},"application/vnd.3gpp.mc-signalling-ear":{"source":"iana"},"application/vnd.3gpp.mcdata-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-payload":{"source":"iana"},"application/vnd.3gpp.mcdata-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-signalling":{"source":"iana"},"application/vnd.3gpp.mcdata-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-floor-request+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-location-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-mbms-usage-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-signed+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-ue-init-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-affiliation-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-location-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-mbms-usage-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-transmission-request+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mid-call+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.ngap":{"source":"iana"},"application/vnd.3gpp.pfcp":{"source":"iana"},"application/vnd.3gpp.pic-bw-large":{"source":"iana","extensions":["plb"]},"application/vnd.3gpp.pic-bw-small":{"source":"iana","extensions":["psb"]},"application/vnd.3gpp.pic-bw-var":{"source":"iana","extensions":["pvb"]},"application/vnd.3gpp.s1ap":{"source":"iana"},"application/vnd.3gpp.sms":{"source":"iana"},"application/vnd.3gpp.sms+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.srvcc-ext+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.srvcc-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.state-and-event-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.ussd+xml":{"source":"iana","compressible":true},"application/vnd.3gpp2.bcmcsinfo+xml":{"source":"iana","compressible":true},"application/vnd.3gpp2.sms":{"source":"iana"},"application/vnd.3gpp2.tcap":{"source":"iana","extensions":["tcap"]},"application/vnd.3lightssoftware.imagescal":{"source":"iana"},"application/vnd.3m.post-it-notes":{"source":"iana","extensions":["pwn"]},"application/vnd.accpac.simply.aso":{"source":"iana","extensions":["aso"]},"application/vnd.accpac.simply.imp":{"source":"iana","extensions":["imp"]},"application/vnd.acucobol":{"source":"iana","extensions":["acu"]},"application/vnd.acucorp":{"source":"iana","extensions":["atc","acutc"]},"application/vnd.adobe.air-application-installer-package+zip":{"source":"apache","compressible":false,"extensions":["air"]},"application/vnd.adobe.flash.movie":{"source":"iana"},"application/vnd.adobe.formscentral.fcdt":{"source":"iana","extensions":["fcdt"]},"application/vnd.adobe.fxp":{"source":"iana","extensions":["fxp","fxpl"]},"application/vnd.adobe.partial-upload":{"source":"iana"},"application/vnd.adobe.xdp+xml":{"source":"iana","compressible":true,"extensions":["xdp"]},"application/vnd.adobe.xfdf":{"source":"iana","extensions":["xfdf"]},"application/vnd.aether.imp":{"source":"iana"},"application/vnd.afpc.afplinedata":{"source":"iana"},"application/vnd.afpc.afplinedata-pagedef":{"source":"iana"},"application/vnd.afpc.cmoca-cmresource":{"source":"iana"},"application/vnd.afpc.foca-charset":{"source":"iana"},"application/vnd.afpc.foca-codedfont":{"source":"iana"},"application/vnd.afpc.foca-codepage":{"source":"iana"},"application/vnd.afpc.modca":{"source":"iana"},"application/vnd.afpc.modca-cmtable":{"source":"iana"},"application/vnd.afpc.modca-formdef":{"source":"iana"},"application/vnd.afpc.modca-mediummap":{"source":"iana"},"application/vnd.afpc.modca-objectcontainer":{"source":"iana"},"application/vnd.afpc.modca-overlay":{"source":"iana"},"application/vnd.afpc.modca-pagesegment":{"source":"iana"},"application/vnd.age":{"source":"iana","extensions":["age"]},"application/vnd.ah-barcode":{"source":"iana"},"application/vnd.ahead.space":{"source":"iana","extensions":["ahead"]},"application/vnd.airzip.filesecure.azf":{"source":"iana","extensions":["azf"]},"application/vnd.airzip.filesecure.azs":{"source":"iana","extensions":["azs"]},"application/vnd.amadeus+json":{"source":"iana","compressible":true},"application/vnd.amazon.ebook":{"source":"apache","extensions":["azw"]},"application/vnd.amazon.mobi8-ebook":{"source":"iana"},"application/vnd.americandynamics.acc":{"source":"iana","extensions":["acc"]},"application/vnd.amiga.ami":{"source":"iana","extensions":["ami"]},"application/vnd.amundsen.maze+xml":{"source":"iana","compressible":true},"application/vnd.android.ota":{"source":"iana"},"application/vnd.android.package-archive":{"source":"apache","compressible":false,"extensions":["apk"]},"application/vnd.anki":{"source":"iana"},"application/vnd.anser-web-certificate-issue-initiation":{"source":"iana","extensions":["cii"]},"application/vnd.anser-web-funds-transfer-initiation":{"source":"apache","extensions":["fti"]},"application/vnd.antix.game-component":{"source":"iana","extensions":["atx"]},"application/vnd.apache.arrow.file":{"source":"iana"},"application/vnd.apache.arrow.stream":{"source":"iana"},"application/vnd.apache.thrift.binary":{"source":"iana"},"application/vnd.apache.thrift.compact":{"source":"iana"},"application/vnd.apache.thrift.json":{"source":"iana"},"application/vnd.api+json":{"source":"iana","compressible":true},"application/vnd.aplextor.warrp+json":{"source":"iana","compressible":true},"application/vnd.apothekende.reservation+json":{"source":"iana","compressible":true},"application/vnd.apple.installer+xml":{"source":"iana","compressible":true,"extensions":["mpkg"]},"application/vnd.apple.keynote":{"source":"iana","extensions":["key"]},"application/vnd.apple.mpegurl":{"source":"iana","extensions":["m3u8"]},"application/vnd.apple.numbers":{"source":"iana","extensions":["numbers"]},"application/vnd.apple.pages":{"source":"iana","extensions":["pages"]},"application/vnd.apple.pkpass":{"compressible":false,"extensions":["pkpass"]},"application/vnd.arastra.swi":{"source":"iana"},"application/vnd.aristanetworks.swi":{"source":"iana","extensions":["swi"]},"application/vnd.artisan+json":{"source":"iana","compressible":true},"application/vnd.artsquare":{"source":"iana"},"application/vnd.astraea-software.iota":{"source":"iana","extensions":["iota"]},"application/vnd.audiograph":{"source":"iana","extensions":["aep"]},"application/vnd.autopackage":{"source":"iana"},"application/vnd.avalon+json":{"source":"iana","compressible":true},"application/vnd.avistar+xml":{"source":"iana","compressible":true},"application/vnd.balsamiq.bmml+xml":{"source":"iana","compressible":true,"extensions":["bmml"]},"application/vnd.balsamiq.bmpr":{"source":"iana"},"application/vnd.banana-accounting":{"source":"iana"},"application/vnd.bbf.usp.error":{"source":"iana"},"application/vnd.bbf.usp.msg":{"source":"iana"},"application/vnd.bbf.usp.msg+json":{"source":"iana","compressible":true},"application/vnd.bekitzur-stech+json":{"source":"iana","compressible":true},"application/vnd.bint.med-content":{"source":"iana"},"application/vnd.biopax.rdf+xml":{"source":"iana","compressible":true},"application/vnd.blink-idb-value-wrapper":{"source":"iana"},"application/vnd.blueice.multipass":{"source":"iana","extensions":["mpm"]},"application/vnd.bluetooth.ep.oob":{"source":"iana"},"application/vnd.bluetooth.le.oob":{"source":"iana"},"application/vnd.bmi":{"source":"iana","extensions":["bmi"]},"application/vnd.bpf":{"source":"iana"},"application/vnd.bpf3":{"source":"iana"},"application/vnd.businessobjects":{"source":"iana","extensions":["rep"]},"application/vnd.byu.uapi+json":{"source":"iana","compressible":true},"application/vnd.cab-jscript":{"source":"iana"},"application/vnd.canon-cpdl":{"source":"iana"},"application/vnd.canon-lips":{"source":"iana"},"application/vnd.capasystems-pg+json":{"source":"iana","compressible":true},"application/vnd.cendio.thinlinc.clientconf":{"source":"iana"},"application/vnd.century-systems.tcp_stream":{"source":"iana"},"application/vnd.chemdraw+xml":{"source":"iana","compressible":true,"extensions":["cdxml"]},"application/vnd.chess-pgn":{"source":"iana"},"application/vnd.chipnuts.karaoke-mmd":{"source":"iana","extensions":["mmd"]},"application/vnd.ciedi":{"source":"iana"},"application/vnd.cinderella":{"source":"iana","extensions":["cdy"]},"application/vnd.cirpack.isdn-ext":{"source":"iana"},"application/vnd.citationstyles.style+xml":{"source":"iana","compressible":true,"extensions":["csl"]},"application/vnd.claymore":{"source":"iana","extensions":["cla"]},"application/vnd.cloanto.rp9":{"source":"iana","extensions":["rp9"]},"application/vnd.clonk.c4group":{"source":"iana","extensions":["c4g","c4d","c4f","c4p","c4u"]},"application/vnd.cluetrust.cartomobile-config":{"source":"iana","extensions":["c11amc"]},"application/vnd.cluetrust.cartomobile-config-pkg":{"source":"iana","extensions":["c11amz"]},"application/vnd.coffeescript":{"source":"iana"},"application/vnd.collabio.xodocuments.document":{"source":"iana"},"application/vnd.collabio.xodocuments.document-template":{"source":"iana"},"application/vnd.collabio.xodocuments.presentation":{"source":"iana"},"application/vnd.collabio.xodocuments.presentation-template":{"source":"iana"},"application/vnd.collabio.xodocuments.spreadsheet":{"source":"iana"},"application/vnd.collabio.xodocuments.spreadsheet-template":{"source":"iana"},"application/vnd.collection+json":{"source":"iana","compressible":true},"application/vnd.collection.doc+json":{"source":"iana","compressible":true},"application/vnd.collection.next+json":{"source":"iana","compressible":true},"application/vnd.comicbook+zip":{"source":"iana","compressible":false},"application/vnd.comicbook-rar":{"source":"iana"},"application/vnd.commerce-battelle":{"source":"iana"},"application/vnd.commonspace":{"source":"iana","extensions":["csp"]},"application/vnd.contact.cmsg":{"source":"iana","extensions":["cdbcmsg"]},"application/vnd.coreos.ignition+json":{"source":"iana","compressible":true},"application/vnd.cosmocaller":{"source":"iana","extensions":["cmc"]},"application/vnd.crick.clicker":{"source":"iana","extensions":["clkx"]},"application/vnd.crick.clicker.keyboard":{"source":"iana","extensions":["clkk"]},"application/vnd.crick.clicker.palette":{"source":"iana","extensions":["clkp"]},"application/vnd.crick.clicker.template":{"source":"iana","extensions":["clkt"]},"application/vnd.crick.clicker.wordbank":{"source":"iana","extensions":["clkw"]},"application/vnd.criticaltools.wbs+xml":{"source":"iana","compressible":true,"extensions":["wbs"]},"application/vnd.cryptii.pipe+json":{"source":"iana","compressible":true},"application/vnd.crypto-shade-file":{"source":"iana"},"application/vnd.cryptomator.encrypted":{"source":"iana"},"application/vnd.cryptomator.vault":{"source":"iana"},"application/vnd.ctc-posml":{"source":"iana","extensions":["pml"]},"application/vnd.ctct.ws+xml":{"source":"iana","compressible":true},"application/vnd.cups-pdf":{"source":"iana"},"application/vnd.cups-postscript":{"source":"iana"},"application/vnd.cups-ppd":{"source":"iana","extensions":["ppd"]},"application/vnd.cups-raster":{"source":"iana"},"application/vnd.cups-raw":{"source":"iana"},"application/vnd.curl":{"source":"iana"},"application/vnd.curl.car":{"source":"apache","extensions":["car"]},"application/vnd.curl.pcurl":{"source":"apache","extensions":["pcurl"]},"application/vnd.cyan.dean.root+xml":{"source":"iana","compressible":true},"application/vnd.cybank":{"source":"iana"},"application/vnd.cyclonedx+json":{"source":"iana","compressible":true},"application/vnd.cyclonedx+xml":{"source":"iana","compressible":true},"application/vnd.d2l.coursepackage1p0+zip":{"source":"iana","compressible":false},"application/vnd.d3m-dataset":{"source":"iana"},"application/vnd.d3m-problem":{"source":"iana"},"application/vnd.dart":{"source":"iana","compressible":true,"extensions":["dart"]},"application/vnd.data-vision.rdz":{"source":"iana","extensions":["rdz"]},"application/vnd.datapackage+json":{"source":"iana","compressible":true},"application/vnd.dataresource+json":{"source":"iana","compressible":true},"application/vnd.dbf":{"source":"iana","extensions":["dbf"]},"application/vnd.debian.binary-package":{"source":"iana"},"application/vnd.dece.data":{"source":"iana","extensions":["uvf","uvvf","uvd","uvvd"]},"application/vnd.dece.ttml+xml":{"source":"iana","compressible":true,"extensions":["uvt","uvvt"]},"application/vnd.dece.unspecified":{"source":"iana","extensions":["uvx","uvvx"]},"application/vnd.dece.zip":{"source":"iana","extensions":["uvz","uvvz"]},"application/vnd.denovo.fcselayout-link":{"source":"iana","extensions":["fe_launch"]},"application/vnd.desmume.movie":{"source":"iana"},"application/vnd.dir-bi.plate-dl-nosuffix":{"source":"iana"},"application/vnd.dm.delegation+xml":{"source":"iana","compressible":true},"application/vnd.dna":{"source":"iana","extensions":["dna"]},"application/vnd.document+json":{"source":"iana","compressible":true},"application/vnd.dolby.mlp":{"source":"apache","extensions":["mlp"]},"application/vnd.dolby.mobile.1":{"source":"iana"},"application/vnd.dolby.mobile.2":{"source":"iana"},"application/vnd.doremir.scorecloud-binary-document":{"source":"iana"},"application/vnd.dpgraph":{"source":"iana","extensions":["dpg"]},"application/vnd.dreamfactory":{"source":"iana","extensions":["dfac"]},"application/vnd.drive+json":{"source":"iana","compressible":true},"application/vnd.ds-keypoint":{"source":"apache","extensions":["kpxx"]},"application/vnd.dtg.local":{"source":"iana"},"application/vnd.dtg.local.flash":{"source":"iana"},"application/vnd.dtg.local.html":{"source":"iana"},"application/vnd.dvb.ait":{"source":"iana","extensions":["ait"]},"application/vnd.dvb.dvbisl+xml":{"source":"iana","compressible":true},"application/vnd.dvb.dvbj":{"source":"iana"},"application/vnd.dvb.esgcontainer":{"source":"iana"},"application/vnd.dvb.ipdcdftnotifaccess":{"source":"iana"},"application/vnd.dvb.ipdcesgaccess":{"source":"iana"},"application/vnd.dvb.ipdcesgaccess2":{"source":"iana"},"application/vnd.dvb.ipdcesgpdd":{"source":"iana"},"application/vnd.dvb.ipdcroaming":{"source":"iana"},"application/vnd.dvb.iptv.alfec-base":{"source":"iana"},"application/vnd.dvb.iptv.alfec-enhancement":{"source":"iana"},"application/vnd.dvb.notif-aggregate-root+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-container+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-generic+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-msglist+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-registration-request+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-registration-response+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-init+xml":{"source":"iana","compressible":true},"application/vnd.dvb.pfr":{"source":"iana"},"application/vnd.dvb.service":{"source":"iana","extensions":["svc"]},"application/vnd.dxr":{"source":"iana"},"application/vnd.dynageo":{"source":"iana","extensions":["geo"]},"application/vnd.dzr":{"source":"iana"},"application/vnd.easykaraoke.cdgdownload":{"source":"iana"},"application/vnd.ecdis-update":{"source":"iana"},"application/vnd.ecip.rlp":{"source":"iana"},"application/vnd.eclipse.ditto+json":{"source":"iana","compressible":true},"application/vnd.ecowin.chart":{"source":"iana","extensions":["mag"]},"application/vnd.ecowin.filerequest":{"source":"iana"},"application/vnd.ecowin.fileupdate":{"source":"iana"},"application/vnd.ecowin.series":{"source":"iana"},"application/vnd.ecowin.seriesrequest":{"source":"iana"},"application/vnd.ecowin.seriesupdate":{"source":"iana"},"application/vnd.efi.img":{"source":"iana"},"application/vnd.efi.iso":{"source":"iana"},"application/vnd.emclient.accessrequest+xml":{"source":"iana","compressible":true},"application/vnd.enliven":{"source":"iana","extensions":["nml"]},"application/vnd.enphase.envoy":{"source":"iana"},"application/vnd.eprints.data+xml":{"source":"iana","compressible":true},"application/vnd.epson.esf":{"source":"iana","extensions":["esf"]},"application/vnd.epson.msf":{"source":"iana","extensions":["msf"]},"application/vnd.epson.quickanime":{"source":"iana","extensions":["qam"]},"application/vnd.epson.salt":{"source":"iana","extensions":["slt"]},"application/vnd.epson.ssf":{"source":"iana","extensions":["ssf"]},"application/vnd.ericsson.quickcall":{"source":"iana"},"application/vnd.espass-espass+zip":{"source":"iana","compressible":false},"application/vnd.eszigno3+xml":{"source":"iana","compressible":true,"extensions":["es3","et3"]},"application/vnd.etsi.aoc+xml":{"source":"iana","compressible":true},"application/vnd.etsi.asic-e+zip":{"source":"iana","compressible":false},"application/vnd.etsi.asic-s+zip":{"source":"iana","compressible":false},"application/vnd.etsi.cug+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvcommand+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvdiscovery+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvprofile+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-bc+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-cod+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-npvr+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvservice+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsync+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvueprofile+xml":{"source":"iana","compressible":true},"application/vnd.etsi.mcid+xml":{"source":"iana","compressible":true},"application/vnd.etsi.mheg5":{"source":"iana"},"application/vnd.etsi.overload-control-policy-dataset+xml":{"source":"iana","compressible":true},"application/vnd.etsi.pstn+xml":{"source":"iana","compressible":true},"application/vnd.etsi.sci+xml":{"source":"iana","compressible":true},"application/vnd.etsi.simservs+xml":{"source":"iana","compressible":true},"application/vnd.etsi.timestamp-token":{"source":"iana"},"application/vnd.etsi.tsl+xml":{"source":"iana","compressible":true},"application/vnd.etsi.tsl.der":{"source":"iana"},"application/vnd.eu.kasparian.car+json":{"source":"iana","compressible":true},"application/vnd.eudora.data":{"source":"iana"},"application/vnd.evolv.ecig.profile":{"source":"iana"},"application/vnd.evolv.ecig.settings":{"source":"iana"},"application/vnd.evolv.ecig.theme":{"source":"iana"},"application/vnd.exstream-empower+zip":{"source":"iana","compressible":false},"application/vnd.exstream-package":{"source":"iana"},"application/vnd.ezpix-album":{"source":"iana","extensions":["ez2"]},"application/vnd.ezpix-package":{"source":"iana","extensions":["ez3"]},"application/vnd.f-secure.mobile":{"source":"iana"},"application/vnd.familysearch.gedcom+zip":{"source":"iana","compressible":false},"application/vnd.fastcopy-disk-image":{"source":"iana"},"application/vnd.fdf":{"source":"iana","extensions":["fdf"]},"application/vnd.fdsn.mseed":{"source":"iana","extensions":["mseed"]},"application/vnd.fdsn.seed":{"source":"iana","extensions":["seed","dataless"]},"application/vnd.ffsns":{"source":"iana"},"application/vnd.ficlab.flb+zip":{"source":"iana","compressible":false},"application/vnd.filmit.zfc":{"source":"iana"},"application/vnd.fints":{"source":"iana"},"application/vnd.firemonkeys.cloudcell":{"source":"iana"},"application/vnd.flographit":{"source":"iana","extensions":["gph"]},"application/vnd.fluxtime.clip":{"source":"iana","extensions":["ftc"]},"application/vnd.font-fontforge-sfd":{"source":"iana"},"application/vnd.framemaker":{"source":"iana","extensions":["fm","frame","maker","book"]},"application/vnd.frogans.fnc":{"source":"iana","extensions":["fnc"]},"application/vnd.frogans.ltf":{"source":"iana","extensions":["ltf"]},"application/vnd.fsc.weblaunch":{"source":"iana","extensions":["fsc"]},"application/vnd.fujifilm.fb.docuworks":{"source":"iana"},"application/vnd.fujifilm.fb.docuworks.binder":{"source":"iana"},"application/vnd.fujifilm.fb.docuworks.container":{"source":"iana"},"application/vnd.fujifilm.fb.jfi+xml":{"source":"iana","compressible":true},"application/vnd.fujitsu.oasys":{"source":"iana","extensions":["oas"]},"application/vnd.fujitsu.oasys2":{"source":"iana","extensions":["oa2"]},"application/vnd.fujitsu.oasys3":{"source":"iana","extensions":["oa3"]},"application/vnd.fujitsu.oasysgp":{"source":"iana","extensions":["fg5"]},"application/vnd.fujitsu.oasysprs":{"source":"iana","extensions":["bh2"]},"application/vnd.fujixerox.art-ex":{"source":"iana"},"application/vnd.fujixerox.art4":{"source":"iana"},"application/vnd.fujixerox.ddd":{"source":"iana","extensions":["ddd"]},"application/vnd.fujixerox.docuworks":{"source":"iana","extensions":["xdw"]},"application/vnd.fujixerox.docuworks.binder":{"source":"iana","extensions":["xbd"]},"application/vnd.fujixerox.docuworks.container":{"source":"iana"},"application/vnd.fujixerox.hbpl":{"source":"iana"},"application/vnd.fut-misnet":{"source":"iana"},"application/vnd.futoin+cbor":{"source":"iana"},"application/vnd.futoin+json":{"source":"iana","compressible":true},"application/vnd.fuzzysheet":{"source":"iana","extensions":["fzs"]},"application/vnd.genomatix.tuxedo":{"source":"iana","extensions":["txd"]},"application/vnd.gentics.grd+json":{"source":"iana","compressible":true},"application/vnd.geo+json":{"source":"iana","compressible":true},"application/vnd.geocube+xml":{"source":"iana","compressible":true},"application/vnd.geogebra.file":{"source":"iana","extensions":["ggb"]},"application/vnd.geogebra.slides":{"source":"iana"},"application/vnd.geogebra.tool":{"source":"iana","extensions":["ggt"]},"application/vnd.geometry-explorer":{"source":"iana","extensions":["gex","gre"]},"application/vnd.geonext":{"source":"iana","extensions":["gxt"]},"application/vnd.geoplan":{"source":"iana","extensions":["g2w"]},"application/vnd.geospace":{"source":"iana","extensions":["g3w"]},"application/vnd.gerber":{"source":"iana"},"application/vnd.globalplatform.card-content-mgt":{"source":"iana"},"application/vnd.globalplatform.card-content-mgt-response":{"source":"iana"},"application/vnd.gmx":{"source":"iana","extensions":["gmx"]},"application/vnd.google-apps.document":{"compressible":false,"extensions":["gdoc"]},"application/vnd.google-apps.presentation":{"compressible":false,"extensions":["gslides"]},"application/vnd.google-apps.spreadsheet":{"compressible":false,"extensions":["gsheet"]},"application/vnd.google-earth.kml+xml":{"source":"iana","compressible":true,"extensions":["kml"]},"application/vnd.google-earth.kmz":{"source":"iana","compressible":false,"extensions":["kmz"]},"application/vnd.gov.sk.e-form+xml":{"source":"iana","compressible":true},"application/vnd.gov.sk.e-form+zip":{"source":"iana","compressible":false},"application/vnd.gov.sk.xmldatacontainer+xml":{"source":"iana","compressible":true},"application/vnd.grafeq":{"source":"iana","extensions":["gqf","gqs"]},"application/vnd.gridmp":{"source":"iana"},"application/vnd.groove-account":{"source":"iana","extensions":["gac"]},"application/vnd.groove-help":{"source":"iana","extensions":["ghf"]},"application/vnd.groove-identity-message":{"source":"iana","extensions":["gim"]},"application/vnd.groove-injector":{"source":"iana","extensions":["grv"]},"application/vnd.groove-tool-message":{"source":"iana","extensions":["gtm"]},"application/vnd.groove-tool-template":{"source":"iana","extensions":["tpl"]},"application/vnd.groove-vcard":{"source":"iana","extensions":["vcg"]},"application/vnd.hal+json":{"source":"iana","compressible":true},"application/vnd.hal+xml":{"source":"iana","compressible":true,"extensions":["hal"]},"application/vnd.handheld-entertainment+xml":{"source":"iana","compressible":true,"extensions":["zmm"]},"application/vnd.hbci":{"source":"iana","extensions":["hbci"]},"application/vnd.hc+json":{"source":"iana","compressible":true},"application/vnd.hcl-bireports":{"source":"iana"},"application/vnd.hdt":{"source":"iana"},"application/vnd.heroku+json":{"source":"iana","compressible":true},"application/vnd.hhe.lesson-player":{"source":"iana","extensions":["les"]},"application/vnd.hl7cda+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.hl7v2+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.hp-hpgl":{"source":"iana","extensions":["hpgl"]},"application/vnd.hp-hpid":{"source":"iana","extensions":["hpid"]},"application/vnd.hp-hps":{"source":"iana","extensions":["hps"]},"application/vnd.hp-jlyt":{"source":"iana","extensions":["jlt"]},"application/vnd.hp-pcl":{"source":"iana","extensions":["pcl"]},"application/vnd.hp-pclxl":{"source":"iana","extensions":["pclxl"]},"application/vnd.httphone":{"source":"iana"},"application/vnd.hydrostatix.sof-data":{"source":"iana","extensions":["sfd-hdstx"]},"application/vnd.hyper+json":{"source":"iana","compressible":true},"application/vnd.hyper-item+json":{"source":"iana","compressible":true},"application/vnd.hyperdrive+json":{"source":"iana","compressible":true},"application/vnd.hzn-3d-crossword":{"source":"iana"},"application/vnd.ibm.afplinedata":{"source":"iana"},"application/vnd.ibm.electronic-media":{"source":"iana"},"application/vnd.ibm.minipay":{"source":"iana","extensions":["mpy"]},"application/vnd.ibm.modcap":{"source":"iana","extensions":["afp","listafp","list3820"]},"application/vnd.ibm.rights-management":{"source":"iana","extensions":["irm"]},"application/vnd.ibm.secure-container":{"source":"iana","extensions":["sc"]},"application/vnd.iccprofile":{"source":"iana","extensions":["icc","icm"]},"application/vnd.ieee.1905":{"source":"iana"},"application/vnd.igloader":{"source":"iana","extensions":["igl"]},"application/vnd.imagemeter.folder+zip":{"source":"iana","compressible":false},"application/vnd.imagemeter.image+zip":{"source":"iana","compressible":false},"application/vnd.immervision-ivp":{"source":"iana","extensions":["ivp"]},"application/vnd.immervision-ivu":{"source":"iana","extensions":["ivu"]},"application/vnd.ims.imsccv1p1":{"source":"iana"},"application/vnd.ims.imsccv1p2":{"source":"iana"},"application/vnd.ims.imsccv1p3":{"source":"iana"},"application/vnd.ims.lis.v2.result+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolconsumerprofile+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolproxy+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolproxy.id+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolsettings+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolsettings.simple+json":{"source":"iana","compressible":true},"application/vnd.informedcontrol.rms+xml":{"source":"iana","compressible":true},"application/vnd.informix-visionary":{"source":"iana"},"application/vnd.infotech.project":{"source":"iana"},"application/vnd.infotech.project+xml":{"source":"iana","compressible":true},"application/vnd.innopath.wamp.notification":{"source":"iana"},"application/vnd.insors.igm":{"source":"iana","extensions":["igm"]},"application/vnd.intercon.formnet":{"source":"iana","extensions":["xpw","xpx"]},"application/vnd.intergeo":{"source":"iana","extensions":["i2g"]},"application/vnd.intertrust.digibox":{"source":"iana"},"application/vnd.intertrust.nncp":{"source":"iana"},"application/vnd.intu.qbo":{"source":"iana","extensions":["qbo"]},"application/vnd.intu.qfx":{"source":"iana","extensions":["qfx"]},"application/vnd.iptc.g2.catalogitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.conceptitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.knowledgeitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.newsitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.newsmessage+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.packageitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.planningitem+xml":{"source":"iana","compressible":true},"application/vnd.ipunplugged.rcprofile":{"source":"iana","extensions":["rcprofile"]},"application/vnd.irepository.package+xml":{"source":"iana","compressible":true,"extensions":["irp"]},"application/vnd.is-xpr":{"source":"iana","extensions":["xpr"]},"application/vnd.isac.fcs":{"source":"iana","extensions":["fcs"]},"application/vnd.iso11783-10+zip":{"source":"iana","compressible":false},"application/vnd.jam":{"source":"iana","extensions":["jam"]},"application/vnd.japannet-directory-service":{"source":"iana"},"application/vnd.japannet-jpnstore-wakeup":{"source":"iana"},"application/vnd.japannet-payment-wakeup":{"source":"iana"},"application/vnd.japannet-registration":{"source":"iana"},"application/vnd.japannet-registration-wakeup":{"source":"iana"},"application/vnd.japannet-setstore-wakeup":{"source":"iana"},"application/vnd.japannet-verification":{"source":"iana"},"application/vnd.japannet-verification-wakeup":{"source":"iana"},"application/vnd.jcp.javame.midlet-rms":{"source":"iana","extensions":["rms"]},"application/vnd.jisp":{"source":"iana","extensions":["jisp"]},"application/vnd.joost.joda-archive":{"source":"iana","extensions":["joda"]},"application/vnd.jsk.isdn-ngn":{"source":"iana"},"application/vnd.kahootz":{"source":"iana","extensions":["ktz","ktr"]},"application/vnd.kde.karbon":{"source":"iana","extensions":["karbon"]},"application/vnd.kde.kchart":{"source":"iana","extensions":["chrt"]},"application/vnd.kde.kformula":{"source":"iana","extensions":["kfo"]},"application/vnd.kde.kivio":{"source":"iana","extensions":["flw"]},"application/vnd.kde.kontour":{"source":"iana","extensions":["kon"]},"application/vnd.kde.kpresenter":{"source":"iana","extensions":["kpr","kpt"]},"application/vnd.kde.kspread":{"source":"iana","extensions":["ksp"]},"application/vnd.kde.kword":{"source":"iana","extensions":["kwd","kwt"]},"application/vnd.kenameaapp":{"source":"iana","extensions":["htke"]},"application/vnd.kidspiration":{"source":"iana","extensions":["kia"]},"application/vnd.kinar":{"source":"iana","extensions":["kne","knp"]},"application/vnd.koan":{"source":"iana","extensions":["skp","skd","skt","skm"]},"application/vnd.kodak-descriptor":{"source":"iana","extensions":["sse"]},"application/vnd.las":{"source":"iana"},"application/vnd.las.las+json":{"source":"iana","compressible":true},"application/vnd.las.las+xml":{"source":"iana","compressible":true,"extensions":["lasxml"]},"application/vnd.laszip":{"source":"iana"},"application/vnd.leap+json":{"source":"iana","compressible":true},"application/vnd.liberty-request+xml":{"source":"iana","compressible":true},"application/vnd.llamagraphics.life-balance.desktop":{"source":"iana","extensions":["lbd"]},"application/vnd.llamagraphics.life-balance.exchange+xml":{"source":"iana","compressible":true,"extensions":["lbe"]},"application/vnd.logipipe.circuit+zip":{"source":"iana","compressible":false},"application/vnd.loom":{"source":"iana"},"application/vnd.lotus-1-2-3":{"source":"iana","extensions":["123"]},"application/vnd.lotus-approach":{"source":"iana","extensions":["apr"]},"application/vnd.lotus-freelance":{"source":"iana","extensions":["pre"]},"application/vnd.lotus-notes":{"source":"iana","extensions":["nsf"]},"application/vnd.lotus-organizer":{"source":"iana","extensions":["org"]},"application/vnd.lotus-screencam":{"source":"iana","extensions":["scm"]},"application/vnd.lotus-wordpro":{"source":"iana","extensions":["lwp"]},"application/vnd.macports.portpkg":{"source":"iana","extensions":["portpkg"]},"application/vnd.mapbox-vector-tile":{"source":"iana","extensions":["mvt"]},"application/vnd.marlin.drm.actiontoken+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.conftoken+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.license+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.mdcf":{"source":"iana"},"application/vnd.mason+json":{"source":"iana","compressible":true},"application/vnd.maxar.archive.3tz+zip":{"source":"iana","compressible":false},"application/vnd.maxmind.maxmind-db":{"source":"iana"},"application/vnd.mcd":{"source":"iana","extensions":["mcd"]},"application/vnd.medcalcdata":{"source":"iana","extensions":["mc1"]},"application/vnd.mediastation.cdkey":{"source":"iana","extensions":["cdkey"]},"application/vnd.meridian-slingshot":{"source":"iana"},"application/vnd.mfer":{"source":"iana","extensions":["mwf"]},"application/vnd.mfmp":{"source":"iana","extensions":["mfm"]},"application/vnd.micro+json":{"source":"iana","compressible":true},"application/vnd.micrografx.flo":{"source":"iana","extensions":["flo"]},"application/vnd.micrografx.igx":{"source":"iana","extensions":["igx"]},"application/vnd.microsoft.portable-executable":{"source":"iana"},"application/vnd.microsoft.windows.thumbnail-cache":{"source":"iana"},"application/vnd.miele+json":{"source":"iana","compressible":true},"application/vnd.mif":{"source":"iana","extensions":["mif"]},"application/vnd.minisoft-hp3000-save":{"source":"iana"},"application/vnd.mitsubishi.misty-guard.trustweb":{"source":"iana"},"application/vnd.mobius.daf":{"source":"iana","extensions":["daf"]},"application/vnd.mobius.dis":{"source":"iana","extensions":["dis"]},"application/vnd.mobius.mbk":{"source":"iana","extensions":["mbk"]},"application/vnd.mobius.mqy":{"source":"iana","extensions":["mqy"]},"application/vnd.mobius.msl":{"source":"iana","extensions":["msl"]},"application/vnd.mobius.plc":{"source":"iana","extensions":["plc"]},"application/vnd.mobius.txf":{"source":"iana","extensions":["txf"]},"application/vnd.mophun.application":{"source":"iana","extensions":["mpn"]},"application/vnd.mophun.certificate":{"source":"iana","extensions":["mpc"]},"application/vnd.motorola.flexsuite":{"source":"iana"},"application/vnd.motorola.flexsuite.adsi":{"source":"iana"},"application/vnd.motorola.flexsuite.fis":{"source":"iana"},"application/vnd.motorola.flexsuite.gotap":{"source":"iana"},"application/vnd.motorola.flexsuite.kmr":{"source":"iana"},"application/vnd.motorola.flexsuite.ttc":{"source":"iana"},"application/vnd.motorola.flexsuite.wem":{"source":"iana"},"application/vnd.motorola.iprm":{"source":"iana"},"application/vnd.mozilla.xul+xml":{"source":"iana","compressible":true,"extensions":["xul"]},"application/vnd.ms-3mfdocument":{"source":"iana"},"application/vnd.ms-artgalry":{"source":"iana","extensions":["cil"]},"application/vnd.ms-asf":{"source":"iana"},"application/vnd.ms-cab-compressed":{"source":"iana","extensions":["cab"]},"application/vnd.ms-color.iccprofile":{"source":"apache"},"application/vnd.ms-excel":{"source":"iana","compressible":false,"extensions":["xls","xlm","xla","xlc","xlt","xlw"]},"application/vnd.ms-excel.addin.macroenabled.12":{"source":"iana","extensions":["xlam"]},"application/vnd.ms-excel.sheet.binary.macroenabled.12":{"source":"iana","extensions":["xlsb"]},"application/vnd.ms-excel.sheet.macroenabled.12":{"source":"iana","extensions":["xlsm"]},"application/vnd.ms-excel.template.macroenabled.12":{"source":"iana","extensions":["xltm"]},"application/vnd.ms-fontobject":{"source":"iana","compressible":true,"extensions":["eot"]},"application/vnd.ms-htmlhelp":{"source":"iana","extensions":["chm"]},"application/vnd.ms-ims":{"source":"iana","extensions":["ims"]},"application/vnd.ms-lrm":{"source":"iana","extensions":["lrm"]},"application/vnd.ms-office.activex+xml":{"source":"iana","compressible":true},"application/vnd.ms-officetheme":{"source":"iana","extensions":["thmx"]},"application/vnd.ms-opentype":{"source":"apache","compressible":true},"application/vnd.ms-outlook":{"compressible":false,"extensions":["msg"]},"application/vnd.ms-package.obfuscated-opentype":{"source":"apache"},"application/vnd.ms-pki.seccat":{"source":"apache","extensions":["cat"]},"application/vnd.ms-pki.stl":{"source":"apache","extensions":["stl"]},"application/vnd.ms-playready.initiator+xml":{"source":"iana","compressible":true},"application/vnd.ms-powerpoint":{"source":"iana","compressible":false,"extensions":["ppt","pps","pot"]},"application/vnd.ms-powerpoint.addin.macroenabled.12":{"source":"iana","extensions":["ppam"]},"application/vnd.ms-powerpoint.presentation.macroenabled.12":{"source":"iana","extensions":["pptm"]},"application/vnd.ms-powerpoint.slide.macroenabled.12":{"source":"iana","extensions":["sldm"]},"application/vnd.ms-powerpoint.slideshow.macroenabled.12":{"source":"iana","extensions":["ppsm"]},"application/vnd.ms-powerpoint.template.macroenabled.12":{"source":"iana","extensions":["potm"]},"application/vnd.ms-printdevicecapabilities+xml":{"source":"iana","compressible":true},"application/vnd.ms-printing.printticket+xml":{"source":"apache","compressible":true},"application/vnd.ms-printschematicket+xml":{"source":"iana","compressible":true},"application/vnd.ms-project":{"source":"iana","extensions":["mpp","mpt"]},"application/vnd.ms-tnef":{"source":"iana"},"application/vnd.ms-windows.devicepairing":{"source":"iana"},"application/vnd.ms-windows.nwprinting.oob":{"source":"iana"},"application/vnd.ms-windows.printerpairing":{"source":"iana"},"application/vnd.ms-windows.wsd.oob":{"source":"iana"},"application/vnd.ms-wmdrm.lic-chlg-req":{"source":"iana"},"application/vnd.ms-wmdrm.lic-resp":{"source":"iana"},"application/vnd.ms-wmdrm.meter-chlg-req":{"source":"iana"},"application/vnd.ms-wmdrm.meter-resp":{"source":"iana"},"application/vnd.ms-word.document.macroenabled.12":{"source":"iana","extensions":["docm"]},"application/vnd.ms-word.template.macroenabled.12":{"source":"iana","extensions":["dotm"]},"application/vnd.ms-works":{"source":"iana","extensions":["wps","wks","wcm","wdb"]},"application/vnd.ms-wpl":{"source":"iana","extensions":["wpl"]},"application/vnd.ms-xpsdocument":{"source":"iana","compressible":false,"extensions":["xps"]},"application/vnd.msa-disk-image":{"source":"iana"},"application/vnd.mseq":{"source":"iana","extensions":["mseq"]},"application/vnd.msign":{"source":"iana"},"application/vnd.multiad.creator":{"source":"iana"},"application/vnd.multiad.creator.cif":{"source":"iana"},"application/vnd.music-niff":{"source":"iana"},"application/vnd.musician":{"source":"iana","extensions":["mus"]},"application/vnd.muvee.style":{"source":"iana","extensions":["msty"]},"application/vnd.mynfc":{"source":"iana","extensions":["taglet"]},"application/vnd.nacamar.ybrid+json":{"source":"iana","compressible":true},"application/vnd.ncd.control":{"source":"iana"},"application/vnd.ncd.reference":{"source":"iana"},"application/vnd.nearst.inv+json":{"source":"iana","compressible":true},"application/vnd.nebumind.line":{"source":"iana"},"application/vnd.nervana":{"source":"iana"},"application/vnd.netfpx":{"source":"iana"},"application/vnd.neurolanguage.nlu":{"source":"iana","extensions":["nlu"]},"application/vnd.nimn":{"source":"iana"},"application/vnd.nintendo.nitro.rom":{"source":"iana"},"application/vnd.nintendo.snes.rom":{"source":"iana"},"application/vnd.nitf":{"source":"iana","extensions":["ntf","nitf"]},"application/vnd.noblenet-directory":{"source":"iana","extensions":["nnd"]},"application/vnd.noblenet-sealer":{"source":"iana","extensions":["nns"]},"application/vnd.noblenet-web":{"source":"iana","extensions":["nnw"]},"application/vnd.nokia.catalogs":{"source":"iana"},"application/vnd.nokia.conml+wbxml":{"source":"iana"},"application/vnd.nokia.conml+xml":{"source":"iana","compressible":true},"application/vnd.nokia.iptv.config+xml":{"source":"iana","compressible":true},"application/vnd.nokia.isds-radio-presets":{"source":"iana"},"application/vnd.nokia.landmark+wbxml":{"source":"iana"},"application/vnd.nokia.landmark+xml":{"source":"iana","compressible":true},"application/vnd.nokia.landmarkcollection+xml":{"source":"iana","compressible":true},"application/vnd.nokia.n-gage.ac+xml":{"source":"iana","compressible":true,"extensions":["ac"]},"application/vnd.nokia.n-gage.data":{"source":"iana","extensions":["ngdat"]},"application/vnd.nokia.n-gage.symbian.install":{"source":"iana","extensions":["n-gage"]},"application/vnd.nokia.ncd":{"source":"iana"},"application/vnd.nokia.pcd+wbxml":{"source":"iana"},"application/vnd.nokia.pcd+xml":{"source":"iana","compressible":true},"application/vnd.nokia.radio-preset":{"source":"iana","extensions":["rpst"]},"application/vnd.nokia.radio-presets":{"source":"iana","extensions":["rpss"]},"application/vnd.novadigm.edm":{"source":"iana","extensions":["edm"]},"application/vnd.novadigm.edx":{"source":"iana","extensions":["edx"]},"application/vnd.novadigm.ext":{"source":"iana","extensions":["ext"]},"application/vnd.ntt-local.content-share":{"source":"iana"},"application/vnd.ntt-local.file-transfer":{"source":"iana"},"application/vnd.ntt-local.ogw_remote-access":{"source":"iana"},"application/vnd.ntt-local.sip-ta_remote":{"source":"iana"},"application/vnd.ntt-local.sip-ta_tcp_stream":{"source":"iana"},"application/vnd.oasis.opendocument.chart":{"source":"iana","extensions":["odc"]},"application/vnd.oasis.opendocument.chart-template":{"source":"iana","extensions":["otc"]},"application/vnd.oasis.opendocument.database":{"source":"iana","extensions":["odb"]},"application/vnd.oasis.opendocument.formula":{"source":"iana","extensions":["odf"]},"application/vnd.oasis.opendocument.formula-template":{"source":"iana","extensions":["odft"]},"application/vnd.oasis.opendocument.graphics":{"source":"iana","compressible":false,"extensions":["odg"]},"application/vnd.oasis.opendocument.graphics-template":{"source":"iana","extensions":["otg"]},"application/vnd.oasis.opendocument.image":{"source":"iana","extensions":["odi"]},"application/vnd.oasis.opendocument.image-template":{"source":"iana","extensions":["oti"]},"application/vnd.oasis.opendocument.presentation":{"source":"iana","compressible":false,"extensions":["odp"]},"application/vnd.oasis.opendocument.presentation-template":{"source":"iana","extensions":["otp"]},"application/vnd.oasis.opendocument.spreadsheet":{"source":"iana","compressible":false,"extensions":["ods"]},"application/vnd.oasis.opendocument.spreadsheet-template":{"source":"iana","extensions":["ots"]},"application/vnd.oasis.opendocument.text":{"source":"iana","compressible":false,"extensions":["odt"]},"application/vnd.oasis.opendocument.text-master":{"source":"iana","extensions":["odm"]},"application/vnd.oasis.opendocument.text-template":{"source":"iana","extensions":["ott"]},"application/vnd.oasis.opendocument.text-web":{"source":"iana","extensions":["oth"]},"application/vnd.obn":{"source":"iana"},"application/vnd.ocf+cbor":{"source":"iana"},"application/vnd.oci.image.manifest.v1+json":{"source":"iana","compressible":true},"application/vnd.oftn.l10n+json":{"source":"iana","compressible":true},"application/vnd.oipf.contentaccessdownload+xml":{"source":"iana","compressible":true},"application/vnd.oipf.contentaccessstreaming+xml":{"source":"iana","compressible":true},"application/vnd.oipf.cspg-hexbinary":{"source":"iana"},"application/vnd.oipf.dae.svg+xml":{"source":"iana","compressible":true},"application/vnd.oipf.dae.xhtml+xml":{"source":"iana","compressible":true},"application/vnd.oipf.mippvcontrolmessage+xml":{"source":"iana","compressible":true},"application/vnd.oipf.pae.gem":{"source":"iana"},"application/vnd.oipf.spdiscovery+xml":{"source":"iana","compressible":true},"application/vnd.oipf.spdlist+xml":{"source":"iana","compressible":true},"application/vnd.oipf.ueprofile+xml":{"source":"iana","compressible":true},"application/vnd.oipf.userprofile+xml":{"source":"iana","compressible":true},"application/vnd.olpc-sugar":{"source":"iana","extensions":["xo"]},"application/vnd.oma-scws-config":{"source":"iana"},"application/vnd.oma-scws-http-request":{"source":"iana"},"application/vnd.oma-scws-http-response":{"source":"iana"},"application/vnd.oma.bcast.associated-procedure-parameter+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.drm-trigger+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.imd+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.ltkm":{"source":"iana"},"application/vnd.oma.bcast.notification+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.provisioningtrigger":{"source":"iana"},"application/vnd.oma.bcast.sgboot":{"source":"iana"},"application/vnd.oma.bcast.sgdd+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.sgdu":{"source":"iana"},"application/vnd.oma.bcast.simple-symbol-container":{"source":"iana"},"application/vnd.oma.bcast.smartcard-trigger+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.sprov+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.stkm":{"source":"iana"},"application/vnd.oma.cab-address-book+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-feature-handler+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-pcc+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-subs-invite+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-user-prefs+xml":{"source":"iana","compressible":true},"application/vnd.oma.dcd":{"source":"iana"},"application/vnd.oma.dcdc":{"source":"iana"},"application/vnd.oma.dd2+xml":{"source":"iana","compressible":true,"extensions":["dd2"]},"application/vnd.oma.drm.risd+xml":{"source":"iana","compressible":true},"application/vnd.oma.group-usage-list+xml":{"source":"iana","compressible":true},"application/vnd.oma.lwm2m+cbor":{"source":"iana"},"application/vnd.oma.lwm2m+json":{"source":"iana","compressible":true},"application/vnd.oma.lwm2m+tlv":{"source":"iana"},"application/vnd.oma.pal+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.detailed-progress-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.final-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.groups+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.invocation-descriptor+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.optimized-progress-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.push":{"source":"iana"},"application/vnd.oma.scidm.messages+xml":{"source":"iana","compressible":true},"application/vnd.oma.xcap-directory+xml":{"source":"iana","compressible":true},"application/vnd.omads-email+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omads-file+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omads-folder+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omaloc-supl-init":{"source":"iana"},"application/vnd.onepager":{"source":"iana"},"application/vnd.onepagertamp":{"source":"iana"},"application/vnd.onepagertamx":{"source":"iana"},"application/vnd.onepagertat":{"source":"iana"},"application/vnd.onepagertatp":{"source":"iana"},"application/vnd.onepagertatx":{"source":"iana"},"application/vnd.openblox.game+xml":{"source":"iana","compressible":true,"extensions":["obgx"]},"application/vnd.openblox.game-binary":{"source":"iana"},"application/vnd.openeye.oeb":{"source":"iana"},"application/vnd.openofficeorg.extension":{"source":"apache","extensions":["oxt"]},"application/vnd.openstreetmap.data+xml":{"source":"iana","compressible":true,"extensions":["osm"]},"application/vnd.opentimestamps.ots":{"source":"iana"},"application/vnd.openxmlformats-officedocument.custom-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.customxmlproperties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawing+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.chart+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.chartshapes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramcolors+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramdata+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramlayout+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramstyle+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.extended-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.commentauthors+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.handoutmaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.notesmaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.notesslide+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.presentation":{"source":"iana","compressible":false,"extensions":["pptx"]},"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.presprops+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slide":{"source":"iana","extensions":["sldx"]},"application/vnd.openxmlformats-officedocument.presentationml.slide+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slidelayout+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slidemaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slideshow":{"source":"iana","extensions":["ppsx"]},"application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slideupdateinfo+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.tablestyles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.tags+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.template":{"source":"iana","extensions":["potx"]},"application/vnd.openxmlformats-officedocument.presentationml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.viewprops+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.calcchain+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.connections+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.dialogsheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.externallink+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivotcachedefinition+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivotcacherecords+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivottable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.querytable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.revisionheaders+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.revisionlog+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedstrings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":{"source":"iana","compressible":false,"extensions":["xlsx"]},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheetmetadata+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.tablesinglecells+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.template":{"source":"iana","extensions":["xltx"]},"application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.usernames+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.volatiledependencies+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.theme+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.themeoverride+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.vmldrawing":{"source":"iana"},"application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.document":{"source":"iana","compressible":false,"extensions":["docx"]},"application/vnd.openxmlformats-officedocument.wordprocessingml.document.glossary+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.fonttable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.template":{"source":"iana","extensions":["dotx"]},"application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.websettings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.core-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.digital-signature-xmlsignature+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.relationships+xml":{"source":"iana","compressible":true},"application/vnd.oracle.resource+json":{"source":"iana","compressible":true},"application/vnd.orange.indata":{"source":"iana"},"application/vnd.osa.netdeploy":{"source":"iana"},"application/vnd.osgeo.mapguide.package":{"source":"iana","extensions":["mgp"]},"application/vnd.osgi.bundle":{"source":"iana"},"application/vnd.osgi.dp":{"source":"iana","extensions":["dp"]},"application/vnd.osgi.subsystem":{"source":"iana","extensions":["esa"]},"application/vnd.otps.ct-kip+xml":{"source":"iana","compressible":true},"application/vnd.oxli.countgraph":{"source":"iana"},"application/vnd.pagerduty+json":{"source":"iana","compressible":true},"application/vnd.palm":{"source":"iana","extensions":["pdb","pqa","oprc"]},"application/vnd.panoply":{"source":"iana"},"application/vnd.paos.xml":{"source":"iana"},"application/vnd.patentdive":{"source":"iana"},"application/vnd.patientecommsdoc":{"source":"iana"},"application/vnd.pawaafile":{"source":"iana","extensions":["paw"]},"application/vnd.pcos":{"source":"iana"},"application/vnd.pg.format":{"source":"iana","extensions":["str"]},"application/vnd.pg.osasli":{"source":"iana","extensions":["ei6"]},"application/vnd.piaccess.application-licence":{"source":"iana"},"application/vnd.picsel":{"source":"iana","extensions":["efif"]},"application/vnd.pmi.widget":{"source":"iana","extensions":["wg"]},"application/vnd.poc.group-advertisement+xml":{"source":"iana","compressible":true},"application/vnd.pocketlearn":{"source":"iana","extensions":["plf"]},"application/vnd.powerbuilder6":{"source":"iana","extensions":["pbd"]},"application/vnd.powerbuilder6-s":{"source":"iana"},"application/vnd.powerbuilder7":{"source":"iana"},"application/vnd.powerbuilder7-s":{"source":"iana"},"application/vnd.powerbuilder75":{"source":"iana"},"application/vnd.powerbuilder75-s":{"source":"iana"},"application/vnd.preminet":{"source":"iana"},"application/vnd.previewsystems.box":{"source":"iana","extensions":["box"]},"application/vnd.proteus.magazine":{"source":"iana","extensions":["mgz"]},"application/vnd.psfs":{"source":"iana"},"application/vnd.publishare-delta-tree":{"source":"iana","extensions":["qps"]},"application/vnd.pvi.ptid1":{"source":"iana","extensions":["ptid"]},"application/vnd.pwg-multiplexed":{"source":"iana"},"application/vnd.pwg-xhtml-print+xml":{"source":"iana","compressible":true},"application/vnd.qualcomm.brew-app-res":{"source":"iana"},"application/vnd.quarantainenet":{"source":"iana"},"application/vnd.quark.quarkxpress":{"source":"iana","extensions":["qxd","qxt","qwd","qwt","qxl","qxb"]},"application/vnd.quobject-quoxdocument":{"source":"iana"},"application/vnd.radisys.moml+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-conf+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-conn+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-dialog+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-stream+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-conf+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-base+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-fax-detect+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-fax-sendrecv+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-group+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-speech+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-transform+xml":{"source":"iana","compressible":true},"application/vnd.rainstor.data":{"source":"iana"},"application/vnd.rapid":{"source":"iana"},"application/vnd.rar":{"source":"iana","extensions":["rar"]},"application/vnd.realvnc.bed":{"source":"iana","extensions":["bed"]},"application/vnd.recordare.musicxml":{"source":"iana","extensions":["mxl"]},"application/vnd.recordare.musicxml+xml":{"source":"iana","compressible":true,"extensions":["musicxml"]},"application/vnd.renlearn.rlprint":{"source":"iana"},"application/vnd.resilient.logic":{"source":"iana"},"application/vnd.restful+json":{"source":"iana","compressible":true},"application/vnd.rig.cryptonote":{"source":"iana","extensions":["cryptonote"]},"application/vnd.rim.cod":{"source":"apache","extensions":["cod"]},"application/vnd.rn-realmedia":{"source":"apache","extensions":["rm"]},"application/vnd.rn-realmedia-vbr":{"source":"apache","extensions":["rmvb"]},"application/vnd.route66.link66+xml":{"source":"iana","compressible":true,"extensions":["link66"]},"application/vnd.rs-274x":{"source":"iana"},"application/vnd.ruckus.download":{"source":"iana"},"application/vnd.s3sms":{"source":"iana"},"application/vnd.sailingtracker.track":{"source":"iana","extensions":["st"]},"application/vnd.sar":{"source":"iana"},"application/vnd.sbm.cid":{"source":"iana"},"application/vnd.sbm.mid2":{"source":"iana"},"application/vnd.scribus":{"source":"iana"},"application/vnd.sealed.3df":{"source":"iana"},"application/vnd.sealed.csf":{"source":"iana"},"application/vnd.sealed.doc":{"source":"iana"},"application/vnd.sealed.eml":{"source":"iana"},"application/vnd.sealed.mht":{"source":"iana"},"application/vnd.sealed.net":{"source":"iana"},"application/vnd.sealed.ppt":{"source":"iana"},"application/vnd.sealed.tiff":{"source":"iana"},"application/vnd.sealed.xls":{"source":"iana"},"application/vnd.sealedmedia.softseal.html":{"source":"iana"},"application/vnd.sealedmedia.softseal.pdf":{"source":"iana"},"application/vnd.seemail":{"source":"iana","extensions":["see"]},"application/vnd.seis+json":{"source":"iana","compressible":true},"application/vnd.sema":{"source":"iana","extensions":["sema"]},"application/vnd.semd":{"source":"iana","extensions":["semd"]},"application/vnd.semf":{"source":"iana","extensions":["semf"]},"application/vnd.shade-save-file":{"source":"iana"},"application/vnd.shana.informed.formdata":{"source":"iana","extensions":["ifm"]},"application/vnd.shana.informed.formtemplate":{"source":"iana","extensions":["itp"]},"application/vnd.shana.informed.interchange":{"source":"iana","extensions":["iif"]},"application/vnd.shana.informed.package":{"source":"iana","extensions":["ipk"]},"application/vnd.shootproof+json":{"source":"iana","compressible":true},"application/vnd.shopkick+json":{"source":"iana","compressible":true},"application/vnd.shp":{"source":"iana"},"application/vnd.shx":{"source":"iana"},"application/vnd.sigrok.session":{"source":"iana"},"application/vnd.simtech-mindmapper":{"source":"iana","extensions":["twd","twds"]},"application/vnd.siren+json":{"source":"iana","compressible":true},"application/vnd.smaf":{"source":"iana","extensions":["mmf"]},"application/vnd.smart.notebook":{"source":"iana"},"application/vnd.smart.teacher":{"source":"iana","extensions":["teacher"]},"application/vnd.snesdev-page-table":{"source":"iana"},"application/vnd.software602.filler.form+xml":{"source":"iana","compressible":true,"extensions":["fo"]},"application/vnd.software602.filler.form-xml-zip":{"source":"iana"},"application/vnd.solent.sdkm+xml":{"source":"iana","compressible":true,"extensions":["sdkm","sdkd"]},"application/vnd.spotfire.dxp":{"source":"iana","extensions":["dxp"]},"application/vnd.spotfire.sfs":{"source":"iana","extensions":["sfs"]},"application/vnd.sqlite3":{"source":"iana"},"application/vnd.sss-cod":{"source":"iana"},"application/vnd.sss-dtf":{"source":"iana"},"application/vnd.sss-ntf":{"source":"iana"},"application/vnd.stardivision.calc":{"source":"apache","extensions":["sdc"]},"application/vnd.stardivision.draw":{"source":"apache","extensions":["sda"]},"application/vnd.stardivision.impress":{"source":"apache","extensions":["sdd"]},"application/vnd.stardivision.math":{"source":"apache","extensions":["smf"]},"application/vnd.stardivision.writer":{"source":"apache","extensions":["sdw","vor"]},"application/vnd.stardivision.writer-global":{"source":"apache","extensions":["sgl"]},"application/vnd.stepmania.package":{"source":"iana","extensions":["smzip"]},"application/vnd.stepmania.stepchart":{"source":"iana","extensions":["sm"]},"application/vnd.street-stream":{"source":"iana"},"application/vnd.sun.wadl+xml":{"source":"iana","compressible":true,"extensions":["wadl"]},"application/vnd.sun.xml.calc":{"source":"apache","extensions":["sxc"]},"application/vnd.sun.xml.calc.template":{"source":"apache","extensions":["stc"]},"application/vnd.sun.xml.draw":{"source":"apache","extensions":["sxd"]},"application/vnd.sun.xml.draw.template":{"source":"apache","extensions":["std"]},"application/vnd.sun.xml.impress":{"source":"apache","extensions":["sxi"]},"application/vnd.sun.xml.impress.template":{"source":"apache","extensions":["sti"]},"application/vnd.sun.xml.math":{"source":"apache","extensions":["sxm"]},"application/vnd.sun.xml.writer":{"source":"apache","extensions":["sxw"]},"application/vnd.sun.xml.writer.global":{"source":"apache","extensions":["sxg"]},"application/vnd.sun.xml.writer.template":{"source":"apache","extensions":["stw"]},"application/vnd.sus-calendar":{"source":"iana","extensions":["sus","susp"]},"application/vnd.svd":{"source":"iana","extensions":["svd"]},"application/vnd.swiftview-ics":{"source":"iana"},"application/vnd.sycle+xml":{"source":"iana","compressible":true},"application/vnd.syft+json":{"source":"iana","compressible":true},"application/vnd.symbian.install":{"source":"apache","extensions":["sis","sisx"]},"application/vnd.syncml+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["xsm"]},"application/vnd.syncml.dm+wbxml":{"source":"iana","charset":"UTF-8","extensions":["bdm"]},"application/vnd.syncml.dm+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["xdm"]},"application/vnd.syncml.dm.notification":{"source":"iana"},"application/vnd.syncml.dmddf+wbxml":{"source":"iana"},"application/vnd.syncml.dmddf+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["ddf"]},"application/vnd.syncml.dmtnds+wbxml":{"source":"iana"},"application/vnd.syncml.dmtnds+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.syncml.ds.notification":{"source":"iana"},"application/vnd.tableschema+json":{"source":"iana","compressible":true},"application/vnd.tao.intent-module-archive":{"source":"iana","extensions":["tao"]},"application/vnd.tcpdump.pcap":{"source":"iana","extensions":["pcap","cap","dmp"]},"application/vnd.think-cell.ppttc+json":{"source":"iana","compressible":true},"application/vnd.tmd.mediaflex.api+xml":{"source":"iana","compressible":true},"application/vnd.tml":{"source":"iana"},"application/vnd.tmobile-livetv":{"source":"iana","extensions":["tmo"]},"application/vnd.tri.onesource":{"source":"iana"},"application/vnd.trid.tpt":{"source":"iana","extensions":["tpt"]},"application/vnd.triscape.mxs":{"source":"iana","extensions":["mxs"]},"application/vnd.trueapp":{"source":"iana","extensions":["tra"]},"application/vnd.truedoc":{"source":"iana"},"application/vnd.ubisoft.webplayer":{"source":"iana"},"application/vnd.ufdl":{"source":"iana","extensions":["ufd","ufdl"]},"application/vnd.uiq.theme":{"source":"iana","extensions":["utz"]},"application/vnd.umajin":{"source":"iana","extensions":["umj"]},"application/vnd.unity":{"source":"iana","extensions":["unityweb"]},"application/vnd.uoml+xml":{"source":"iana","compressible":true,"extensions":["uoml"]},"application/vnd.uplanet.alert":{"source":"iana"},"application/vnd.uplanet.alert-wbxml":{"source":"iana"},"application/vnd.uplanet.bearer-choice":{"source":"iana"},"application/vnd.uplanet.bearer-choice-wbxml":{"source":"iana"},"application/vnd.uplanet.cacheop":{"source":"iana"},"application/vnd.uplanet.cacheop-wbxml":{"source":"iana"},"application/vnd.uplanet.channel":{"source":"iana"},"application/vnd.uplanet.channel-wbxml":{"source":"iana"},"application/vnd.uplanet.list":{"source":"iana"},"application/vnd.uplanet.list-wbxml":{"source":"iana"},"application/vnd.uplanet.listcmd":{"source":"iana"},"application/vnd.uplanet.listcmd-wbxml":{"source":"iana"},"application/vnd.uplanet.signal":{"source":"iana"},"application/vnd.uri-map":{"source":"iana"},"application/vnd.valve.source.material":{"source":"iana"},"application/vnd.vcx":{"source":"iana","extensions":["vcx"]},"application/vnd.vd-study":{"source":"iana"},"application/vnd.vectorworks":{"source":"iana"},"application/vnd.vel+json":{"source":"iana","compressible":true},"application/vnd.verimatrix.vcas":{"source":"iana"},"application/vnd.veritone.aion+json":{"source":"iana","compressible":true},"application/vnd.veryant.thin":{"source":"iana"},"application/vnd.ves.encrypted":{"source":"iana"},"application/vnd.vidsoft.vidconference":{"source":"iana"},"application/vnd.visio":{"source":"iana","extensions":["vsd","vst","vss","vsw"]},"application/vnd.visionary":{"source":"iana","extensions":["vis"]},"application/vnd.vividence.scriptfile":{"source":"iana"},"application/vnd.vsf":{"source":"iana","extensions":["vsf"]},"application/vnd.wap.sic":{"source":"iana"},"application/vnd.wap.slc":{"source":"iana"},"application/vnd.wap.wbxml":{"source":"iana","charset":"UTF-8","extensions":["wbxml"]},"application/vnd.wap.wmlc":{"source":"iana","extensions":["wmlc"]},"application/vnd.wap.wmlscriptc":{"source":"iana","extensions":["wmlsc"]},"application/vnd.webturbo":{"source":"iana","extensions":["wtb"]},"application/vnd.wfa.dpp":{"source":"iana"},"application/vnd.wfa.p2p":{"source":"iana"},"application/vnd.wfa.wsc":{"source":"iana"},"application/vnd.windows.devicepairing":{"source":"iana"},"application/vnd.wmc":{"source":"iana"},"application/vnd.wmf.bootstrap":{"source":"iana"},"application/vnd.wolfram.mathematica":{"source":"iana"},"application/vnd.wolfram.mathematica.package":{"source":"iana"},"application/vnd.wolfram.player":{"source":"iana","extensions":["nbp"]},"application/vnd.wordperfect":{"source":"iana","extensions":["wpd"]},"application/vnd.wqd":{"source":"iana","extensions":["wqd"]},"application/vnd.wrq-hp3000-labelled":{"source":"iana"},"application/vnd.wt.stf":{"source":"iana","extensions":["stf"]},"application/vnd.wv.csp+wbxml":{"source":"iana"},"application/vnd.wv.csp+xml":{"source":"iana","compressible":true},"application/vnd.wv.ssp+xml":{"source":"iana","compressible":true},"application/vnd.xacml+json":{"source":"iana","compressible":true},"application/vnd.xara":{"source":"iana","extensions":["xar"]},"application/vnd.xfdl":{"source":"iana","extensions":["xfdl"]},"application/vnd.xfdl.webform":{"source":"iana"},"application/vnd.xmi+xml":{"source":"iana","compressible":true},"application/vnd.xmpie.cpkg":{"source":"iana"},"application/vnd.xmpie.dpkg":{"source":"iana"},"application/vnd.xmpie.plan":{"source":"iana"},"application/vnd.xmpie.ppkg":{"source":"iana"},"application/vnd.xmpie.xlim":{"source":"iana"},"application/vnd.yamaha.hv-dic":{"source":"iana","extensions":["hvd"]},"application/vnd.yamaha.hv-script":{"source":"iana","extensions":["hvs"]},"application/vnd.yamaha.hv-voice":{"source":"iana","extensions":["hvp"]},"application/vnd.yamaha.openscoreformat":{"source":"iana","extensions":["osf"]},"application/vnd.yamaha.openscoreformat.osfpvg+xml":{"source":"iana","compressible":true,"extensions":["osfpvg"]},"application/vnd.yamaha.remote-setup":{"source":"iana"},"application/vnd.yamaha.smaf-audio":{"source":"iana","extensions":["saf"]},"application/vnd.yamaha.smaf-phrase":{"source":"iana","extensions":["spf"]},"application/vnd.yamaha.through-ngn":{"source":"iana"},"application/vnd.yamaha.tunnel-udpencap":{"source":"iana"},"application/vnd.yaoweme":{"source":"iana"},"application/vnd.yellowriver-custom-menu":{"source":"iana","extensions":["cmp"]},"application/vnd.youtube.yt":{"source":"iana"},"application/vnd.zul":{"source":"iana","extensions":["zir","zirz"]},"application/vnd.zzazz.deck+xml":{"source":"iana","compressible":true,"extensions":["zaz"]},"application/voicexml+xml":{"source":"iana","compressible":true,"extensions":["vxml"]},"application/voucher-cms+json":{"source":"iana","compressible":true},"application/vq-rtcpxr":{"source":"iana"},"application/wasm":{"source":"iana","compressible":true,"extensions":["wasm"]},"application/watcherinfo+xml":{"source":"iana","compressible":true,"extensions":["wif"]},"application/webpush-options+json":{"source":"iana","compressible":true},"application/whoispp-query":{"source":"iana"},"application/whoispp-response":{"source":"iana"},"application/widget":{"source":"iana","extensions":["wgt"]},"application/winhlp":{"source":"apache","extensions":["hlp"]},"application/wita":{"source":"iana"},"application/wordperfect5.1":{"source":"iana"},"application/wsdl+xml":{"source":"iana","compressible":true,"extensions":["wsdl"]},"application/wspolicy+xml":{"source":"iana","compressible":true,"extensions":["wspolicy"]},"application/x-7z-compressed":{"source":"apache","compressible":false,"extensions":["7z"]},"application/x-abiword":{"source":"apache","extensions":["abw"]},"application/x-ace-compressed":{"source":"apache","extensions":["ace"]},"application/x-amf":{"source":"apache"},"application/x-apple-diskimage":{"source":"apache","extensions":["dmg"]},"application/x-arj":{"compressible":false,"extensions":["arj"]},"application/x-authorware-bin":{"source":"apache","extensions":["aab","x32","u32","vox"]},"application/x-authorware-map":{"source":"apache","extensions":["aam"]},"application/x-authorware-seg":{"source":"apache","extensions":["aas"]},"application/x-bcpio":{"source":"apache","extensions":["bcpio"]},"application/x-bdoc":{"compressible":false,"extensions":["bdoc"]},"application/x-bittorrent":{"source":"apache","extensions":["torrent"]},"application/x-blorb":{"source":"apache","extensions":["blb","blorb"]},"application/x-bzip":{"source":"apache","compressible":false,"extensions":["bz"]},"application/x-bzip2":{"source":"apache","compressible":false,"extensions":["bz2","boz"]},"application/x-cbr":{"source":"apache","extensions":["cbr","cba","cbt","cbz","cb7"]},"application/x-cdlink":{"source":"apache","extensions":["vcd"]},"application/x-cfs-compressed":{"source":"apache","extensions":["cfs"]},"application/x-chat":{"source":"apache","extensions":["chat"]},"application/x-chess-pgn":{"source":"apache","extensions":["pgn"]},"application/x-chrome-extension":{"extensions":["crx"]},"application/x-cocoa":{"source":"nginx","extensions":["cco"]},"application/x-compress":{"source":"apache"},"application/x-conference":{"source":"apache","extensions":["nsc"]},"application/x-cpio":{"source":"apache","extensions":["cpio"]},"application/x-csh":{"source":"apache","extensions":["csh"]},"application/x-deb":{"compressible":false},"application/x-debian-package":{"source":"apache","extensions":["deb","udeb"]},"application/x-dgc-compressed":{"source":"apache","extensions":["dgc"]},"application/x-director":{"source":"apache","extensions":["dir","dcr","dxr","cst","cct","cxt","w3d","fgd","swa"]},"application/x-doom":{"source":"apache","extensions":["wad"]},"application/x-dtbncx+xml":{"source":"apache","compressible":true,"extensions":["ncx"]},"application/x-dtbook+xml":{"source":"apache","compressible":true,"extensions":["dtb"]},"application/x-dtbresource+xml":{"source":"apache","compressible":true,"extensions":["res"]},"application/x-dvi":{"source":"apache","compressible":false,"extensions":["dvi"]},"application/x-envoy":{"source":"apache","extensions":["evy"]},"application/x-eva":{"source":"apache","extensions":["eva"]},"application/x-font-bdf":{"source":"apache","extensions":["bdf"]},"application/x-font-dos":{"source":"apache"},"application/x-font-framemaker":{"source":"apache"},"application/x-font-ghostscript":{"source":"apache","extensions":["gsf"]},"application/x-font-libgrx":{"source":"apache"},"application/x-font-linux-psf":{"source":"apache","extensions":["psf"]},"application/x-font-pcf":{"source":"apache","extensions":["pcf"]},"application/x-font-snf":{"source":"apache","extensions":["snf"]},"application/x-font-speedo":{"source":"apache"},"application/x-font-sunos-news":{"source":"apache"},"application/x-font-type1":{"source":"apache","extensions":["pfa","pfb","pfm","afm"]},"application/x-font-vfont":{"source":"apache"},"application/x-freearc":{"source":"apache","extensions":["arc"]},"application/x-futuresplash":{"source":"apache","extensions":["spl"]},"application/x-gca-compressed":{"source":"apache","extensions":["gca"]},"application/x-glulx":{"source":"apache","extensions":["ulx"]},"application/x-gnumeric":{"source":"apache","extensions":["gnumeric"]},"application/x-gramps-xml":{"source":"apache","extensions":["gramps"]},"application/x-gtar":{"source":"apache","extensions":["gtar"]},"application/x-gzip":{"source":"apache"},"application/x-hdf":{"source":"apache","extensions":["hdf"]},"application/x-httpd-php":{"compressible":true,"extensions":["php"]},"application/x-install-instructions":{"source":"apache","extensions":["install"]},"application/x-iso9660-image":{"source":"apache","extensions":["iso"]},"application/x-iwork-keynote-sffkey":{"extensions":["key"]},"application/x-iwork-numbers-sffnumbers":{"extensions":["numbers"]},"application/x-iwork-pages-sffpages":{"extensions":["pages"]},"application/x-java-archive-diff":{"source":"nginx","extensions":["jardiff"]},"application/x-java-jnlp-file":{"source":"apache","compressible":false,"extensions":["jnlp"]},"application/x-javascript":{"compressible":true},"application/x-keepass2":{"extensions":["kdbx"]},"application/x-latex":{"source":"apache","compressible":false,"extensions":["latex"]},"application/x-lua-bytecode":{"extensions":["luac"]},"application/x-lzh-compressed":{"source":"apache","extensions":["lzh","lha"]},"application/x-makeself":{"source":"nginx","extensions":["run"]},"application/x-mie":{"source":"apache","extensions":["mie"]},"application/x-mobipocket-ebook":{"source":"apache","extensions":["prc","mobi"]},"application/x-mpegurl":{"compressible":false},"application/x-ms-application":{"source":"apache","extensions":["application"]},"application/x-ms-shortcut":{"source":"apache","extensions":["lnk"]},"application/x-ms-wmd":{"source":"apache","extensions":["wmd"]},"application/x-ms-wmz":{"source":"apache","extensions":["wmz"]},"application/x-ms-xbap":{"source":"apache","extensions":["xbap"]},"application/x-msaccess":{"source":"apache","extensions":["mdb"]},"application/x-msbinder":{"source":"apache","extensions":["obd"]},"application/x-mscardfile":{"source":"apache","extensions":["crd"]},"application/x-msclip":{"source":"apache","extensions":["clp"]},"application/x-msdos-program":{"extensions":["exe"]},"application/x-msdownload":{"source":"apache","extensions":["exe","dll","com","bat","msi"]},"application/x-msmediaview":{"source":"apache","extensions":["mvb","m13","m14"]},"application/x-msmetafile":{"source":"apache","extensions":["wmf","wmz","emf","emz"]},"application/x-msmoney":{"source":"apache","extensions":["mny"]},"application/x-mspublisher":{"source":"apache","extensions":["pub"]},"application/x-msschedule":{"source":"apache","extensions":["scd"]},"application/x-msterminal":{"source":"apache","extensions":["trm"]},"application/x-mswrite":{"source":"apache","extensions":["wri"]},"application/x-netcdf":{"source":"apache","extensions":["nc","cdf"]},"application/x-ns-proxy-autoconfig":{"compressible":true,"extensions":["pac"]},"application/x-nzb":{"source":"apache","extensions":["nzb"]},"application/x-perl":{"source":"nginx","extensions":["pl","pm"]},"application/x-pilot":{"source":"nginx","extensions":["prc","pdb"]},"application/x-pkcs12":{"source":"apache","compressible":false,"extensions":["p12","pfx"]},"application/x-pkcs7-certificates":{"source":"apache","extensions":["p7b","spc"]},"application/x-pkcs7-certreqresp":{"source":"apache","extensions":["p7r"]},"application/x-pki-message":{"source":"iana"},"application/x-rar-compressed":{"source":"apache","compressible":false,"extensions":["rar"]},"application/x-redhat-package-manager":{"source":"nginx","extensions":["rpm"]},"application/x-research-info-systems":{"source":"apache","extensions":["ris"]},"application/x-sea":{"source":"nginx","extensions":["sea"]},"application/x-sh":{"source":"apache","compressible":true,"extensions":["sh"]},"application/x-shar":{"source":"apache","extensions":["shar"]},"application/x-shockwave-flash":{"source":"apache","compressible":false,"extensions":["swf"]},"application/x-silverlight-app":{"source":"apache","extensions":["xap"]},"application/x-sql":{"source":"apache","extensions":["sql"]},"application/x-stuffit":{"source":"apache","compressible":false,"extensions":["sit"]},"application/x-stuffitx":{"source":"apache","extensions":["sitx"]},"application/x-subrip":{"source":"apache","extensions":["srt"]},"application/x-sv4cpio":{"source":"apache","extensions":["sv4cpio"]},"application/x-sv4crc":{"source":"apache","extensions":["sv4crc"]},"application/x-t3vm-image":{"source":"apache","extensions":["t3"]},"application/x-tads":{"source":"apache","extensions":["gam"]},"application/x-tar":{"source":"apache","compressible":true,"extensions":["tar"]},"application/x-tcl":{"source":"apache","extensions":["tcl","tk"]},"application/x-tex":{"source":"apache","extensions":["tex"]},"application/x-tex-tfm":{"source":"apache","extensions":["tfm"]},"application/x-texinfo":{"source":"apache","extensions":["texinfo","texi"]},"application/x-tgif":{"source":"apache","extensions":["obj"]},"application/x-ustar":{"source":"apache","extensions":["ustar"]},"application/x-virtualbox-hdd":{"compressible":true,"extensions":["hdd"]},"application/x-virtualbox-ova":{"compressible":true,"extensions":["ova"]},"application/x-virtualbox-ovf":{"compressible":true,"extensions":["ovf"]},"application/x-virtualbox-vbox":{"compressible":true,"extensions":["vbox"]},"application/x-virtualbox-vbox-extpack":{"compressible":false,"extensions":["vbox-extpack"]},"application/x-virtualbox-vdi":{"compressible":true,"extensions":["vdi"]},"application/x-virtualbox-vhd":{"compressible":true,"extensions":["vhd"]},"application/x-virtualbox-vmdk":{"compressible":true,"extensions":["vmdk"]},"application/x-wais-source":{"source":"apache","extensions":["src"]},"application/x-web-app-manifest+json":{"compressible":true,"extensions":["webapp"]},"application/x-www-form-urlencoded":{"source":"iana","compressible":true},"application/x-x509-ca-cert":{"source":"iana","extensions":["der","crt","pem"]},"application/x-x509-ca-ra-cert":{"source":"iana"},"application/x-x509-next-ca-cert":{"source":"iana"},"application/x-xfig":{"source":"apache","extensions":["fig"]},"application/x-xliff+xml":{"source":"apache","compressible":true,"extensions":["xlf"]},"application/x-xpinstall":{"source":"apache","compressible":false,"extensions":["xpi"]},"application/x-xz":{"source":"apache","extensions":["xz"]},"application/x-zmachine":{"source":"apache","extensions":["z1","z2","z3","z4","z5","z6","z7","z8"]},"application/x400-bp":{"source":"iana"},"application/xacml+xml":{"source":"iana","compressible":true},"application/xaml+xml":{"source":"apache","compressible":true,"extensions":["xaml"]},"application/xcap-att+xml":{"source":"iana","compressible":true,"extensions":["xav"]},"application/xcap-caps+xml":{"source":"iana","compressible":true,"extensions":["xca"]},"application/xcap-diff+xml":{"source":"iana","compressible":true,"extensions":["xdf"]},"application/xcap-el+xml":{"source":"iana","compressible":true,"extensions":["xel"]},"application/xcap-error+xml":{"source":"iana","compressible":true},"application/xcap-ns+xml":{"source":"iana","compressible":true,"extensions":["xns"]},"application/xcon-conference-info+xml":{"source":"iana","compressible":true},"application/xcon-conference-info-diff+xml":{"source":"iana","compressible":true},"application/xenc+xml":{"source":"iana","compressible":true,"extensions":["xenc"]},"application/xhtml+xml":{"source":"iana","compressible":true,"extensions":["xhtml","xht"]},"application/xhtml-voice+xml":{"source":"apache","compressible":true},"application/xliff+xml":{"source":"iana","compressible":true,"extensions":["xlf"]},"application/xml":{"source":"iana","compressible":true,"extensions":["xml","xsl","xsd","rng"]},"application/xml-dtd":{"source":"iana","compressible":true,"extensions":["dtd"]},"application/xml-external-parsed-entity":{"source":"iana"},"application/xml-patch+xml":{"source":"iana","compressible":true},"application/xmpp+xml":{"source":"iana","compressible":true},"application/xop+xml":{"source":"iana","compressible":true,"extensions":["xop"]},"application/xproc+xml":{"source":"apache","compressible":true,"extensions":["xpl"]},"application/xslt+xml":{"source":"iana","compressible":true,"extensions":["xsl","xslt"]},"application/xspf+xml":{"source":"apache","compressible":true,"extensions":["xspf"]},"application/xv+xml":{"source":"iana","compressible":true,"extensions":["mxml","xhvml","xvml","xvm"]},"application/yang":{"source":"iana","extensions":["yang"]},"application/yang-data+json":{"source":"iana","compressible":true},"application/yang-data+xml":{"source":"iana","compressible":true},"application/yang-patch+json":{"source":"iana","compressible":true},"application/yang-patch+xml":{"source":"iana","compressible":true},"application/yin+xml":{"source":"iana","compressible":true,"extensions":["yin"]},"application/zip":{"source":"iana","compressible":false,"extensions":["zip"]},"application/zlib":{"source":"iana"},"application/zstd":{"source":"iana"},"audio/1d-interleaved-parityfec":{"source":"iana"},"audio/32kadpcm":{"source":"iana"},"audio/3gpp":{"source":"iana","compressible":false,"extensions":["3gpp"]},"audio/3gpp2":{"source":"iana"},"audio/aac":{"source":"iana"},"audio/ac3":{"source":"iana"},"audio/adpcm":{"source":"apache","extensions":["adp"]},"audio/amr":{"source":"iana","extensions":["amr"]},"audio/amr-wb":{"source":"iana"},"audio/amr-wb+":{"source":"iana"},"audio/aptx":{"source":"iana"},"audio/asc":{"source":"iana"},"audio/atrac-advanced-lossless":{"source":"iana"},"audio/atrac-x":{"source":"iana"},"audio/atrac3":{"source":"iana"},"audio/basic":{"source":"iana","compressible":false,"extensions":["au","snd"]},"audio/bv16":{"source":"iana"},"audio/bv32":{"source":"iana"},"audio/clearmode":{"source":"iana"},"audio/cn":{"source":"iana"},"audio/dat12":{"source":"iana"},"audio/dls":{"source":"iana"},"audio/dsr-es201108":{"source":"iana"},"audio/dsr-es202050":{"source":"iana"},"audio/dsr-es202211":{"source":"iana"},"audio/dsr-es202212":{"source":"iana"},"audio/dv":{"source":"iana"},"audio/dvi4":{"source":"iana"},"audio/eac3":{"source":"iana"},"audio/encaprtp":{"source":"iana"},"audio/evrc":{"source":"iana"},"audio/evrc-qcp":{"source":"iana"},"audio/evrc0":{"source":"iana"},"audio/evrc1":{"source":"iana"},"audio/evrcb":{"source":"iana"},"audio/evrcb0":{"source":"iana"},"audio/evrcb1":{"source":"iana"},"audio/evrcnw":{"source":"iana"},"audio/evrcnw0":{"source":"iana"},"audio/evrcnw1":{"source":"iana"},"audio/evrcwb":{"source":"iana"},"audio/evrcwb0":{"source":"iana"},"audio/evrcwb1":{"source":"iana"},"audio/evs":{"source":"iana"},"audio/flexfec":{"source":"iana"},"audio/fwdred":{"source":"iana"},"audio/g711-0":{"source":"iana"},"audio/g719":{"source":"iana"},"audio/g722":{"source":"iana"},"audio/g7221":{"source":"iana"},"audio/g723":{"source":"iana"},"audio/g726-16":{"source":"iana"},"audio/g726-24":{"source":"iana"},"audio/g726-32":{"source":"iana"},"audio/g726-40":{"source":"iana"},"audio/g728":{"source":"iana"},"audio/g729":{"source":"iana"},"audio/g7291":{"source":"iana"},"audio/g729d":{"source":"iana"},"audio/g729e":{"source":"iana"},"audio/gsm":{"source":"iana"},"audio/gsm-efr":{"source":"iana"},"audio/gsm-hr-08":{"source":"iana"},"audio/ilbc":{"source":"iana"},"audio/ip-mr_v2.5":{"source":"iana"},"audio/isac":{"source":"apache"},"audio/l16":{"source":"iana"},"audio/l20":{"source":"iana"},"audio/l24":{"source":"iana","compressible":false},"audio/l8":{"source":"iana"},"audio/lpc":{"source":"iana"},"audio/melp":{"source":"iana"},"audio/melp1200":{"source":"iana"},"audio/melp2400":{"source":"iana"},"audio/melp600":{"source":"iana"},"audio/mhas":{"source":"iana"},"audio/midi":{"source":"apache","extensions":["mid","midi","kar","rmi"]},"audio/mobile-xmf":{"source":"iana","extensions":["mxmf"]},"audio/mp3":{"compressible":false,"extensions":["mp3"]},"audio/mp4":{"source":"iana","compressible":false,"extensions":["m4a","mp4a"]},"audio/mp4a-latm":{"source":"iana"},"audio/mpa":{"source":"iana"},"audio/mpa-robust":{"source":"iana"},"audio/mpeg":{"source":"iana","compressible":false,"extensions":["mpga","mp2","mp2a","mp3","m2a","m3a"]},"audio/mpeg4-generic":{"source":"iana"},"audio/musepack":{"source":"apache"},"audio/ogg":{"source":"iana","compressible":false,"extensions":["oga","ogg","spx","opus"]},"audio/opus":{"source":"iana"},"audio/parityfec":{"source":"iana"},"audio/pcma":{"source":"iana"},"audio/pcma-wb":{"source":"iana"},"audio/pcmu":{"source":"iana"},"audio/pcmu-wb":{"source":"iana"},"audio/prs.sid":{"source":"iana"},"audio/qcelp":{"source":"iana"},"audio/raptorfec":{"source":"iana"},"audio/red":{"source":"iana"},"audio/rtp-enc-aescm128":{"source":"iana"},"audio/rtp-midi":{"source":"iana"},"audio/rtploopback":{"source":"iana"},"audio/rtx":{"source":"iana"},"audio/s3m":{"source":"apache","extensions":["s3m"]},"audio/scip":{"source":"iana"},"audio/silk":{"source":"apache","extensions":["sil"]},"audio/smv":{"source":"iana"},"audio/smv-qcp":{"source":"iana"},"audio/smv0":{"source":"iana"},"audio/sofa":{"source":"iana"},"audio/sp-midi":{"source":"iana"},"audio/speex":{"source":"iana"},"audio/t140c":{"source":"iana"},"audio/t38":{"source":"iana"},"audio/telephone-event":{"source":"iana"},"audio/tetra_acelp":{"source":"iana"},"audio/tetra_acelp_bb":{"source":"iana"},"audio/tone":{"source":"iana"},"audio/tsvcis":{"source":"iana"},"audio/uemclip":{"source":"iana"},"audio/ulpfec":{"source":"iana"},"audio/usac":{"source":"iana"},"audio/vdvi":{"source":"iana"},"audio/vmr-wb":{"source":"iana"},"audio/vnd.3gpp.iufp":{"source":"iana"},"audio/vnd.4sb":{"source":"iana"},"audio/vnd.audiokoz":{"source":"iana"},"audio/vnd.celp":{"source":"iana"},"audio/vnd.cisco.nse":{"source":"iana"},"audio/vnd.cmles.radio-events":{"source":"iana"},"audio/vnd.cns.anp1":{"source":"iana"},"audio/vnd.cns.inf1":{"source":"iana"},"audio/vnd.dece.audio":{"source":"iana","extensions":["uva","uvva"]},"audio/vnd.digital-winds":{"source":"iana","extensions":["eol"]},"audio/vnd.dlna.adts":{"source":"iana"},"audio/vnd.dolby.heaac.1":{"source":"iana"},"audio/vnd.dolby.heaac.2":{"source":"iana"},"audio/vnd.dolby.mlp":{"source":"iana"},"audio/vnd.dolby.mps":{"source":"iana"},"audio/vnd.dolby.pl2":{"source":"iana"},"audio/vnd.dolby.pl2x":{"source":"iana"},"audio/vnd.dolby.pl2z":{"source":"iana"},"audio/vnd.dolby.pulse.1":{"source":"iana"},"audio/vnd.dra":{"source":"iana","extensions":["dra"]},"audio/vnd.dts":{"source":"iana","extensions":["dts"]},"audio/vnd.dts.hd":{"source":"iana","extensions":["dtshd"]},"audio/vnd.dts.uhd":{"source":"iana"},"audio/vnd.dvb.file":{"source":"iana"},"audio/vnd.everad.plj":{"source":"iana"},"audio/vnd.hns.audio":{"source":"iana"},"audio/vnd.lucent.voice":{"source":"iana","extensions":["lvp"]},"audio/vnd.ms-playready.media.pya":{"source":"iana","extensions":["pya"]},"audio/vnd.nokia.mobile-xmf":{"source":"iana"},"audio/vnd.nortel.vbk":{"source":"iana"},"audio/vnd.nuera.ecelp4800":{"source":"iana","extensions":["ecelp4800"]},"audio/vnd.nuera.ecelp7470":{"source":"iana","extensions":["ecelp7470"]},"audio/vnd.nuera.ecelp9600":{"source":"iana","extensions":["ecelp9600"]},"audio/vnd.octel.sbc":{"source":"iana"},"audio/vnd.presonus.multitrack":{"source":"iana"},"audio/vnd.qcelp":{"source":"iana"},"audio/vnd.rhetorex.32kadpcm":{"source":"iana"},"audio/vnd.rip":{"source":"iana","extensions":["rip"]},"audio/vnd.rn-realaudio":{"compressible":false},"audio/vnd.sealedmedia.softseal.mpeg":{"source":"iana"},"audio/vnd.vmx.cvsd":{"source":"iana"},"audio/vnd.wave":{"compressible":false},"audio/vorbis":{"source":"iana","compressible":false},"audio/vorbis-config":{"source":"iana"},"audio/wav":{"compressible":false,"extensions":["wav"]},"audio/wave":{"compressible":false,"extensions":["wav"]},"audio/webm":{"source":"apache","compressible":false,"extensions":["weba"]},"audio/x-aac":{"source":"apache","compressible":false,"extensions":["aac"]},"audio/x-aiff":{"source":"apache","extensions":["aif","aiff","aifc"]},"audio/x-caf":{"source":"apache","compressible":false,"extensions":["caf"]},"audio/x-flac":{"source":"apache","extensions":["flac"]},"audio/x-m4a":{"source":"nginx","extensions":["m4a"]},"audio/x-matroska":{"source":"apache","extensions":["mka"]},"audio/x-mpegurl":{"source":"apache","extensions":["m3u"]},"audio/x-ms-wax":{"source":"apache","extensions":["wax"]},"audio/x-ms-wma":{"source":"apache","extensions":["wma"]},"audio/x-pn-realaudio":{"source":"apache","extensions":["ram","ra"]},"audio/x-pn-realaudio-plugin":{"source":"apache","extensions":["rmp"]},"audio/x-realaudio":{"source":"nginx","extensions":["ra"]},"audio/x-tta":{"source":"apache"},"audio/x-wav":{"source":"apache","extensions":["wav"]},"audio/xm":{"source":"apache","extensions":["xm"]},"chemical/x-cdx":{"source":"apache","extensions":["cdx"]},"chemical/x-cif":{"source":"apache","extensions":["cif"]},"chemical/x-cmdf":{"source":"apache","extensions":["cmdf"]},"chemical/x-cml":{"source":"apache","extensions":["cml"]},"chemical/x-csml":{"source":"apache","extensions":["csml"]},"chemical/x-pdb":{"source":"apache"},"chemical/x-xyz":{"source":"apache","extensions":["xyz"]},"font/collection":{"source":"iana","extensions":["ttc"]},"font/otf":{"source":"iana","compressible":true,"extensions":["otf"]},"font/sfnt":{"source":"iana"},"font/ttf":{"source":"iana","compressible":true,"extensions":["ttf"]},"font/woff":{"source":"iana","extensions":["woff"]},"font/woff2":{"source":"iana","extensions":["woff2"]},"image/aces":{"source":"iana","extensions":["exr"]},"image/apng":{"compressible":false,"extensions":["apng"]},"image/avci":{"source":"iana","extensions":["avci"]},"image/avcs":{"source":"iana","extensions":["avcs"]},"image/avif":{"source":"iana","compressible":false,"extensions":["avif"]},"image/bmp":{"source":"iana","compressible":true,"extensions":["bmp"]},"image/cgm":{"source":"iana","extensions":["cgm"]},"image/dicom-rle":{"source":"iana","extensions":["drle"]},"image/emf":{"source":"iana","extensions":["emf"]},"image/fits":{"source":"iana","extensions":["fits"]},"image/g3fax":{"source":"iana","extensions":["g3"]},"image/gif":{"source":"iana","compressible":false,"extensions":["gif"]},"image/heic":{"source":"iana","extensions":["heic"]},"image/heic-sequence":{"source":"iana","extensions":["heics"]},"image/heif":{"source":"iana","extensions":["heif"]},"image/heif-sequence":{"source":"iana","extensions":["heifs"]},"image/hej2k":{"source":"iana","extensions":["hej2"]},"image/hsj2":{"source":"iana","extensions":["hsj2"]},"image/ief":{"source":"iana","extensions":["ief"]},"image/jls":{"source":"iana","extensions":["jls"]},"image/jp2":{"source":"iana","compressible":false,"extensions":["jp2","jpg2"]},"image/jpeg":{"source":"iana","compressible":false,"extensions":["jpeg","jpg","jpe"]},"image/jph":{"source":"iana","extensions":["jph"]},"image/jphc":{"source":"iana","extensions":["jhc"]},"image/jpm":{"source":"iana","compressible":false,"extensions":["jpm"]},"image/jpx":{"source":"iana","compressible":false,"extensions":["jpx","jpf"]},"image/jxr":{"source":"iana","extensions":["jxr"]},"image/jxra":{"source":"iana","extensions":["jxra"]},"image/jxrs":{"source":"iana","extensions":["jxrs"]},"image/jxs":{"source":"iana","extensions":["jxs"]},"image/jxsc":{"source":"iana","extensions":["jxsc"]},"image/jxsi":{"source":"iana","extensions":["jxsi"]},"image/jxss":{"source":"iana","extensions":["jxss"]},"image/ktx":{"source":"iana","extensions":["ktx"]},"image/ktx2":{"source":"iana","extensions":["ktx2"]},"image/naplps":{"source":"iana"},"image/pjpeg":{"compressible":false},"image/png":{"source":"iana","compressible":false,"extensions":["png"]},"image/prs.btif":{"source":"iana","extensions":["btif"]},"image/prs.pti":{"source":"iana","extensions":["pti"]},"image/pwg-raster":{"source":"iana"},"image/sgi":{"source":"apache","extensions":["sgi"]},"image/svg+xml":{"source":"iana","compressible":true,"extensions":["svg","svgz"]},"image/t38":{"source":"iana","extensions":["t38"]},"image/tiff":{"source":"iana","compressible":false,"extensions":["tif","tiff"]},"image/tiff-fx":{"source":"iana","extensions":["tfx"]},"image/vnd.adobe.photoshop":{"source":"iana","compressible":true,"extensions":["psd"]},"image/vnd.airzip.accelerator.azv":{"source":"iana","extensions":["azv"]},"image/vnd.cns.inf2":{"source":"iana"},"image/vnd.dece.graphic":{"source":"iana","extensions":["uvi","uvvi","uvg","uvvg"]},"image/vnd.djvu":{"source":"iana","extensions":["djvu","djv"]},"image/vnd.dvb.subtitle":{"source":"iana","extensions":["sub"]},"image/vnd.dwg":{"source":"iana","extensions":["dwg"]},"image/vnd.dxf":{"source":"iana","extensions":["dxf"]},"image/vnd.fastbidsheet":{"source":"iana","extensions":["fbs"]},"image/vnd.fpx":{"source":"iana","extensions":["fpx"]},"image/vnd.fst":{"source":"iana","extensions":["fst"]},"image/vnd.fujixerox.edmics-mmr":{"source":"iana","extensions":["mmr"]},"image/vnd.fujixerox.edmics-rlc":{"source":"iana","extensions":["rlc"]},"image/vnd.globalgraphics.pgb":{"source":"iana"},"image/vnd.microsoft.icon":{"source":"iana","compressible":true,"extensions":["ico"]},"image/vnd.mix":{"source":"iana"},"image/vnd.mozilla.apng":{"source":"iana"},"image/vnd.ms-dds":{"compressible":true,"extensions":["dds"]},"image/vnd.ms-modi":{"source":"iana","extensions":["mdi"]},"image/vnd.ms-photo":{"source":"apache","extensions":["wdp"]},"image/vnd.net-fpx":{"source":"iana","extensions":["npx"]},"image/vnd.pco.b16":{"source":"iana","extensions":["b16"]},"image/vnd.radiance":{"source":"iana"},"image/vnd.sealed.png":{"source":"iana"},"image/vnd.sealedmedia.softseal.gif":{"source":"iana"},"image/vnd.sealedmedia.softseal.jpg":{"source":"iana"},"image/vnd.svf":{"source":"iana"},"image/vnd.tencent.tap":{"source":"iana","extensions":["tap"]},"image/vnd.valve.source.texture":{"source":"iana","extensions":["vtf"]},"image/vnd.wap.wbmp":{"source":"iana","extensions":["wbmp"]},"image/vnd.xiff":{"source":"iana","extensions":["xif"]},"image/vnd.zbrush.pcx":{"source":"iana","extensions":["pcx"]},"image/webp":{"source":"apache","extensions":["webp"]},"image/wmf":{"source":"iana","extensions":["wmf"]},"image/x-3ds":{"source":"apache","extensions":["3ds"]},"image/x-cmu-raster":{"source":"apache","extensions":["ras"]},"image/x-cmx":{"source":"apache","extensions":["cmx"]},"image/x-freehand":{"source":"apache","extensions":["fh","fhc","fh4","fh5","fh7"]},"image/x-icon":{"source":"apache","compressible":true,"extensions":["ico"]},"image/x-jng":{"source":"nginx","extensions":["jng"]},"image/x-mrsid-image":{"source":"apache","extensions":["sid"]},"image/x-ms-bmp":{"source":"nginx","compressible":true,"extensions":["bmp"]},"image/x-pcx":{"source":"apache","extensions":["pcx"]},"image/x-pict":{"source":"apache","extensions":["pic","pct"]},"image/x-portable-anymap":{"source":"apache","extensions":["pnm"]},"image/x-portable-bitmap":{"source":"apache","extensions":["pbm"]},"image/x-portable-graymap":{"source":"apache","extensions":["pgm"]},"image/x-portable-pixmap":{"source":"apache","extensions":["ppm"]},"image/x-rgb":{"source":"apache","extensions":["rgb"]},"image/x-tga":{"source":"apache","extensions":["tga"]},"image/x-xbitmap":{"source":"apache","extensions":["xbm"]},"image/x-xcf":{"compressible":false},"image/x-xpixmap":{"source":"apache","extensions":["xpm"]},"image/x-xwindowdump":{"source":"apache","extensions":["xwd"]},"message/cpim":{"source":"iana"},"message/delivery-status":{"source":"iana"},"message/disposition-notification":{"source":"iana","extensions":["disposition-notification"]},"message/external-body":{"source":"iana"},"message/feedback-report":{"source":"iana"},"message/global":{"source":"iana","extensions":["u8msg"]},"message/global-delivery-status":{"source":"iana","extensions":["u8dsn"]},"message/global-disposition-notification":{"source":"iana","extensions":["u8mdn"]},"message/global-headers":{"source":"iana","extensions":["u8hdr"]},"message/http":{"source":"iana","compressible":false},"message/imdn+xml":{"source":"iana","compressible":true},"message/news":{"source":"iana"},"message/partial":{"source":"iana","compressible":false},"message/rfc822":{"source":"iana","compressible":true,"extensions":["eml","mime"]},"message/s-http":{"source":"iana"},"message/sip":{"source":"iana"},"message/sipfrag":{"source":"iana"},"message/tracking-status":{"source":"iana"},"message/vnd.si.simp":{"source":"iana"},"message/vnd.wfa.wsc":{"source":"iana","extensions":["wsc"]},"model/3mf":{"source":"iana","extensions":["3mf"]},"model/e57":{"source":"iana"},"model/gltf+json":{"source":"iana","compressible":true,"extensions":["gltf"]},"model/gltf-binary":{"source":"iana","compressible":true,"extensions":["glb"]},"model/iges":{"source":"iana","compressible":false,"extensions":["igs","iges"]},"model/mesh":{"source":"iana","compressible":false,"extensions":["msh","mesh","silo"]},"model/mtl":{"source":"iana","extensions":["mtl"]},"model/obj":{"source":"iana","extensions":["obj"]},"model/step":{"source":"iana"},"model/step+xml":{"source":"iana","compressible":true,"extensions":["stpx"]},"model/step+zip":{"source":"iana","compressible":false,"extensions":["stpz"]},"model/step-xml+zip":{"source":"iana","compressible":false,"extensions":["stpxz"]},"model/stl":{"source":"iana","extensions":["stl"]},"model/vnd.collada+xml":{"source":"iana","compressible":true,"extensions":["dae"]},"model/vnd.dwf":{"source":"iana","extensions":["dwf"]},"model/vnd.flatland.3dml":{"source":"iana"},"model/vnd.gdl":{"source":"iana","extensions":["gdl"]},"model/vnd.gs-gdl":{"source":"apache"},"model/vnd.gs.gdl":{"source":"iana"},"model/vnd.gtw":{"source":"iana","extensions":["gtw"]},"model/vnd.moml+xml":{"source":"iana","compressible":true},"model/vnd.mts":{"source":"iana","extensions":["mts"]},"model/vnd.opengex":{"source":"iana","extensions":["ogex"]},"model/vnd.parasolid.transmit.binary":{"source":"iana","extensions":["x_b"]},"model/vnd.parasolid.transmit.text":{"source":"iana","extensions":["x_t"]},"model/vnd.pytha.pyox":{"source":"iana"},"model/vnd.rosette.annotated-data-model":{"source":"iana"},"model/vnd.sap.vds":{"source":"iana","extensions":["vds"]},"model/vnd.usdz+zip":{"source":"iana","compressible":false,"extensions":["usdz"]},"model/vnd.valve.source.compiled-map":{"source":"iana","extensions":["bsp"]},"model/vnd.vtu":{"source":"iana","extensions":["vtu"]},"model/vrml":{"source":"iana","compressible":false,"extensions":["wrl","vrml"]},"model/x3d+binary":{"source":"apache","compressible":false,"extensions":["x3db","x3dbz"]},"model/x3d+fastinfoset":{"source":"iana","extensions":["x3db"]},"model/x3d+vrml":{"source":"apache","compressible":false,"extensions":["x3dv","x3dvz"]},"model/x3d+xml":{"source":"iana","compressible":true,"extensions":["x3d","x3dz"]},"model/x3d-vrml":{"source":"iana","extensions":["x3dv"]},"multipart/alternative":{"source":"iana","compressible":false},"multipart/appledouble":{"source":"iana"},"multipart/byteranges":{"source":"iana"},"multipart/digest":{"source":"iana"},"multipart/encrypted":{"source":"iana","compressible":false},"multipart/form-data":{"source":"iana","compressible":false},"multipart/header-set":{"source":"iana"},"multipart/mixed":{"source":"iana"},"multipart/multilingual":{"source":"iana"},"multipart/parallel":{"source":"iana"},"multipart/related":{"source":"iana","compressible":false},"multipart/report":{"source":"iana"},"multipart/signed":{"source":"iana","compressible":false},"multipart/vnd.bint.med-plus":{"source":"iana"},"multipart/voice-message":{"source":"iana"},"multipart/x-mixed-replace":{"source":"iana"},"text/1d-interleaved-parityfec":{"source":"iana"},"text/cache-manifest":{"source":"iana","compressible":true,"extensions":["appcache","manifest"]},"text/calendar":{"source":"iana","extensions":["ics","ifb"]},"text/calender":{"compressible":true},"text/cmd":{"compressible":true},"text/coffeescript":{"extensions":["coffee","litcoffee"]},"text/cql":{"source":"iana"},"text/cql-expression":{"source":"iana"},"text/cql-identifier":{"source":"iana"},"text/css":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["css"]},"text/csv":{"source":"iana","compressible":true,"extensions":["csv"]},"text/csv-schema":{"source":"iana"},"text/directory":{"source":"iana"},"text/dns":{"source":"iana"},"text/ecmascript":{"source":"iana"},"text/encaprtp":{"source":"iana"},"text/enriched":{"source":"iana"},"text/fhirpath":{"source":"iana"},"text/flexfec":{"source":"iana"},"text/fwdred":{"source":"iana"},"text/gff3":{"source":"iana"},"text/grammar-ref-list":{"source":"iana"},"text/html":{"source":"iana","compressible":true,"extensions":["html","htm","shtml"]},"text/jade":{"extensions":["jade"]},"text/javascript":{"source":"iana","compressible":true},"text/jcr-cnd":{"source":"iana"},"text/jsx":{"compressible":true,"extensions":["jsx"]},"text/less":{"compressible":true,"extensions":["less"]},"text/markdown":{"source":"iana","compressible":true,"extensions":["markdown","md"]},"text/mathml":{"source":"nginx","extensions":["mml"]},"text/mdx":{"compressible":true,"extensions":["mdx"]},"text/mizar":{"source":"iana"},"text/n3":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["n3"]},"text/parameters":{"source":"iana","charset":"UTF-8"},"text/parityfec":{"source":"iana"},"text/plain":{"source":"iana","compressible":true,"extensions":["txt","text","conf","def","list","log","in","ini"]},"text/provenance-notation":{"source":"iana","charset":"UTF-8"},"text/prs.fallenstein.rst":{"source":"iana"},"text/prs.lines.tag":{"source":"iana","extensions":["dsc"]},"text/prs.prop.logic":{"source":"iana"},"text/raptorfec":{"source":"iana"},"text/red":{"source":"iana"},"text/rfc822-headers":{"source":"iana"},"text/richtext":{"source":"iana","compressible":true,"extensions":["rtx"]},"text/rtf":{"source":"iana","compressible":true,"extensions":["rtf"]},"text/rtp-enc-aescm128":{"source":"iana"},"text/rtploopback":{"source":"iana"},"text/rtx":{"source":"iana"},"text/sgml":{"source":"iana","extensions":["sgml","sgm"]},"text/shaclc":{"source":"iana"},"text/shex":{"source":"iana","extensions":["shex"]},"text/slim":{"extensions":["slim","slm"]},"text/spdx":{"source":"iana","extensions":["spdx"]},"text/strings":{"source":"iana"},"text/stylus":{"extensions":["stylus","styl"]},"text/t140":{"source":"iana"},"text/tab-separated-values":{"source":"iana","compressible":true,"extensions":["tsv"]},"text/troff":{"source":"iana","extensions":["t","tr","roff","man","me","ms"]},"text/turtle":{"source":"iana","charset":"UTF-8","extensions":["ttl"]},"text/ulpfec":{"source":"iana"},"text/uri-list":{"source":"iana","compressible":true,"extensions":["uri","uris","urls"]},"text/vcard":{"source":"iana","compressible":true,"extensions":["vcard"]},"text/vnd.a":{"source":"iana"},"text/vnd.abc":{"source":"iana"},"text/vnd.ascii-art":{"source":"iana"},"text/vnd.curl":{"source":"iana","extensions":["curl"]},"text/vnd.curl.dcurl":{"source":"apache","extensions":["dcurl"]},"text/vnd.curl.mcurl":{"source":"apache","extensions":["mcurl"]},"text/vnd.curl.scurl":{"source":"apache","extensions":["scurl"]},"text/vnd.debian.copyright":{"source":"iana","charset":"UTF-8"},"text/vnd.dmclientscript":{"source":"iana"},"text/vnd.dvb.subtitle":{"source":"iana","extensions":["sub"]},"text/vnd.esmertec.theme-descriptor":{"source":"iana","charset":"UTF-8"},"text/vnd.familysearch.gedcom":{"source":"iana","extensions":["ged"]},"text/vnd.ficlab.flt":{"source":"iana"},"text/vnd.fly":{"source":"iana","extensions":["fly"]},"text/vnd.fmi.flexstor":{"source":"iana","extensions":["flx"]},"text/vnd.gml":{"source":"iana"},"text/vnd.graphviz":{"source":"iana","extensions":["gv"]},"text/vnd.hans":{"source":"iana"},"text/vnd.hgl":{"source":"iana"},"text/vnd.in3d.3dml":{"source":"iana","extensions":["3dml"]},"text/vnd.in3d.spot":{"source":"iana","extensions":["spot"]},"text/vnd.iptc.newsml":{"source":"iana"},"text/vnd.iptc.nitf":{"source":"iana"},"text/vnd.latex-z":{"source":"iana"},"text/vnd.motorola.reflex":{"source":"iana"},"text/vnd.ms-mediapackage":{"source":"iana"},"text/vnd.net2phone.commcenter.command":{"source":"iana"},"text/vnd.radisys.msml-basic-layout":{"source":"iana"},"text/vnd.senx.warpscript":{"source":"iana"},"text/vnd.si.uricatalogue":{"source":"iana"},"text/vnd.sosi":{"source":"iana"},"text/vnd.sun.j2me.app-descriptor":{"source":"iana","charset":"UTF-8","extensions":["jad"]},"text/vnd.trolltech.linguist":{"source":"iana","charset":"UTF-8"},"text/vnd.wap.si":{"source":"iana"},"text/vnd.wap.sl":{"source":"iana"},"text/vnd.wap.wml":{"source":"iana","extensions":["wml"]},"text/vnd.wap.wmlscript":{"source":"iana","extensions":["wmls"]},"text/vtt":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["vtt"]},"text/x-asm":{"source":"apache","extensions":["s","asm"]},"text/x-c":{"source":"apache","extensions":["c","cc","cxx","cpp","h","hh","dic"]},"text/x-component":{"source":"nginx","extensions":["htc"]},"text/x-fortran":{"source":"apache","extensions":["f","for","f77","f90"]},"text/x-gwt-rpc":{"compressible":true},"text/x-handlebars-template":{"extensions":["hbs"]},"text/x-java-source":{"source":"apache","extensions":["java"]},"text/x-jquery-tmpl":{"compressible":true},"text/x-lua":{"extensions":["lua"]},"text/x-markdown":{"compressible":true,"extensions":["mkd"]},"text/x-nfo":{"source":"apache","extensions":["nfo"]},"text/x-opml":{"source":"apache","extensions":["opml"]},"text/x-org":{"compressible":true,"extensions":["org"]},"text/x-pascal":{"source":"apache","extensions":["p","pas"]},"text/x-processing":{"compressible":true,"extensions":["pde"]},"text/x-sass":{"extensions":["sass"]},"text/x-scss":{"extensions":["scss"]},"text/x-setext":{"source":"apache","extensions":["etx"]},"text/x-sfv":{"source":"apache","extensions":["sfv"]},"text/x-suse-ymp":{"compressible":true,"extensions":["ymp"]},"text/x-uuencode":{"source":"apache","extensions":["uu"]},"text/x-vcalendar":{"source":"apache","extensions":["vcs"]},"text/x-vcard":{"source":"apache","extensions":["vcf"]},"text/xml":{"source":"iana","compressible":true,"extensions":["xml"]},"text/xml-external-parsed-entity":{"source":"iana"},"text/yaml":{"compressible":true,"extensions":["yaml","yml"]},"video/1d-interleaved-parityfec":{"source":"iana"},"video/3gpp":{"source":"iana","extensions":["3gp","3gpp"]},"video/3gpp-tt":{"source":"iana"},"video/3gpp2":{"source":"iana","extensions":["3g2"]},"video/av1":{"source":"iana"},"video/bmpeg":{"source":"iana"},"video/bt656":{"source":"iana"},"video/celb":{"source":"iana"},"video/dv":{"source":"iana"},"video/encaprtp":{"source":"iana"},"video/ffv1":{"source":"iana"},"video/flexfec":{"source":"iana"},"video/h261":{"source":"iana","extensions":["h261"]},"video/h263":{"source":"iana","extensions":["h263"]},"video/h263-1998":{"source":"iana"},"video/h263-2000":{"source":"iana"},"video/h264":{"source":"iana","extensions":["h264"]},"video/h264-rcdo":{"source":"iana"},"video/h264-svc":{"source":"iana"},"video/h265":{"source":"iana"},"video/iso.segment":{"source":"iana","extensions":["m4s"]},"video/jpeg":{"source":"iana","extensions":["jpgv"]},"video/jpeg2000":{"source":"iana"},"video/jpm":{"source":"apache","extensions":["jpm","jpgm"]},"video/jxsv":{"source":"iana"},"video/mj2":{"source":"iana","extensions":["mj2","mjp2"]},"video/mp1s":{"source":"iana"},"video/mp2p":{"source":"iana"},"video/mp2t":{"source":"iana","extensions":["ts"]},"video/mp4":{"source":"iana","compressible":false,"extensions":["mp4","mp4v","mpg4"]},"video/mp4v-es":{"source":"iana"},"video/mpeg":{"source":"iana","compressible":false,"extensions":["mpeg","mpg","mpe","m1v","m2v"]},"video/mpeg4-generic":{"source":"iana"},"video/mpv":{"source":"iana"},"video/nv":{"source":"iana"},"video/ogg":{"source":"iana","compressible":false,"extensions":["ogv"]},"video/parityfec":{"source":"iana"},"video/pointer":{"source":"iana"},"video/quicktime":{"source":"iana","compressible":false,"extensions":["qt","mov"]},"video/raptorfec":{"source":"iana"},"video/raw":{"source":"iana"},"video/rtp-enc-aescm128":{"source":"iana"},"video/rtploopback":{"source":"iana"},"video/rtx":{"source":"iana"},"video/scip":{"source":"iana"},"video/smpte291":{"source":"iana"},"video/smpte292m":{"source":"iana"},"video/ulpfec":{"source":"iana"},"video/vc1":{"source":"iana"},"video/vc2":{"source":"iana"},"video/vnd.cctv":{"source":"iana"},"video/vnd.dece.hd":{"source":"iana","extensions":["uvh","uvvh"]},"video/vnd.dece.mobile":{"source":"iana","extensions":["uvm","uvvm"]},"video/vnd.dece.mp4":{"source":"iana"},"video/vnd.dece.pd":{"source":"iana","extensions":["uvp","uvvp"]},"video/vnd.dece.sd":{"source":"iana","extensions":["uvs","uvvs"]},"video/vnd.dece.video":{"source":"iana","extensions":["uvv","uvvv"]},"video/vnd.directv.mpeg":{"source":"iana"},"video/vnd.directv.mpeg-tts":{"source":"iana"},"video/vnd.dlna.mpeg-tts":{"source":"iana"},"video/vnd.dvb.file":{"source":"iana","extensions":["dvb"]},"video/vnd.fvt":{"source":"iana","extensions":["fvt"]},"video/vnd.hns.video":{"source":"iana"},"video/vnd.iptvforum.1dparityfec-1010":{"source":"iana"},"video/vnd.iptvforum.1dparityfec-2005":{"source":"iana"},"video/vnd.iptvforum.2dparityfec-1010":{"source":"iana"},"video/vnd.iptvforum.2dparityfec-2005":{"source":"iana"},"video/vnd.iptvforum.ttsavc":{"source":"iana"},"video/vnd.iptvforum.ttsmpeg2":{"source":"iana"},"video/vnd.motorola.video":{"source":"iana"},"video/vnd.motorola.videop":{"source":"iana"},"video/vnd.mpegurl":{"source":"iana","extensions":["mxu","m4u"]},"video/vnd.ms-playready.media.pyv":{"source":"iana","extensions":["pyv"]},"video/vnd.nokia.interleaved-multimedia":{"source":"iana"},"video/vnd.nokia.mp4vr":{"source":"iana"},"video/vnd.nokia.videovoip":{"source":"iana"},"video/vnd.objectvideo":{"source":"iana"},"video/vnd.radgamettools.bink":{"source":"iana"},"video/vnd.radgamettools.smacker":{"source":"iana"},"video/vnd.sealed.mpeg1":{"source":"iana"},"video/vnd.sealed.mpeg4":{"source":"iana"},"video/vnd.sealed.swf":{"source":"iana"},"video/vnd.sealedmedia.softseal.mov":{"source":"iana"},"video/vnd.uvvu.mp4":{"source":"iana","extensions":["uvu","uvvu"]},"video/vnd.vivo":{"source":"iana","extensions":["viv"]},"video/vnd.youtube.yt":{"source":"iana"},"video/vp8":{"source":"iana"},"video/vp9":{"source":"iana"},"video/webm":{"source":"apache","compressible":false,"extensions":["webm"]},"video/x-f4v":{"source":"apache","extensions":["f4v"]},"video/x-fli":{"source":"apache","extensions":["fli"]},"video/x-flv":{"source":"apache","compressible":false,"extensions":["flv"]},"video/x-m4v":{"source":"apache","extensions":["m4v"]},"video/x-matroska":{"source":"apache","compressible":false,"extensions":["mkv","mk3d","mks"]},"video/x-mng":{"source":"apache","extensions":["mng"]},"video/x-ms-asf":{"source":"apache","extensions":["asf","asx"]},"video/x-ms-vob":{"source":"apache","extensions":["vob"]},"video/x-ms-wm":{"source":"apache","extensions":["wm"]},"video/x-ms-wmv":{"source":"apache","compressible":false,"extensions":["wmv"]},"video/x-ms-wmx":{"source":"apache","extensions":["wmx"]},"video/x-ms-wvx":{"source":"apache","extensions":["wvx"]},"video/x-msvideo":{"source":"apache","extensions":["avi"]},"video/x-sgi-movie":{"source":"apache","extensions":["movie"]},"video/x-smv":{"source":"apache","extensions":["smv"]},"x-conference/x-cooltalk":{"source":"apache","extensions":["ice"]},"x-shader/x-fragment":{"compressible":true},"x-shader/x-vertex":{"compressible":true}}');
-
-/***/ }),
-
-/***/ 9415:
-/***/ ((module) => {
-
-"use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"application/andrew-inset":["ez"],"application/applixware":["aw"],"application/atom+xml":["atom"],"application/atomcat+xml":["atomcat"],"application/atomsvc+xml":["atomsvc"],"application/bdoc":["bdoc"],"application/ccxml+xml":["ccxml"],"application/cdmi-capability":["cdmia"],"application/cdmi-container":["cdmic"],"application/cdmi-domain":["cdmid"],"application/cdmi-object":["cdmio"],"application/cdmi-queue":["cdmiq"],"application/cu-seeme":["cu"],"application/dash+xml":["mpd"],"application/davmount+xml":["davmount"],"application/docbook+xml":["dbk"],"application/dssc+der":["dssc"],"application/dssc+xml":["xdssc"],"application/ecmascript":["ecma"],"application/emma+xml":["emma"],"application/epub+zip":["epub"],"application/exi":["exi"],"application/font-tdpfr":["pfr"],"application/font-woff":[],"application/font-woff2":[],"application/geo+json":["geojson"],"application/gml+xml":["gml"],"application/gpx+xml":["gpx"],"application/gxf":["gxf"],"application/gzip":["gz"],"application/hyperstudio":["stk"],"application/inkml+xml":["ink","inkml"],"application/ipfix":["ipfix"],"application/java-archive":["jar","war","ear"],"application/java-serialized-object":["ser"],"application/java-vm":["class"],"application/javascript":["js","mjs"],"application/json":["json","map"],"application/json5":["json5"],"application/jsonml+json":["jsonml"],"application/ld+json":["jsonld"],"application/lost+xml":["lostxml"],"application/mac-binhex40":["hqx"],"application/mac-compactpro":["cpt"],"application/mads+xml":["mads"],"application/manifest+json":["webmanifest"],"application/marc":["mrc"],"application/marcxml+xml":["mrcx"],"application/mathematica":["ma","nb","mb"],"application/mathml+xml":["mathml"],"application/mbox":["mbox"],"application/mediaservercontrol+xml":["mscml"],"application/metalink+xml":["metalink"],"application/metalink4+xml":["meta4"],"application/mets+xml":["mets"],"application/mods+xml":["mods"],"application/mp21":["m21","mp21"],"application/mp4":["mp4s","m4p"],"application/msword":["doc","dot"],"application/mxf":["mxf"],"application/octet-stream":["bin","dms","lrf","mar","so","dist","distz","pkg","bpk","dump","elc","deploy","exe","dll","deb","dmg","iso","img","msi","msp","msm","buffer"],"application/oda":["oda"],"application/oebps-package+xml":["opf"],"application/ogg":["ogx"],"application/omdoc+xml":["omdoc"],"application/onenote":["onetoc","onetoc2","onetmp","onepkg"],"application/oxps":["oxps"],"application/patch-ops-error+xml":["xer"],"application/pdf":["pdf"],"application/pgp-encrypted":["pgp"],"application/pgp-signature":["asc","sig"],"application/pics-rules":["prf"],"application/pkcs10":["p10"],"application/pkcs7-mime":["p7m","p7c"],"application/pkcs7-signature":["p7s"],"application/pkcs8":["p8"],"application/pkix-attr-cert":["ac"],"application/pkix-cert":["cer"],"application/pkix-crl":["crl"],"application/pkix-pkipath":["pkipath"],"application/pkixcmp":["pki"],"application/pls+xml":["pls"],"application/postscript":["ai","eps","ps"],"application/prs.cww":["cww"],"application/pskc+xml":["pskcxml"],"application/raml+yaml":["raml"],"application/rdf+xml":["rdf"],"application/reginfo+xml":["rif"],"application/relax-ng-compact-syntax":["rnc"],"application/resource-lists+xml":["rl"],"application/resource-lists-diff+xml":["rld"],"application/rls-services+xml":["rs"],"application/rpki-ghostbusters":["gbr"],"application/rpki-manifest":["mft"],"application/rpki-roa":["roa"],"application/rsd+xml":["rsd"],"application/rss+xml":["rss"],"application/rtf":["rtf"],"application/sbml+xml":["sbml"],"application/scvp-cv-request":["scq"],"application/scvp-cv-response":["scs"],"application/scvp-vp-request":["spq"],"application/scvp-vp-response":["spp"],"application/sdp":["sdp"],"application/set-payment-initiation":["setpay"],"application/set-registration-initiation":["setreg"],"application/shf+xml":["shf"],"application/smil+xml":["smi","smil"],"application/sparql-query":["rq"],"application/sparql-results+xml":["srx"],"application/srgs":["gram"],"application/srgs+xml":["grxml"],"application/sru+xml":["sru"],"application/ssdl+xml":["ssdl"],"application/ssml+xml":["ssml"],"application/tei+xml":["tei","teicorpus"],"application/thraud+xml":["tfi"],"application/timestamped-data":["tsd"],"application/vnd.3gpp.pic-bw-large":["plb"],"application/vnd.3gpp.pic-bw-small":["psb"],"application/vnd.3gpp.pic-bw-var":["pvb"],"application/vnd.3gpp2.tcap":["tcap"],"application/vnd.3m.post-it-notes":["pwn"],"application/vnd.accpac.simply.aso":["aso"],"application/vnd.accpac.simply.imp":["imp"],"application/vnd.acucobol":["acu"],"application/vnd.acucorp":["atc","acutc"],"application/vnd.adobe.air-application-installer-package+zip":["air"],"application/vnd.adobe.formscentral.fcdt":["fcdt"],"application/vnd.adobe.fxp":["fxp","fxpl"],"application/vnd.adobe.xdp+xml":["xdp"],"application/vnd.adobe.xfdf":["xfdf"],"application/vnd.ahead.space":["ahead"],"application/vnd.airzip.filesecure.azf":["azf"],"application/vnd.airzip.filesecure.azs":["azs"],"application/vnd.amazon.ebook":["azw"],"application/vnd.americandynamics.acc":["acc"],"application/vnd.amiga.ami":["ami"],"application/vnd.android.package-archive":["apk"],"application/vnd.anser-web-certificate-issue-initiation":["cii"],"application/vnd.anser-web-funds-transfer-initiation":["fti"],"application/vnd.antix.game-component":["atx"],"application/vnd.apple.installer+xml":["mpkg"],"application/vnd.apple.mpegurl":["m3u8"],"application/vnd.apple.pkpass":["pkpass"],"application/vnd.aristanetworks.swi":["swi"],"application/vnd.astraea-software.iota":["iota"],"application/vnd.audiograph":["aep"],"application/vnd.blueice.multipass":["mpm"],"application/vnd.bmi":["bmi"],"application/vnd.businessobjects":["rep"],"application/vnd.chemdraw+xml":["cdxml"],"application/vnd.chipnuts.karaoke-mmd":["mmd"],"application/vnd.cinderella":["cdy"],"application/vnd.claymore":["cla"],"application/vnd.cloanto.rp9":["rp9"],"application/vnd.clonk.c4group":["c4g","c4d","c4f","c4p","c4u"],"application/vnd.cluetrust.cartomobile-config":["c11amc"],"application/vnd.cluetrust.cartomobile-config-pkg":["c11amz"],"application/vnd.commonspace":["csp"],"application/vnd.contact.cmsg":["cdbcmsg"],"application/vnd.cosmocaller":["cmc"],"application/vnd.crick.clicker":["clkx"],"application/vnd.crick.clicker.keyboard":["clkk"],"application/vnd.crick.clicker.palette":["clkp"],"application/vnd.crick.clicker.template":["clkt"],"application/vnd.crick.clicker.wordbank":["clkw"],"application/vnd.criticaltools.wbs+xml":["wbs"],"application/vnd.ctc-posml":["pml"],"application/vnd.cups-ppd":["ppd"],"application/vnd.curl.car":["car"],"application/vnd.curl.pcurl":["pcurl"],"application/vnd.dart":["dart"],"application/vnd.data-vision.rdz":["rdz"],"application/vnd.dece.data":["uvf","uvvf","uvd","uvvd"],"application/vnd.dece.ttml+xml":["uvt","uvvt"],"application/vnd.dece.unspecified":["uvx","uvvx"],"application/vnd.dece.zip":["uvz","uvvz"],"application/vnd.denovo.fcselayout-link":["fe_launch"],"application/vnd.dna":["dna"],"application/vnd.dolby.mlp":["mlp"],"application/vnd.dpgraph":["dpg"],"application/vnd.dreamfactory":["dfac"],"application/vnd.ds-keypoint":["kpxx"],"application/vnd.dvb.ait":["ait"],"application/vnd.dvb.service":["svc"],"application/vnd.dynageo":["geo"],"application/vnd.ecowin.chart":["mag"],"application/vnd.enliven":["nml"],"application/vnd.epson.esf":["esf"],"application/vnd.epson.msf":["msf"],"application/vnd.epson.quickanime":["qam"],"application/vnd.epson.salt":["slt"],"application/vnd.epson.ssf":["ssf"],"application/vnd.eszigno3+xml":["es3","et3"],"application/vnd.ezpix-album":["ez2"],"application/vnd.ezpix-package":["ez3"],"application/vnd.fdf":["fdf"],"application/vnd.fdsn.mseed":["mseed"],"application/vnd.fdsn.seed":["seed","dataless"],"application/vnd.flographit":["gph"],"application/vnd.fluxtime.clip":["ftc"],"application/vnd.framemaker":["fm","frame","maker","book"],"application/vnd.frogans.fnc":["fnc"],"application/vnd.frogans.ltf":["ltf"],"application/vnd.fsc.weblaunch":["fsc"],"application/vnd.fujitsu.oasys":["oas"],"application/vnd.fujitsu.oasys2":["oa2"],"application/vnd.fujitsu.oasys3":["oa3"],"application/vnd.fujitsu.oasysgp":["fg5"],"application/vnd.fujitsu.oasysprs":["bh2"],"application/vnd.fujixerox.ddd":["ddd"],"application/vnd.fujixerox.docuworks":["xdw"],"application/vnd.fujixerox.docuworks.binder":["xbd"],"application/vnd.fuzzysheet":["fzs"],"application/vnd.genomatix.tuxedo":["txd"],"application/vnd.geogebra.file":["ggb"],"application/vnd.geogebra.tool":["ggt"],"application/vnd.geometry-explorer":["gex","gre"],"application/vnd.geonext":["gxt"],"application/vnd.geoplan":["g2w"],"application/vnd.geospace":["g3w"],"application/vnd.gmx":["gmx"],"application/vnd.google-apps.document":["gdoc"],"application/vnd.google-apps.presentation":["gslides"],"application/vnd.google-apps.spreadsheet":["gsheet"],"application/vnd.google-earth.kml+xml":["kml"],"application/vnd.google-earth.kmz":["kmz"],"application/vnd.grafeq":["gqf","gqs"],"application/vnd.groove-account":["gac"],"application/vnd.groove-help":["ghf"],"application/vnd.groove-identity-message":["gim"],"application/vnd.groove-injector":["grv"],"application/vnd.groove-tool-message":["gtm"],"application/vnd.groove-tool-template":["tpl"],"application/vnd.groove-vcard":["vcg"],"application/vnd.hal+xml":["hal"],"application/vnd.handheld-entertainment+xml":["zmm"],"application/vnd.hbci":["hbci"],"application/vnd.hhe.lesson-player":["les"],"application/vnd.hp-hpgl":["hpgl"],"application/vnd.hp-hpid":["hpid"],"application/vnd.hp-hps":["hps"],"application/vnd.hp-jlyt":["jlt"],"application/vnd.hp-pcl":["pcl"],"application/vnd.hp-pclxl":["pclxl"],"application/vnd.hydrostatix.sof-data":["sfd-hdstx"],"application/vnd.ibm.minipay":["mpy"],"application/vnd.ibm.modcap":["afp","listafp","list3820"],"application/vnd.ibm.rights-management":["irm"],"application/vnd.ibm.secure-container":["sc"],"application/vnd.iccprofile":["icc","icm"],"application/vnd.igloader":["igl"],"application/vnd.immervision-ivp":["ivp"],"application/vnd.immervision-ivu":["ivu"],"application/vnd.insors.igm":["igm"],"application/vnd.intercon.formnet":["xpw","xpx"],"application/vnd.intergeo":["i2g"],"application/vnd.intu.qbo":["qbo"],"application/vnd.intu.qfx":["qfx"],"application/vnd.ipunplugged.rcprofile":["rcprofile"],"application/vnd.irepository.package+xml":["irp"],"application/vnd.is-xpr":["xpr"],"application/vnd.isac.fcs":["fcs"],"application/vnd.jam":["jam"],"application/vnd.jcp.javame.midlet-rms":["rms"],"application/vnd.jisp":["jisp"],"application/vnd.joost.joda-archive":["joda"],"application/vnd.kahootz":["ktz","ktr"],"application/vnd.kde.karbon":["karbon"],"application/vnd.kde.kchart":["chrt"],"application/vnd.kde.kformula":["kfo"],"application/vnd.kde.kivio":["flw"],"application/vnd.kde.kontour":["kon"],"application/vnd.kde.kpresenter":["kpr","kpt"],"application/vnd.kde.kspread":["ksp"],"application/vnd.kde.kword":["kwd","kwt"],"application/vnd.kenameaapp":["htke"],"application/vnd.kidspiration":["kia"],"application/vnd.kinar":["kne","knp"],"application/vnd.koan":["skp","skd","skt","skm"],"application/vnd.kodak-descriptor":["sse"],"application/vnd.las.las+xml":["lasxml"],"application/vnd.llamagraphics.life-balance.desktop":["lbd"],"application/vnd.llamagraphics.life-balance.exchange+xml":["lbe"],"application/vnd.lotus-1-2-3":["123"],"application/vnd.lotus-approach":["apr"],"application/vnd.lotus-freelance":["pre"],"application/vnd.lotus-notes":["nsf"],"application/vnd.lotus-organizer":["org"],"application/vnd.lotus-screencam":["scm"],"application/vnd.lotus-wordpro":["lwp"],"application/vnd.macports.portpkg":["portpkg"],"application/vnd.mcd":["mcd"],"application/vnd.medcalcdata":["mc1"],"application/vnd.mediastation.cdkey":["cdkey"],"application/vnd.mfer":["mwf"],"application/vnd.mfmp":["mfm"],"application/vnd.micrografx.flo":["flo"],"application/vnd.micrografx.igx":["igx"],"application/vnd.mif":["mif"],"application/vnd.mobius.daf":["daf"],"application/vnd.mobius.dis":["dis"],"application/vnd.mobius.mbk":["mbk"],"application/vnd.mobius.mqy":["mqy"],"application/vnd.mobius.msl":["msl"],"application/vnd.mobius.plc":["plc"],"application/vnd.mobius.txf":["txf"],"application/vnd.mophun.application":["mpn"],"application/vnd.mophun.certificate":["mpc"],"application/vnd.mozilla.xul+xml":["xul"],"application/vnd.ms-artgalry":["cil"],"application/vnd.ms-cab-compressed":["cab"],"application/vnd.ms-excel":["xls","xlm","xla","xlc","xlt","xlw"],"application/vnd.ms-excel.addin.macroenabled.12":["xlam"],"application/vnd.ms-excel.sheet.binary.macroenabled.12":["xlsb"],"application/vnd.ms-excel.sheet.macroenabled.12":["xlsm"],"application/vnd.ms-excel.template.macroenabled.12":["xltm"],"application/vnd.ms-fontobject":["eot"],"application/vnd.ms-htmlhelp":["chm"],"application/vnd.ms-ims":["ims"],"application/vnd.ms-lrm":["lrm"],"application/vnd.ms-officetheme":["thmx"],"application/vnd.ms-outlook":["msg"],"application/vnd.ms-pki.seccat":["cat"],"application/vnd.ms-pki.stl":["stl"],"application/vnd.ms-powerpoint":["ppt","pps","pot"],"application/vnd.ms-powerpoint.addin.macroenabled.12":["ppam"],"application/vnd.ms-powerpoint.presentation.macroenabled.12":["pptm"],"application/vnd.ms-powerpoint.slide.macroenabled.12":["sldm"],"application/vnd.ms-powerpoint.slideshow.macroenabled.12":["ppsm"],"application/vnd.ms-powerpoint.template.macroenabled.12":["potm"],"application/vnd.ms-project":["mpp","mpt"],"application/vnd.ms-word.document.macroenabled.12":["docm"],"application/vnd.ms-word.template.macroenabled.12":["dotm"],"application/vnd.ms-works":["wps","wks","wcm","wdb"],"application/vnd.ms-wpl":["wpl"],"application/vnd.ms-xpsdocument":["xps"],"application/vnd.mseq":["mseq"],"application/vnd.musician":["mus"],"application/vnd.muvee.style":["msty"],"application/vnd.mynfc":["taglet"],"application/vnd.neurolanguage.nlu":["nlu"],"application/vnd.nitf":["ntf","nitf"],"application/vnd.noblenet-directory":["nnd"],"application/vnd.noblenet-sealer":["nns"],"application/vnd.noblenet-web":["nnw"],"application/vnd.nokia.n-gage.data":["ngdat"],"application/vnd.nokia.n-gage.symbian.install":["n-gage"],"application/vnd.nokia.radio-preset":["rpst"],"application/vnd.nokia.radio-presets":["rpss"],"application/vnd.novadigm.edm":["edm"],"application/vnd.novadigm.edx":["edx"],"application/vnd.novadigm.ext":["ext"],"application/vnd.oasis.opendocument.chart":["odc"],"application/vnd.oasis.opendocument.chart-template":["otc"],"application/vnd.oasis.opendocument.database":["odb"],"application/vnd.oasis.opendocument.formula":["odf"],"application/vnd.oasis.opendocument.formula-template":["odft"],"application/vnd.oasis.opendocument.graphics":["odg"],"application/vnd.oasis.opendocument.graphics-template":["otg"],"application/vnd.oasis.opendocument.image":["odi"],"application/vnd.oasis.opendocument.image-template":["oti"],"application/vnd.oasis.opendocument.presentation":["odp"],"application/vnd.oasis.opendocument.presentation-template":["otp"],"application/vnd.oasis.opendocument.spreadsheet":["ods"],"application/vnd.oasis.opendocument.spreadsheet-template":["ots"],"application/vnd.oasis.opendocument.text":["odt"],"application/vnd.oasis.opendocument.text-master":["odm"],"application/vnd.oasis.opendocument.text-template":["ott"],"application/vnd.oasis.opendocument.text-web":["oth"],"application/vnd.olpc-sugar":["xo"],"application/vnd.oma.dd2+xml":["dd2"],"application/vnd.openofficeorg.extension":["oxt"],"application/vnd.openxmlformats-officedocument.presentationml.presentation":["pptx"],"application/vnd.openxmlformats-officedocument.presentationml.slide":["sldx"],"application/vnd.openxmlformats-officedocument.presentationml.slideshow":["ppsx"],"application/vnd.openxmlformats-officedocument.presentationml.template":["potx"],"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":["xlsx"],"application/vnd.openxmlformats-officedocument.spreadsheetml.template":["xltx"],"application/vnd.openxmlformats-officedocument.wordprocessingml.document":["docx"],"application/vnd.openxmlformats-officedocument.wordprocessingml.template":["dotx"],"application/vnd.osgeo.mapguide.package":["mgp"],"application/vnd.osgi.dp":["dp"],"application/vnd.osgi.subsystem":["esa"],"application/vnd.palm":["pdb","pqa","oprc"],"application/vnd.pawaafile":["paw"],"application/vnd.pg.format":["str"],"application/vnd.pg.osasli":["ei6"],"application/vnd.picsel":["efif"],"application/vnd.pmi.widget":["wg"],"application/vnd.pocketlearn":["plf"],"application/vnd.powerbuilder6":["pbd"],"application/vnd.previewsystems.box":["box"],"application/vnd.proteus.magazine":["mgz"],"application/vnd.publishare-delta-tree":["qps"],"application/vnd.pvi.ptid1":["ptid"],"application/vnd.quark.quarkxpress":["qxd","qxt","qwd","qwt","qxl","qxb"],"application/vnd.realvnc.bed":["bed"],"application/vnd.recordare.musicxml":["mxl"],"application/vnd.recordare.musicxml+xml":["musicxml"],"application/vnd.rig.cryptonote":["cryptonote"],"application/vnd.rim.cod":["cod"],"application/vnd.rn-realmedia":["rm"],"application/vnd.rn-realmedia-vbr":["rmvb"],"application/vnd.route66.link66+xml":["link66"],"application/vnd.sailingtracker.track":["st"],"application/vnd.seemail":["see"],"application/vnd.sema":["sema"],"application/vnd.semd":["semd"],"application/vnd.semf":["semf"],"application/vnd.shana.informed.formdata":["ifm"],"application/vnd.shana.informed.formtemplate":["itp"],"application/vnd.shana.informed.interchange":["iif"],"application/vnd.shana.informed.package":["ipk"],"application/vnd.simtech-mindmapper":["twd","twds"],"application/vnd.smaf":["mmf"],"application/vnd.smart.teacher":["teacher"],"application/vnd.solent.sdkm+xml":["sdkm","sdkd"],"application/vnd.spotfire.dxp":["dxp"],"application/vnd.spotfire.sfs":["sfs"],"application/vnd.stardivision.calc":["sdc"],"application/vnd.stardivision.draw":["sda"],"application/vnd.stardivision.impress":["sdd"],"application/vnd.stardivision.math":["smf"],"application/vnd.stardivision.writer":["sdw","vor"],"application/vnd.stardivision.writer-global":["sgl"],"application/vnd.stepmania.package":["smzip"],"application/vnd.stepmania.stepchart":["sm"],"application/vnd.sun.wadl+xml":["wadl"],"application/vnd.sun.xml.calc":["sxc"],"application/vnd.sun.xml.calc.template":["stc"],"application/vnd.sun.xml.draw":["sxd"],"application/vnd.sun.xml.draw.template":["std"],"application/vnd.sun.xml.impress":["sxi"],"application/vnd.sun.xml.impress.template":["sti"],"application/vnd.sun.xml.math":["sxm"],"application/vnd.sun.xml.writer":["sxw"],"application/vnd.sun.xml.writer.global":["sxg"],"application/vnd.sun.xml.writer.template":["stw"],"application/vnd.sus-calendar":["sus","susp"],"application/vnd.svd":["svd"],"application/vnd.symbian.install":["sis","sisx"],"application/vnd.syncml+xml":["xsm"],"application/vnd.syncml.dm+wbxml":["bdm"],"application/vnd.syncml.dm+xml":["xdm"],"application/vnd.tao.intent-module-archive":["tao"],"application/vnd.tcpdump.pcap":["pcap","cap","dmp"],"application/vnd.tmobile-livetv":["tmo"],"application/vnd.trid.tpt":["tpt"],"application/vnd.triscape.mxs":["mxs"],"application/vnd.trueapp":["tra"],"application/vnd.ufdl":["ufd","ufdl"],"application/vnd.uiq.theme":["utz"],"application/vnd.umajin":["umj"],"application/vnd.unity":["unityweb"],"application/vnd.uoml+xml":["uoml"],"application/vnd.vcx":["vcx"],"application/vnd.visio":["vsd","vst","vss","vsw"],"application/vnd.visionary":["vis"],"application/vnd.vsf":["vsf"],"application/vnd.wap.wbxml":["wbxml"],"application/vnd.wap.wmlc":["wmlc"],"application/vnd.wap.wmlscriptc":["wmlsc"],"application/vnd.webturbo":["wtb"],"application/vnd.wolfram.player":["nbp"],"application/vnd.wordperfect":["wpd"],"application/vnd.wqd":["wqd"],"application/vnd.wt.stf":["stf"],"application/vnd.xara":["xar"],"application/vnd.xfdl":["xfdl"],"application/vnd.yamaha.hv-dic":["hvd"],"application/vnd.yamaha.hv-script":["hvs"],"application/vnd.yamaha.hv-voice":["hvp"],"application/vnd.yamaha.openscoreformat":["osf"],"application/vnd.yamaha.openscoreformat.osfpvg+xml":["osfpvg"],"application/vnd.yamaha.smaf-audio":["saf"],"application/vnd.yamaha.smaf-phrase":["spf"],"application/vnd.yellowriver-custom-menu":["cmp"],"application/vnd.zul":["zir","zirz"],"application/vnd.zzazz.deck+xml":["zaz"],"application/voicexml+xml":["vxml"],"application/wasm":["wasm"],"application/widget":["wgt"],"application/winhlp":["hlp"],"application/wsdl+xml":["wsdl"],"application/wspolicy+xml":["wspolicy"],"application/x-7z-compressed":["7z"],"application/x-abiword":["abw"],"application/x-ace-compressed":["ace"],"application/x-apple-diskimage":[],"application/x-arj":["arj"],"application/x-authorware-bin":["aab","x32","u32","vox"],"application/x-authorware-map":["aam"],"application/x-authorware-seg":["aas"],"application/x-bcpio":["bcpio"],"application/x-bdoc":[],"application/x-bittorrent":["torrent"],"application/x-blorb":["blb","blorb"],"application/x-bzip":["bz"],"application/x-bzip2":["bz2","boz"],"application/x-cbr":["cbr","cba","cbt","cbz","cb7"],"application/x-cdlink":["vcd"],"application/x-cfs-compressed":["cfs"],"application/x-chat":["chat"],"application/x-chess-pgn":["pgn"],"application/x-chrome-extension":["crx"],"application/x-cocoa":["cco"],"application/x-conference":["nsc"],"application/x-cpio":["cpio"],"application/x-csh":["csh"],"application/x-debian-package":["udeb"],"application/x-dgc-compressed":["dgc"],"application/x-director":["dir","dcr","dxr","cst","cct","cxt","w3d","fgd","swa"],"application/x-doom":["wad"],"application/x-dtbncx+xml":["ncx"],"application/x-dtbook+xml":["dtb"],"application/x-dtbresource+xml":["res"],"application/x-dvi":["dvi"],"application/x-envoy":["evy"],"application/x-eva":["eva"],"application/x-font-bdf":["bdf"],"application/x-font-ghostscript":["gsf"],"application/x-font-linux-psf":["psf"],"application/x-font-pcf":["pcf"],"application/x-font-snf":["snf"],"application/x-font-type1":["pfa","pfb","pfm","afm"],"application/x-freearc":["arc"],"application/x-futuresplash":["spl"],"application/x-gca-compressed":["gca"],"application/x-glulx":["ulx"],"application/x-gnumeric":["gnumeric"],"application/x-gramps-xml":["gramps"],"application/x-gtar":["gtar"],"application/x-hdf":["hdf"],"application/x-httpd-php":["php"],"application/x-install-instructions":["install"],"application/x-iso9660-image":[],"application/x-java-archive-diff":["jardiff"],"application/x-java-jnlp-file":["jnlp"],"application/x-latex":["latex"],"application/x-lua-bytecode":["luac"],"application/x-lzh-compressed":["lzh","lha"],"application/x-makeself":["run"],"application/x-mie":["mie"],"application/x-mobipocket-ebook":["prc","mobi"],"application/x-ms-application":["application"],"application/x-ms-shortcut":["lnk"],"application/x-ms-wmd":["wmd"],"application/x-ms-wmz":["wmz"],"application/x-ms-xbap":["xbap"],"application/x-msaccess":["mdb"],"application/x-msbinder":["obd"],"application/x-mscardfile":["crd"],"application/x-msclip":["clp"],"application/x-msdos-program":[],"application/x-msdownload":["com","bat"],"application/x-msmediaview":["mvb","m13","m14"],"application/x-msmetafile":["wmf","emf","emz"],"application/x-msmoney":["mny"],"application/x-mspublisher":["pub"],"application/x-msschedule":["scd"],"application/x-msterminal":["trm"],"application/x-mswrite":["wri"],"application/x-netcdf":["nc","cdf"],"application/x-ns-proxy-autoconfig":["pac"],"application/x-nzb":["nzb"],"application/x-perl":["pl","pm"],"application/x-pilot":[],"application/x-pkcs12":["p12","pfx"],"application/x-pkcs7-certificates":["p7b","spc"],"application/x-pkcs7-certreqresp":["p7r"],"application/x-rar-compressed":["rar"],"application/x-redhat-package-manager":["rpm"],"application/x-research-info-systems":["ris"],"application/x-sea":["sea"],"application/x-sh":["sh"],"application/x-shar":["shar"],"application/x-shockwave-flash":["swf"],"application/x-silverlight-app":["xap"],"application/x-sql":["sql"],"application/x-stuffit":["sit"],"application/x-stuffitx":["sitx"],"application/x-subrip":["srt"],"application/x-sv4cpio":["sv4cpio"],"application/x-sv4crc":["sv4crc"],"application/x-t3vm-image":["t3"],"application/x-tads":["gam"],"application/x-tar":["tar"],"application/x-tcl":["tcl","tk"],"application/x-tex":["tex"],"application/x-tex-tfm":["tfm"],"application/x-texinfo":["texinfo","texi"],"application/x-tgif":["obj"],"application/x-ustar":["ustar"],"application/x-virtualbox-hdd":["hdd"],"application/x-virtualbox-ova":["ova"],"application/x-virtualbox-ovf":["ovf"],"application/x-virtualbox-vbox":["vbox"],"application/x-virtualbox-vbox-extpack":["vbox-extpack"],"application/x-virtualbox-vdi":["vdi"],"application/x-virtualbox-vhd":["vhd"],"application/x-virtualbox-vmdk":["vmdk"],"application/x-wais-source":["src"],"application/x-web-app-manifest+json":["webapp"],"application/x-x509-ca-cert":["der","crt","pem"],"application/x-xfig":["fig"],"application/x-xliff+xml":["xlf"],"application/x-xpinstall":["xpi"],"application/x-xz":["xz"],"application/x-zmachine":["z1","z2","z3","z4","z5","z6","z7","z8"],"application/xaml+xml":["xaml"],"application/xcap-diff+xml":["xdf"],"application/xenc+xml":["xenc"],"application/xhtml+xml":["xhtml","xht"],"application/xml":["xml","xsl","xsd","rng"],"application/xml-dtd":["dtd"],"application/xop+xml":["xop"],"application/xproc+xml":["xpl"],"application/xslt+xml":["xslt"],"application/xspf+xml":["xspf"],"application/xv+xml":["mxml","xhvml","xvml","xvm"],"application/yang":["yang"],"application/yin+xml":["yin"],"application/zip":["zip"],"audio/3gpp":[],"audio/adpcm":["adp"],"audio/basic":["au","snd"],"audio/midi":["mid","midi","kar","rmi"],"audio/mp3":[],"audio/mp4":["m4a","mp4a"],"audio/mpeg":["mpga","mp2","mp2a","mp3","m2a","m3a"],"audio/ogg":["oga","ogg","spx"],"audio/s3m":["s3m"],"audio/silk":["sil"],"audio/vnd.dece.audio":["uva","uvva"],"audio/vnd.digital-winds":["eol"],"audio/vnd.dra":["dra"],"audio/vnd.dts":["dts"],"audio/vnd.dts.hd":["dtshd"],"audio/vnd.lucent.voice":["lvp"],"audio/vnd.ms-playready.media.pya":["pya"],"audio/vnd.nuera.ecelp4800":["ecelp4800"],"audio/vnd.nuera.ecelp7470":["ecelp7470"],"audio/vnd.nuera.ecelp9600":["ecelp9600"],"audio/vnd.rip":["rip"],"audio/wav":["wav"],"audio/wave":[],"audio/webm":["weba"],"audio/x-aac":["aac"],"audio/x-aiff":["aif","aiff","aifc"],"audio/x-caf":["caf"],"audio/x-flac":["flac"],"audio/x-m4a":[],"audio/x-matroska":["mka"],"audio/x-mpegurl":["m3u"],"audio/x-ms-wax":["wax"],"audio/x-ms-wma":["wma"],"audio/x-pn-realaudio":["ram","ra"],"audio/x-pn-realaudio-plugin":["rmp"],"audio/x-realaudio":[],"audio/x-wav":[],"audio/xm":["xm"],"chemical/x-cdx":["cdx"],"chemical/x-cif":["cif"],"chemical/x-cmdf":["cmdf"],"chemical/x-cml":["cml"],"chemical/x-csml":["csml"],"chemical/x-xyz":["xyz"],"font/collection":["ttc"],"font/otf":["otf"],"font/ttf":["ttf"],"font/woff":["woff"],"font/woff2":["woff2"],"image/apng":["apng"],"image/bmp":["bmp"],"image/cgm":["cgm"],"image/g3fax":["g3"],"image/gif":["gif"],"image/ief":["ief"],"image/jp2":["jp2","jpg2"],"image/jpeg":["jpeg","jpg","jpe"],"image/jpm":["jpm"],"image/jpx":["jpx","jpf"],"image/ktx":["ktx"],"image/png":["png"],"image/prs.btif":["btif"],"image/sgi":["sgi"],"image/svg+xml":["svg","svgz"],"image/tiff":["tiff","tif"],"image/vnd.adobe.photoshop":["psd"],"image/vnd.dece.graphic":["uvi","uvvi","uvg","uvvg"],"image/vnd.djvu":["djvu","djv"],"image/vnd.dvb.subtitle":[],"image/vnd.dwg":["dwg"],"image/vnd.dxf":["dxf"],"image/vnd.fastbidsheet":["fbs"],"image/vnd.fpx":["fpx"],"image/vnd.fst":["fst"],"image/vnd.fujixerox.edmics-mmr":["mmr"],"image/vnd.fujixerox.edmics-rlc":["rlc"],"image/vnd.ms-modi":["mdi"],"image/vnd.ms-photo":["wdp"],"image/vnd.net-fpx":["npx"],"image/vnd.wap.wbmp":["wbmp"],"image/vnd.xiff":["xif"],"image/webp":["webp"],"image/x-3ds":["3ds"],"image/x-cmu-raster":["ras"],"image/x-cmx":["cmx"],"image/x-freehand":["fh","fhc","fh4","fh5","fh7"],"image/x-icon":["ico"],"image/x-jng":["jng"],"image/x-mrsid-image":["sid"],"image/x-ms-bmp":[],"image/x-pcx":["pcx"],"image/x-pict":["pic","pct"],"image/x-portable-anymap":["pnm"],"image/x-portable-bitmap":["pbm"],"image/x-portable-graymap":["pgm"],"image/x-portable-pixmap":["ppm"],"image/x-rgb":["rgb"],"image/x-tga":["tga"],"image/x-xbitmap":["xbm"],"image/x-xpixmap":["xpm"],"image/x-xwindowdump":["xwd"],"message/rfc822":["eml","mime"],"model/gltf+json":["gltf"],"model/gltf-binary":["glb"],"model/iges":["igs","iges"],"model/mesh":["msh","mesh","silo"],"model/vnd.collada+xml":["dae"],"model/vnd.dwf":["dwf"],"model/vnd.gdl":["gdl"],"model/vnd.gtw":["gtw"],"model/vnd.mts":["mts"],"model/vnd.vtu":["vtu"],"model/vrml":["wrl","vrml"],"model/x3d+binary":["x3db","x3dbz"],"model/x3d+vrml":["x3dv","x3dvz"],"model/x3d+xml":["x3d","x3dz"],"text/cache-manifest":["appcache","manifest"],"text/calendar":["ics","ifb"],"text/coffeescript":["coffee","litcoffee"],"text/css":["css"],"text/csv":["csv"],"text/hjson":["hjson"],"text/html":["html","htm","shtml"],"text/jade":["jade"],"text/jsx":["jsx"],"text/less":["less"],"text/markdown":["markdown","md"],"text/mathml":["mml"],"text/n3":["n3"],"text/plain":["txt","text","conf","def","list","log","in","ini"],"text/prs.lines.tag":["dsc"],"text/richtext":["rtx"],"text/rtf":[],"text/sgml":["sgml","sgm"],"text/slim":["slim","slm"],"text/stylus":["stylus","styl"],"text/tab-separated-values":["tsv"],"text/troff":["t","tr","roff","man","me","ms"],"text/turtle":["ttl"],"text/uri-list":["uri","uris","urls"],"text/vcard":["vcard"],"text/vnd.curl":["curl"],"text/vnd.curl.dcurl":["dcurl"],"text/vnd.curl.mcurl":["mcurl"],"text/vnd.curl.scurl":["scurl"],"text/vnd.dvb.subtitle":["sub"],"text/vnd.fly":["fly"],"text/vnd.fmi.flexstor":["flx"],"text/vnd.graphviz":["gv"],"text/vnd.in3d.3dml":["3dml"],"text/vnd.in3d.spot":["spot"],"text/vnd.sun.j2me.app-descriptor":["jad"],"text/vnd.wap.wml":["wml"],"text/vnd.wap.wmlscript":["wmls"],"text/vtt":["vtt"],"text/x-asm":["s","asm"],"text/x-c":["c","cc","cxx","cpp","h","hh","dic"],"text/x-component":["htc"],"text/x-fortran":["f","for","f77","f90"],"text/x-handlebars-template":["hbs"],"text/x-java-source":["java"],"text/x-lua":["lua"],"text/x-markdown":["mkd"],"text/x-nfo":["nfo"],"text/x-opml":["opml"],"text/x-org":[],"text/x-pascal":["p","pas"],"text/x-processing":["pde"],"text/x-sass":["sass"],"text/x-scss":["scss"],"text/x-setext":["etx"],"text/x-sfv":["sfv"],"text/x-suse-ymp":["ymp"],"text/x-uuencode":["uu"],"text/x-vcalendar":["vcs"],"text/x-vcard":["vcf"],"text/xml":[],"text/yaml":["yaml","yml"],"video/3gpp":["3gp","3gpp"],"video/3gpp2":["3g2"],"video/h261":["h261"],"video/h263":["h263"],"video/h264":["h264"],"video/jpeg":["jpgv"],"video/jpm":["jpgm"],"video/mj2":["mj2","mjp2"],"video/mp2t":["ts"],"video/mp4":["mp4","mp4v","mpg4"],"video/mpeg":["mpeg","mpg","mpe","m1v","m2v"],"video/ogg":["ogv"],"video/quicktime":["qt","mov"],"video/vnd.dece.hd":["uvh","uvvh"],"video/vnd.dece.mobile":["uvm","uvvm"],"video/vnd.dece.pd":["uvp","uvvp"],"video/vnd.dece.sd":["uvs","uvvs"],"video/vnd.dece.video":["uvv","uvvv"],"video/vnd.dvb.file":["dvb"],"video/vnd.fvt":["fvt"],"video/vnd.mpegurl":["mxu","m4u"],"video/vnd.ms-playready.media.pyv":["pyv"],"video/vnd.uvvu.mp4":["uvu","uvvu"],"video/vnd.vivo":["viv"],"video/webm":["webm"],"video/x-f4v":["f4v"],"video/x-fli":["fli"],"video/x-flv":["flv"],"video/x-m4v":["m4v"],"video/x-matroska":["mkv","mk3d","mks"],"video/x-mng":["mng"],"video/x-ms-asf":["asf","asx"],"video/x-ms-vob":["vob"],"video/x-ms-wm":["wm"],"video/x-ms-wmv":["wmv"],"video/x-ms-wmx":["wmx"],"video/x-ms-wvx":["wvx"],"video/x-msvideo":["avi"],"video/x-sgi-movie":["movie"],"video/x-smv":["smv"],"x-conference/x-cooltalk":["ice"]}');
+module.exports = /*#__PURE__*/JSON.parse('{"application/1d-interleaved-parityfec":{"source":"iana"},"application/3gpdash-qoe-report+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/3gpp-ims+xml":{"source":"iana","compressible":true},"application/3gpphal+json":{"source":"iana","compressible":true},"application/3gpphalforms+json":{"source":"iana","compressible":true},"application/a2l":{"source":"iana"},"application/ace+cbor":{"source":"iana"},"application/ace+json":{"source":"iana","compressible":true},"application/ace-groupcomm+cbor":{"source":"iana"},"application/ace-trl+cbor":{"source":"iana"},"application/activemessage":{"source":"iana"},"application/activity+json":{"source":"iana","compressible":true},"application/aif+cbor":{"source":"iana"},"application/aif+json":{"source":"iana","compressible":true},"application/alto-cdni+json":{"source":"iana","compressible":true},"application/alto-cdnifilter+json":{"source":"iana","compressible":true},"application/alto-costmap+json":{"source":"iana","compressible":true},"application/alto-costmapfilter+json":{"source":"iana","compressible":true},"application/alto-directory+json":{"source":"iana","compressible":true},"application/alto-endpointcost+json":{"source":"iana","compressible":true},"application/alto-endpointcostparams+json":{"source":"iana","compressible":true},"application/alto-endpointprop+json":{"source":"iana","compressible":true},"application/alto-endpointpropparams+json":{"source":"iana","compressible":true},"application/alto-error+json":{"source":"iana","compressible":true},"application/alto-networkmap+json":{"source":"iana","compressible":true},"application/alto-networkmapfilter+json":{"source":"iana","compressible":true},"application/alto-propmap+json":{"source":"iana","compressible":true},"application/alto-propmapparams+json":{"source":"iana","compressible":true},"application/alto-tips+json":{"source":"iana","compressible":true},"application/alto-tipsparams+json":{"source":"iana","compressible":true},"application/alto-updatestreamcontrol+json":{"source":"iana","compressible":true},"application/alto-updatestreamparams+json":{"source":"iana","compressible":true},"application/aml":{"source":"iana"},"application/andrew-inset":{"source":"iana","extensions":["ez"]},"application/appinstaller":{"compressible":false,"extensions":["appinstaller"]},"application/applefile":{"source":"iana"},"application/applixware":{"source":"apache","extensions":["aw"]},"application/appx":{"compressible":false,"extensions":["appx"]},"application/appxbundle":{"compressible":false,"extensions":["appxbundle"]},"application/at+jwt":{"source":"iana"},"application/atf":{"source":"iana"},"application/atfx":{"source":"iana"},"application/atom+xml":{"source":"iana","compressible":true,"extensions":["atom"]},"application/atomcat+xml":{"source":"iana","compressible":true,"extensions":["atomcat"]},"application/atomdeleted+xml":{"source":"iana","compressible":true,"extensions":["atomdeleted"]},"application/atomicmail":{"source":"iana"},"application/atomsvc+xml":{"source":"iana","compressible":true,"extensions":["atomsvc"]},"application/atsc-dwd+xml":{"source":"iana","compressible":true,"extensions":["dwd"]},"application/atsc-dynamic-event-message":{"source":"iana"},"application/atsc-held+xml":{"source":"iana","compressible":true,"extensions":["held"]},"application/atsc-rdt+json":{"source":"iana","compressible":true},"application/atsc-rsat+xml":{"source":"iana","compressible":true,"extensions":["rsat"]},"application/atxml":{"source":"iana"},"application/auth-policy+xml":{"source":"iana","compressible":true},"application/automationml-aml+xml":{"source":"iana","compressible":true,"extensions":["aml"]},"application/automationml-amlx+zip":{"source":"iana","compressible":false,"extensions":["amlx"]},"application/bacnet-xdd+zip":{"source":"iana","compressible":false},"application/batch-smtp":{"source":"iana"},"application/bdoc":{"compressible":false,"extensions":["bdoc"]},"application/beep+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/bufr":{"source":"iana"},"application/c2pa":{"source":"iana"},"application/calendar+json":{"source":"iana","compressible":true},"application/calendar+xml":{"source":"iana","compressible":true,"extensions":["xcs"]},"application/call-completion":{"source":"iana"},"application/cals-1840":{"source":"iana"},"application/captive+json":{"source":"iana","compressible":true},"application/cbor":{"source":"iana"},"application/cbor-seq":{"source":"iana"},"application/cccex":{"source":"iana"},"application/ccmp+xml":{"source":"iana","compressible":true},"application/ccxml+xml":{"source":"iana","compressible":true,"extensions":["ccxml"]},"application/cda+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/cdfx+xml":{"source":"iana","compressible":true,"extensions":["cdfx"]},"application/cdmi-capability":{"source":"iana","extensions":["cdmia"]},"application/cdmi-container":{"source":"iana","extensions":["cdmic"]},"application/cdmi-domain":{"source":"iana","extensions":["cdmid"]},"application/cdmi-object":{"source":"iana","extensions":["cdmio"]},"application/cdmi-queue":{"source":"iana","extensions":["cdmiq"]},"application/cdni":{"source":"iana"},"application/ce+cbor":{"source":"iana"},"application/cea":{"source":"iana"},"application/cea-2018+xml":{"source":"iana","compressible":true},"application/cellml+xml":{"source":"iana","compressible":true},"application/cfw":{"source":"iana"},"application/cid-edhoc+cbor-seq":{"source":"iana"},"application/city+json":{"source":"iana","compressible":true},"application/city+json-seq":{"source":"iana"},"application/clr":{"source":"iana"},"application/clue+xml":{"source":"iana","compressible":true},"application/clue_info+xml":{"source":"iana","compressible":true},"application/cms":{"source":"iana"},"application/cnrp+xml":{"source":"iana","compressible":true},"application/coap-eap":{"source":"iana"},"application/coap-group+json":{"source":"iana","compressible":true},"application/coap-payload":{"source":"iana"},"application/commonground":{"source":"iana"},"application/concise-problem-details+cbor":{"source":"iana"},"application/conference-info+xml":{"source":"iana","compressible":true},"application/cose":{"source":"iana"},"application/cose-key":{"source":"iana"},"application/cose-key-set":{"source":"iana"},"application/cose-x509":{"source":"iana"},"application/cpl+xml":{"source":"iana","compressible":true,"extensions":["cpl"]},"application/csrattrs":{"source":"iana"},"application/csta+xml":{"source":"iana","compressible":true},"application/cstadata+xml":{"source":"iana","compressible":true},"application/csvm+json":{"source":"iana","compressible":true},"application/cu-seeme":{"source":"apache","extensions":["cu"]},"application/cwl":{"source":"iana","extensions":["cwl"]},"application/cwl+json":{"source":"iana","compressible":true},"application/cwl+yaml":{"source":"iana"},"application/cwt":{"source":"iana"},"application/cybercash":{"source":"iana"},"application/dart":{"compressible":true},"application/dash+xml":{"source":"iana","compressible":true,"extensions":["mpd"]},"application/dash-patch+xml":{"source":"iana","compressible":true,"extensions":["mpp"]},"application/dashdelta":{"source":"iana"},"application/davmount+xml":{"source":"iana","compressible":true,"extensions":["davmount"]},"application/dca-rft":{"source":"iana"},"application/dcd":{"source":"iana"},"application/dec-dx":{"source":"iana"},"application/dialog-info+xml":{"source":"iana","compressible":true},"application/dicom":{"source":"iana","extensions":["dcm"]},"application/dicom+json":{"source":"iana","compressible":true},"application/dicom+xml":{"source":"iana","compressible":true},"application/dii":{"source":"iana"},"application/dit":{"source":"iana"},"application/dns":{"source":"iana"},"application/dns+json":{"source":"iana","compressible":true},"application/dns-message":{"source":"iana"},"application/docbook+xml":{"source":"apache","compressible":true,"extensions":["dbk"]},"application/dots+cbor":{"source":"iana"},"application/dpop+jwt":{"source":"iana"},"application/dskpp+xml":{"source":"iana","compressible":true},"application/dssc+der":{"source":"iana","extensions":["dssc"]},"application/dssc+xml":{"source":"iana","compressible":true,"extensions":["xdssc"]},"application/dvcs":{"source":"iana"},"application/eat+cwt":{"source":"iana"},"application/eat+jwt":{"source":"iana"},"application/eat-bun+cbor":{"source":"iana"},"application/eat-bun+json":{"source":"iana","compressible":true},"application/eat-ucs+cbor":{"source":"iana"},"application/eat-ucs+json":{"source":"iana","compressible":true},"application/ecmascript":{"source":"apache","compressible":true,"extensions":["ecma"]},"application/edhoc+cbor-seq":{"source":"iana"},"application/edi-consent":{"source":"iana"},"application/edi-x12":{"source":"iana","compressible":false},"application/edifact":{"source":"iana","compressible":false},"application/efi":{"source":"iana"},"application/elm+json":{"source":"iana","charset":"UTF-8","compressible":true},"application/elm+xml":{"source":"iana","compressible":true},"application/emergencycalldata.cap+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/emergencycalldata.comment+xml":{"source":"iana","compressible":true},"application/emergencycalldata.control+xml":{"source":"iana","compressible":true},"application/emergencycalldata.deviceinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.ecall.msd":{"source":"iana"},"application/emergencycalldata.legacyesn+json":{"source":"iana","compressible":true},"application/emergencycalldata.providerinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.serviceinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.subscriberinfo+xml":{"source":"iana","compressible":true},"application/emergencycalldata.veds+xml":{"source":"iana","compressible":true},"application/emma+xml":{"source":"iana","compressible":true,"extensions":["emma"]},"application/emotionml+xml":{"source":"iana","compressible":true,"extensions":["emotionml"]},"application/encaprtp":{"source":"iana"},"application/entity-statement+jwt":{"source":"iana"},"application/epp+xml":{"source":"iana","compressible":true},"application/epub+zip":{"source":"iana","compressible":false,"extensions":["epub"]},"application/eshop":{"source":"iana"},"application/exi":{"source":"iana","extensions":["exi"]},"application/expect-ct-report+json":{"source":"iana","compressible":true},"application/express":{"source":"iana","extensions":["exp"]},"application/fastinfoset":{"source":"iana"},"application/fastsoap":{"source":"iana"},"application/fdf":{"source":"iana","extensions":["fdf"]},"application/fdt+xml":{"source":"iana","compressible":true,"extensions":["fdt"]},"application/fhir+json":{"source":"iana","charset":"UTF-8","compressible":true},"application/fhir+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/fido.trusted-apps+json":{"compressible":true},"application/fits":{"source":"iana"},"application/flexfec":{"source":"iana"},"application/font-sfnt":{"source":"iana"},"application/font-tdpfr":{"source":"iana","extensions":["pfr"]},"application/font-woff":{"source":"iana","compressible":false},"application/framework-attributes+xml":{"source":"iana","compressible":true},"application/geo+json":{"source":"iana","compressible":true,"extensions":["geojson"]},"application/geo+json-seq":{"source":"iana"},"application/geopackage+sqlite3":{"source":"iana"},"application/geopose+json":{"source":"iana","compressible":true},"application/geoxacml+json":{"source":"iana","compressible":true},"application/geoxacml+xml":{"source":"iana","compressible":true},"application/gltf-buffer":{"source":"iana"},"application/gml+xml":{"source":"iana","compressible":true,"extensions":["gml"]},"application/gnap-binding-jws":{"source":"iana"},"application/gnap-binding-jwsd":{"source":"iana"},"application/gnap-binding-rotation-jws":{"source":"iana"},"application/gnap-binding-rotation-jwsd":{"source":"iana"},"application/gpx+xml":{"source":"apache","compressible":true,"extensions":["gpx"]},"application/grib":{"source":"iana"},"application/gxf":{"source":"apache","extensions":["gxf"]},"application/gzip":{"source":"iana","compressible":false,"extensions":["gz"]},"application/h224":{"source":"iana"},"application/held+xml":{"source":"iana","compressible":true},"application/hjson":{"extensions":["hjson"]},"application/hl7v2+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/http":{"source":"iana"},"application/hyperstudio":{"source":"iana","extensions":["stk"]},"application/ibe-key-request+xml":{"source":"iana","compressible":true},"application/ibe-pkg-reply+xml":{"source":"iana","compressible":true},"application/ibe-pp-data":{"source":"iana"},"application/iges":{"source":"iana"},"application/im-iscomposing+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/index":{"source":"iana"},"application/index.cmd":{"source":"iana"},"application/index.obj":{"source":"iana"},"application/index.response":{"source":"iana"},"application/index.vnd":{"source":"iana"},"application/inkml+xml":{"source":"iana","compressible":true,"extensions":["ink","inkml"]},"application/iotp":{"source":"iana"},"application/ipfix":{"source":"iana","extensions":["ipfix"]},"application/ipp":{"source":"iana"},"application/isup":{"source":"iana"},"application/its+xml":{"source":"iana","compressible":true,"extensions":["its"]},"application/java-archive":{"source":"iana","compressible":false,"extensions":["jar","war","ear"]},"application/java-serialized-object":{"source":"apache","compressible":false,"extensions":["ser"]},"application/java-vm":{"source":"apache","compressible":false,"extensions":["class"]},"application/javascript":{"source":"apache","charset":"UTF-8","compressible":true,"extensions":["js"]},"application/jf2feed+json":{"source":"iana","compressible":true},"application/jose":{"source":"iana"},"application/jose+json":{"source":"iana","compressible":true},"application/jrd+json":{"source":"iana","compressible":true},"application/jscalendar+json":{"source":"iana","compressible":true},"application/jscontact+json":{"source":"iana","compressible":true},"application/json":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["json","map"]},"application/json-patch+json":{"source":"iana","compressible":true},"application/json-seq":{"source":"iana"},"application/json5":{"extensions":["json5"]},"application/jsonml+json":{"source":"apache","compressible":true,"extensions":["jsonml"]},"application/jsonpath":{"source":"iana"},"application/jwk+json":{"source":"iana","compressible":true},"application/jwk-set+json":{"source":"iana","compressible":true},"application/jwk-set+jwt":{"source":"iana"},"application/jwt":{"source":"iana"},"application/kpml-request+xml":{"source":"iana","compressible":true},"application/kpml-response+xml":{"source":"iana","compressible":true},"application/ld+json":{"source":"iana","compressible":true,"extensions":["jsonld"]},"application/lgr+xml":{"source":"iana","compressible":true,"extensions":["lgr"]},"application/link-format":{"source":"iana"},"application/linkset":{"source":"iana"},"application/linkset+json":{"source":"iana","compressible":true},"application/load-control+xml":{"source":"iana","compressible":true},"application/logout+jwt":{"source":"iana"},"application/lost+xml":{"source":"iana","compressible":true,"extensions":["lostxml"]},"application/lostsync+xml":{"source":"iana","compressible":true},"application/lpf+zip":{"source":"iana","compressible":false},"application/lxf":{"source":"iana"},"application/mac-binhex40":{"source":"iana","extensions":["hqx"]},"application/mac-compactpro":{"source":"apache","extensions":["cpt"]},"application/macwriteii":{"source":"iana"},"application/mads+xml":{"source":"iana","compressible":true,"extensions":["mads"]},"application/manifest+json":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["webmanifest"]},"application/marc":{"source":"iana","extensions":["mrc"]},"application/marcxml+xml":{"source":"iana","compressible":true,"extensions":["mrcx"]},"application/mathematica":{"source":"iana","extensions":["ma","nb","mb"]},"application/mathml+xml":{"source":"iana","compressible":true,"extensions":["mathml"]},"application/mathml-content+xml":{"source":"iana","compressible":true},"application/mathml-presentation+xml":{"source":"iana","compressible":true},"application/mbms-associated-procedure-description+xml":{"source":"iana","compressible":true},"application/mbms-deregister+xml":{"source":"iana","compressible":true},"application/mbms-envelope+xml":{"source":"iana","compressible":true},"application/mbms-msk+xml":{"source":"iana","compressible":true},"application/mbms-msk-response+xml":{"source":"iana","compressible":true},"application/mbms-protection-description+xml":{"source":"iana","compressible":true},"application/mbms-reception-report+xml":{"source":"iana","compressible":true},"application/mbms-register+xml":{"source":"iana","compressible":true},"application/mbms-register-response+xml":{"source":"iana","compressible":true},"application/mbms-schedule+xml":{"source":"iana","compressible":true},"application/mbms-user-service-description+xml":{"source":"iana","compressible":true},"application/mbox":{"source":"iana","extensions":["mbox"]},"application/media-policy-dataset+xml":{"source":"iana","compressible":true,"extensions":["mpf"]},"application/media_control+xml":{"source":"iana","compressible":true},"application/mediaservercontrol+xml":{"source":"iana","compressible":true,"extensions":["mscml"]},"application/merge-patch+json":{"source":"iana","compressible":true},"application/metalink+xml":{"source":"apache","compressible":true,"extensions":["metalink"]},"application/metalink4+xml":{"source":"iana","compressible":true,"extensions":["meta4"]},"application/mets+xml":{"source":"iana","compressible":true,"extensions":["mets"]},"application/mf4":{"source":"iana"},"application/mikey":{"source":"iana"},"application/mipc":{"source":"iana"},"application/missing-blocks+cbor-seq":{"source":"iana"},"application/mmt-aei+xml":{"source":"iana","compressible":true,"extensions":["maei"]},"application/mmt-usd+xml":{"source":"iana","compressible":true,"extensions":["musd"]},"application/mods+xml":{"source":"iana","compressible":true,"extensions":["mods"]},"application/moss-keys":{"source":"iana"},"application/moss-signature":{"source":"iana"},"application/mosskey-data":{"source":"iana"},"application/mosskey-request":{"source":"iana"},"application/mp21":{"source":"iana","extensions":["m21","mp21"]},"application/mp4":{"source":"iana","extensions":["mp4","mpg4","mp4s","m4p"]},"application/mpeg4-generic":{"source":"iana"},"application/mpeg4-iod":{"source":"iana"},"application/mpeg4-iod-xmt":{"source":"iana"},"application/mrb-consumer+xml":{"source":"iana","compressible":true},"application/mrb-publish+xml":{"source":"iana","compressible":true},"application/msc-ivr+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/msc-mixer+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/msix":{"compressible":false,"extensions":["msix"]},"application/msixbundle":{"compressible":false,"extensions":["msixbundle"]},"application/msword":{"source":"iana","compressible":false,"extensions":["doc","dot"]},"application/mud+json":{"source":"iana","compressible":true},"application/multipart-core":{"source":"iana"},"application/mxf":{"source":"iana","extensions":["mxf"]},"application/n-quads":{"source":"iana","extensions":["nq"]},"application/n-triples":{"source":"iana","extensions":["nt"]},"application/nasdata":{"source":"iana"},"application/news-checkgroups":{"source":"iana","charset":"US-ASCII"},"application/news-groupinfo":{"source":"iana","charset":"US-ASCII"},"application/news-transmission":{"source":"iana"},"application/nlsml+xml":{"source":"iana","compressible":true},"application/node":{"source":"iana","extensions":["cjs"]},"application/nss":{"source":"iana"},"application/oauth-authz-req+jwt":{"source":"iana"},"application/oblivious-dns-message":{"source":"iana"},"application/ocsp-request":{"source":"iana"},"application/ocsp-response":{"source":"iana"},"application/octet-stream":{"source":"iana","compressible":true,"extensions":["bin","dms","lrf","mar","so","dist","distz","pkg","bpk","dump","elc","deploy","exe","dll","deb","dmg","iso","img","msi","msp","msm","buffer"]},"application/oda":{"source":"iana","extensions":["oda"]},"application/odm+xml":{"source":"iana","compressible":true},"application/odx":{"source":"iana"},"application/oebps-package+xml":{"source":"iana","compressible":true,"extensions":["opf"]},"application/ogg":{"source":"iana","compressible":false,"extensions":["ogx"]},"application/ohttp-keys":{"source":"iana"},"application/omdoc+xml":{"source":"apache","compressible":true,"extensions":["omdoc"]},"application/onenote":{"source":"apache","extensions":["onetoc","onetoc2","onetmp","onepkg","one","onea"]},"application/opc-nodeset+xml":{"source":"iana","compressible":true},"application/oscore":{"source":"iana"},"application/oxps":{"source":"iana","extensions":["oxps"]},"application/p21":{"source":"iana"},"application/p21+zip":{"source":"iana","compressible":false},"application/p2p-overlay+xml":{"source":"iana","compressible":true,"extensions":["relo"]},"application/parityfec":{"source":"iana"},"application/passport":{"source":"iana"},"application/patch-ops-error+xml":{"source":"iana","compressible":true,"extensions":["xer"]},"application/pdf":{"source":"iana","compressible":false,"extensions":["pdf"]},"application/pdx":{"source":"iana"},"application/pem-certificate-chain":{"source":"iana"},"application/pgp-encrypted":{"source":"iana","compressible":false,"extensions":["pgp"]},"application/pgp-keys":{"source":"iana","extensions":["asc"]},"application/pgp-signature":{"source":"iana","extensions":["sig","asc"]},"application/pics-rules":{"source":"apache","extensions":["prf"]},"application/pidf+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/pidf-diff+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/pkcs10":{"source":"iana","extensions":["p10"]},"application/pkcs12":{"source":"iana"},"application/pkcs7-mime":{"source":"iana","extensions":["p7m","p7c"]},"application/pkcs7-signature":{"source":"iana","extensions":["p7s"]},"application/pkcs8":{"source":"iana","extensions":["p8"]},"application/pkcs8-encrypted":{"source":"iana"},"application/pkix-attr-cert":{"source":"iana","extensions":["ac"]},"application/pkix-cert":{"source":"iana","extensions":["cer"]},"application/pkix-crl":{"source":"iana","extensions":["crl"]},"application/pkix-pkipath":{"source":"iana","extensions":["pkipath"]},"application/pkixcmp":{"source":"iana","extensions":["pki"]},"application/pls+xml":{"source":"iana","compressible":true,"extensions":["pls"]},"application/poc-settings+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/postscript":{"source":"iana","compressible":true,"extensions":["ai","eps","ps"]},"application/ppsp-tracker+json":{"source":"iana","compressible":true},"application/private-token-issuer-directory":{"source":"iana"},"application/private-token-request":{"source":"iana"},"application/private-token-response":{"source":"iana"},"application/problem+json":{"source":"iana","compressible":true},"application/problem+xml":{"source":"iana","compressible":true},"application/provenance+xml":{"source":"iana","compressible":true,"extensions":["provx"]},"application/provided-claims+jwt":{"source":"iana"},"application/prs.alvestrand.titrax-sheet":{"source":"iana"},"application/prs.cww":{"source":"iana","extensions":["cww"]},"application/prs.cyn":{"source":"iana","charset":"7-BIT"},"application/prs.hpub+zip":{"source":"iana","compressible":false},"application/prs.implied-document+xml":{"source":"iana","compressible":true},"application/prs.implied-executable":{"source":"iana"},"application/prs.implied-object+json":{"source":"iana","compressible":true},"application/prs.implied-object+json-seq":{"source":"iana"},"application/prs.implied-object+yaml":{"source":"iana"},"application/prs.implied-structure":{"source":"iana"},"application/prs.mayfile":{"source":"iana"},"application/prs.nprend":{"source":"iana"},"application/prs.plucker":{"source":"iana"},"application/prs.rdf-xml-crypt":{"source":"iana"},"application/prs.vcfbzip2":{"source":"iana"},"application/prs.xsf+xml":{"source":"iana","compressible":true,"extensions":["xsf"]},"application/pskc+xml":{"source":"iana","compressible":true,"extensions":["pskcxml"]},"application/pvd+json":{"source":"iana","compressible":true},"application/qsig":{"source":"iana"},"application/raml+yaml":{"compressible":true,"extensions":["raml"]},"application/raptorfec":{"source":"iana"},"application/rdap+json":{"source":"iana","compressible":true},"application/rdf+xml":{"source":"iana","compressible":true,"extensions":["rdf","owl"]},"application/reginfo+xml":{"source":"iana","compressible":true,"extensions":["rif"]},"application/relax-ng-compact-syntax":{"source":"iana","extensions":["rnc"]},"application/remote-printing":{"source":"apache"},"application/reputon+json":{"source":"iana","compressible":true},"application/resolve-response+jwt":{"source":"iana"},"application/resource-lists+xml":{"source":"iana","compressible":true,"extensions":["rl"]},"application/resource-lists-diff+xml":{"source":"iana","compressible":true,"extensions":["rld"]},"application/rfc+xml":{"source":"iana","compressible":true},"application/riscos":{"source":"iana"},"application/rlmi+xml":{"source":"iana","compressible":true},"application/rls-services+xml":{"source":"iana","compressible":true,"extensions":["rs"]},"application/route-apd+xml":{"source":"iana","compressible":true,"extensions":["rapd"]},"application/route-s-tsid+xml":{"source":"iana","compressible":true,"extensions":["sls"]},"application/route-usd+xml":{"source":"iana","compressible":true,"extensions":["rusd"]},"application/rpki-checklist":{"source":"iana"},"application/rpki-ghostbusters":{"source":"iana","extensions":["gbr"]},"application/rpki-manifest":{"source":"iana","extensions":["mft"]},"application/rpki-publication":{"source":"iana"},"application/rpki-roa":{"source":"iana","extensions":["roa"]},"application/rpki-signed-tal":{"source":"iana"},"application/rpki-updown":{"source":"iana"},"application/rsd+xml":{"source":"apache","compressible":true,"extensions":["rsd"]},"application/rss+xml":{"source":"apache","compressible":true,"extensions":["rss"]},"application/rtf":{"source":"iana","compressible":true,"extensions":["rtf"]},"application/rtploopback":{"source":"iana"},"application/rtx":{"source":"iana"},"application/samlassertion+xml":{"source":"iana","compressible":true},"application/samlmetadata+xml":{"source":"iana","compressible":true},"application/sarif+json":{"source":"iana","compressible":true},"application/sarif-external-properties+json":{"source":"iana","compressible":true},"application/sbe":{"source":"iana"},"application/sbml+xml":{"source":"iana","compressible":true,"extensions":["sbml"]},"application/scaip+xml":{"source":"iana","compressible":true},"application/scim+json":{"source":"iana","compressible":true},"application/scvp-cv-request":{"source":"iana","extensions":["scq"]},"application/scvp-cv-response":{"source":"iana","extensions":["scs"]},"application/scvp-vp-request":{"source":"iana","extensions":["spq"]},"application/scvp-vp-response":{"source":"iana","extensions":["spp"]},"application/sdp":{"source":"iana","extensions":["sdp"]},"application/secevent+jwt":{"source":"iana"},"application/senml+cbor":{"source":"iana"},"application/senml+json":{"source":"iana","compressible":true},"application/senml+xml":{"source":"iana","compressible":true,"extensions":["senmlx"]},"application/senml-etch+cbor":{"source":"iana"},"application/senml-etch+json":{"source":"iana","compressible":true},"application/senml-exi":{"source":"iana"},"application/sensml+cbor":{"source":"iana"},"application/sensml+json":{"source":"iana","compressible":true},"application/sensml+xml":{"source":"iana","compressible":true,"extensions":["sensmlx"]},"application/sensml-exi":{"source":"iana"},"application/sep+xml":{"source":"iana","compressible":true},"application/sep-exi":{"source":"iana"},"application/session-info":{"source":"iana"},"application/set-payment":{"source":"iana"},"application/set-payment-initiation":{"source":"iana","extensions":["setpay"]},"application/set-registration":{"source":"iana"},"application/set-registration-initiation":{"source":"iana","extensions":["setreg"]},"application/sgml":{"source":"iana"},"application/sgml-open-catalog":{"source":"iana"},"application/shf+xml":{"source":"iana","compressible":true,"extensions":["shf"]},"application/sieve":{"source":"iana","extensions":["siv","sieve"]},"application/simple-filter+xml":{"source":"iana","compressible":true},"application/simple-message-summary":{"source":"iana"},"application/simplesymbolcontainer":{"source":"iana"},"application/sipc":{"source":"iana"},"application/slate":{"source":"iana"},"application/smil":{"source":"apache"},"application/smil+xml":{"source":"iana","compressible":true,"extensions":["smi","smil"]},"application/smpte336m":{"source":"iana"},"application/soap+fastinfoset":{"source":"iana"},"application/soap+xml":{"source":"iana","compressible":true},"application/sparql-query":{"source":"iana","extensions":["rq"]},"application/sparql-results+xml":{"source":"iana","compressible":true,"extensions":["srx"]},"application/spdx+json":{"source":"iana","compressible":true},"application/spirits-event+xml":{"source":"iana","compressible":true},"application/sql":{"source":"iana","extensions":["sql"]},"application/srgs":{"source":"iana","extensions":["gram"]},"application/srgs+xml":{"source":"iana","compressible":true,"extensions":["grxml"]},"application/sru+xml":{"source":"iana","compressible":true,"extensions":["sru"]},"application/ssdl+xml":{"source":"apache","compressible":true,"extensions":["ssdl"]},"application/sslkeylogfile":{"source":"iana"},"application/ssml+xml":{"source":"iana","compressible":true,"extensions":["ssml"]},"application/st2110-41":{"source":"iana"},"application/stix+json":{"source":"iana","compressible":true},"application/stratum":{"source":"iana"},"application/swid+cbor":{"source":"iana"},"application/swid+xml":{"source":"iana","compressible":true,"extensions":["swidtag"]},"application/tamp-apex-update":{"source":"iana"},"application/tamp-apex-update-confirm":{"source":"iana"},"application/tamp-community-update":{"source":"iana"},"application/tamp-community-update-confirm":{"source":"iana"},"application/tamp-error":{"source":"iana"},"application/tamp-sequence-adjust":{"source":"iana"},"application/tamp-sequence-adjust-confirm":{"source":"iana"},"application/tamp-status-query":{"source":"iana"},"application/tamp-status-response":{"source":"iana"},"application/tamp-update":{"source":"iana"},"application/tamp-update-confirm":{"source":"iana"},"application/tar":{"compressible":true},"application/taxii+json":{"source":"iana","compressible":true},"application/td+json":{"source":"iana","compressible":true},"application/tei+xml":{"source":"iana","compressible":true,"extensions":["tei","teicorpus"]},"application/tetra_isi":{"source":"iana"},"application/thraud+xml":{"source":"iana","compressible":true,"extensions":["tfi"]},"application/timestamp-query":{"source":"iana"},"application/timestamp-reply":{"source":"iana"},"application/timestamped-data":{"source":"iana","extensions":["tsd"]},"application/tlsrpt+gzip":{"source":"iana"},"application/tlsrpt+json":{"source":"iana","compressible":true},"application/tm+json":{"source":"iana","compressible":true},"application/tnauthlist":{"source":"iana"},"application/toc+cbor":{"source":"iana"},"application/token-introspection+jwt":{"source":"iana"},"application/toml":{"source":"iana","compressible":true,"extensions":["toml"]},"application/trickle-ice-sdpfrag":{"source":"iana"},"application/trig":{"source":"iana","extensions":["trig"]},"application/trust-chain+json":{"source":"iana","compressible":true},"application/trust-mark+jwt":{"source":"iana"},"application/trust-mark-delegation+jwt":{"source":"iana"},"application/ttml+xml":{"source":"iana","compressible":true,"extensions":["ttml"]},"application/tve-trigger":{"source":"iana"},"application/tzif":{"source":"iana"},"application/tzif-leap":{"source":"iana"},"application/ubjson":{"compressible":false,"extensions":["ubj"]},"application/uccs+cbor":{"source":"iana"},"application/ujcs+json":{"source":"iana","compressible":true},"application/ulpfec":{"source":"iana"},"application/urc-grpsheet+xml":{"source":"iana","compressible":true},"application/urc-ressheet+xml":{"source":"iana","compressible":true,"extensions":["rsheet"]},"application/urc-targetdesc+xml":{"source":"iana","compressible":true,"extensions":["td"]},"application/urc-uisocketdesc+xml":{"source":"iana","compressible":true},"application/vc":{"source":"iana"},"application/vc+cose":{"source":"iana"},"application/vc+jwt":{"source":"iana"},"application/vcard+json":{"source":"iana","compressible":true},"application/vcard+xml":{"source":"iana","compressible":true},"application/vemmi":{"source":"iana"},"application/vividence.scriptfile":{"source":"apache"},"application/vnd.1000minds.decision-model+xml":{"source":"iana","compressible":true,"extensions":["1km"]},"application/vnd.1ob":{"source":"iana"},"application/vnd.3gpp-prose+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-prose-pc3a+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-prose-pc3ach+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-prose-pc3ch+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-prose-pc8+xml":{"source":"iana","compressible":true},"application/vnd.3gpp-v2x-local-service-information":{"source":"iana"},"application/vnd.3gpp.5gnas":{"source":"iana"},"application/vnd.3gpp.5gsa2x":{"source":"iana"},"application/vnd.3gpp.5gsa2x-local-service-information":{"source":"iana"},"application/vnd.3gpp.5gsv2x":{"source":"iana"},"application/vnd.3gpp.5gsv2x-local-service-information":{"source":"iana"},"application/vnd.3gpp.access-transfer-events+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.bsf+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.crs+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.current-location-discovery+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.gmop+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.gtpc":{"source":"iana"},"application/vnd.3gpp.interworking-data":{"source":"iana"},"application/vnd.3gpp.lpp":{"source":"iana"},"application/vnd.3gpp.mc-signalling-ear":{"source":"iana"},"application/vnd.3gpp.mcdata-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-msgstore-ctrl-request+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-payload":{"source":"iana"},"application/vnd.3gpp.mcdata-regroup+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-signalling":{"source":"iana"},"application/vnd.3gpp.mcdata-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcdata-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-floor-request+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-location-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-mbms-usage-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-regroup+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-signed+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-ue-init-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcptt-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-affiliation-command+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-location-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-mbms-usage-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-regroup+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-service-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-transmission-request+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-ue-config+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mcvideo-user-profile+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.mid-call+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.ngap":{"source":"iana"},"application/vnd.3gpp.pfcp":{"source":"iana"},"application/vnd.3gpp.pic-bw-large":{"source":"iana","extensions":["plb"]},"application/vnd.3gpp.pic-bw-small":{"source":"iana","extensions":["psb"]},"application/vnd.3gpp.pic-bw-var":{"source":"iana","extensions":["pvb"]},"application/vnd.3gpp.pinapp-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.s1ap":{"source":"iana"},"application/vnd.3gpp.seal-group-doc+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.seal-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.seal-location-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.seal-mbms-usage-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.seal-network-qos-management-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.seal-ue-config-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.seal-unicast-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.seal-user-profile-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.sms":{"source":"iana"},"application/vnd.3gpp.sms+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.srvcc-ext+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.srvcc-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.state-and-event-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.ussd+xml":{"source":"iana","compressible":true},"application/vnd.3gpp.v2x":{"source":"iana"},"application/vnd.3gpp.vae-info+xml":{"source":"iana","compressible":true},"application/vnd.3gpp2.bcmcsinfo+xml":{"source":"iana","compressible":true},"application/vnd.3gpp2.sms":{"source":"iana"},"application/vnd.3gpp2.tcap":{"source":"iana","extensions":["tcap"]},"application/vnd.3lightssoftware.imagescal":{"source":"iana"},"application/vnd.3m.post-it-notes":{"source":"iana","extensions":["pwn"]},"application/vnd.accpac.simply.aso":{"source":"iana","extensions":["aso"]},"application/vnd.accpac.simply.imp":{"source":"iana","extensions":["imp"]},"application/vnd.acm.addressxfer+json":{"source":"iana","compressible":true},"application/vnd.acm.chatbot+json":{"source":"iana","compressible":true},"application/vnd.acucobol":{"source":"iana","extensions":["acu"]},"application/vnd.acucorp":{"source":"iana","extensions":["atc","acutc"]},"application/vnd.adobe.air-application-installer-package+zip":{"source":"apache","compressible":false,"extensions":["air"]},"application/vnd.adobe.flash.movie":{"source":"iana"},"application/vnd.adobe.formscentral.fcdt":{"source":"iana","extensions":["fcdt"]},"application/vnd.adobe.fxp":{"source":"iana","extensions":["fxp","fxpl"]},"application/vnd.adobe.partial-upload":{"source":"iana"},"application/vnd.adobe.xdp+xml":{"source":"iana","compressible":true,"extensions":["xdp"]},"application/vnd.adobe.xfdf":{"source":"apache","extensions":["xfdf"]},"application/vnd.aether.imp":{"source":"iana"},"application/vnd.afpc.afplinedata":{"source":"iana"},"application/vnd.afpc.afplinedata-pagedef":{"source":"iana"},"application/vnd.afpc.cmoca-cmresource":{"source":"iana"},"application/vnd.afpc.foca-charset":{"source":"iana"},"application/vnd.afpc.foca-codedfont":{"source":"iana"},"application/vnd.afpc.foca-codepage":{"source":"iana"},"application/vnd.afpc.modca":{"source":"iana"},"application/vnd.afpc.modca-cmtable":{"source":"iana"},"application/vnd.afpc.modca-formdef":{"source":"iana"},"application/vnd.afpc.modca-mediummap":{"source":"iana"},"application/vnd.afpc.modca-objectcontainer":{"source":"iana"},"application/vnd.afpc.modca-overlay":{"source":"iana"},"application/vnd.afpc.modca-pagesegment":{"source":"iana"},"application/vnd.age":{"source":"iana","extensions":["age"]},"application/vnd.ah-barcode":{"source":"apache"},"application/vnd.ahead.space":{"source":"iana","extensions":["ahead"]},"application/vnd.airzip.filesecure.azf":{"source":"iana","extensions":["azf"]},"application/vnd.airzip.filesecure.azs":{"source":"iana","extensions":["azs"]},"application/vnd.amadeus+json":{"source":"iana","compressible":true},"application/vnd.amazon.ebook":{"source":"apache","extensions":["azw"]},"application/vnd.amazon.mobi8-ebook":{"source":"iana"},"application/vnd.americandynamics.acc":{"source":"iana","extensions":["acc"]},"application/vnd.amiga.ami":{"source":"iana","extensions":["ami"]},"application/vnd.amundsen.maze+xml":{"source":"iana","compressible":true},"application/vnd.android.ota":{"source":"iana"},"application/vnd.android.package-archive":{"source":"apache","compressible":false,"extensions":["apk"]},"application/vnd.anki":{"source":"iana"},"application/vnd.anser-web-certificate-issue-initiation":{"source":"iana","extensions":["cii"]},"application/vnd.anser-web-funds-transfer-initiation":{"source":"apache","extensions":["fti"]},"application/vnd.antix.game-component":{"source":"iana","extensions":["atx"]},"application/vnd.apache.arrow.file":{"source":"iana"},"application/vnd.apache.arrow.stream":{"source":"iana"},"application/vnd.apache.parquet":{"source":"iana"},"application/vnd.apache.thrift.binary":{"source":"iana"},"application/vnd.apache.thrift.compact":{"source":"iana"},"application/vnd.apache.thrift.json":{"source":"iana"},"application/vnd.apexlang":{"source":"iana"},"application/vnd.api+json":{"source":"iana","compressible":true},"application/vnd.aplextor.warrp+json":{"source":"iana","compressible":true},"application/vnd.apothekende.reservation+json":{"source":"iana","compressible":true},"application/vnd.apple.installer+xml":{"source":"iana","compressible":true,"extensions":["mpkg"]},"application/vnd.apple.keynote":{"source":"iana","extensions":["key"]},"application/vnd.apple.mpegurl":{"source":"iana","extensions":["m3u8"]},"application/vnd.apple.numbers":{"source":"iana","extensions":["numbers"]},"application/vnd.apple.pages":{"source":"iana","extensions":["pages"]},"application/vnd.apple.pkpass":{"compressible":false,"extensions":["pkpass"]},"application/vnd.arastra.swi":{"source":"apache"},"application/vnd.aristanetworks.swi":{"source":"iana","extensions":["swi"]},"application/vnd.artisan+json":{"source":"iana","compressible":true},"application/vnd.artsquare":{"source":"iana"},"application/vnd.astraea-software.iota":{"source":"iana","extensions":["iota"]},"application/vnd.audiograph":{"source":"iana","extensions":["aep"]},"application/vnd.autodesk.fbx":{"extensions":["fbx"]},"application/vnd.autopackage":{"source":"iana"},"application/vnd.avalon+json":{"source":"iana","compressible":true},"application/vnd.avistar+xml":{"source":"iana","compressible":true},"application/vnd.balsamiq.bmml+xml":{"source":"iana","compressible":true,"extensions":["bmml"]},"application/vnd.balsamiq.bmpr":{"source":"iana"},"application/vnd.banana-accounting":{"source":"iana"},"application/vnd.bbf.usp.error":{"source":"iana"},"application/vnd.bbf.usp.msg":{"source":"iana"},"application/vnd.bbf.usp.msg+json":{"source":"iana","compressible":true},"application/vnd.bekitzur-stech+json":{"source":"iana","compressible":true},"application/vnd.belightsoft.lhzd+zip":{"source":"iana","compressible":false},"application/vnd.belightsoft.lhzl+zip":{"source":"iana","compressible":false},"application/vnd.bint.med-content":{"source":"iana"},"application/vnd.biopax.rdf+xml":{"source":"iana","compressible":true},"application/vnd.blink-idb-value-wrapper":{"source":"iana"},"application/vnd.blueice.multipass":{"source":"iana","extensions":["mpm"]},"application/vnd.bluetooth.ep.oob":{"source":"iana"},"application/vnd.bluetooth.le.oob":{"source":"iana"},"application/vnd.bmi":{"source":"iana","extensions":["bmi"]},"application/vnd.bpf":{"source":"iana"},"application/vnd.bpf3":{"source":"iana"},"application/vnd.businessobjects":{"source":"iana","extensions":["rep"]},"application/vnd.byu.uapi+json":{"source":"iana","compressible":true},"application/vnd.bzip3":{"source":"iana"},"application/vnd.c3voc.schedule+xml":{"source":"iana","compressible":true},"application/vnd.cab-jscript":{"source":"iana"},"application/vnd.canon-cpdl":{"source":"iana"},"application/vnd.canon-lips":{"source":"iana"},"application/vnd.capasystems-pg+json":{"source":"iana","compressible":true},"application/vnd.cendio.thinlinc.clientconf":{"source":"iana"},"application/vnd.century-systems.tcp_stream":{"source":"iana"},"application/vnd.chemdraw+xml":{"source":"iana","compressible":true,"extensions":["cdxml"]},"application/vnd.chess-pgn":{"source":"iana"},"application/vnd.chipnuts.karaoke-mmd":{"source":"iana","extensions":["mmd"]},"application/vnd.ciedi":{"source":"iana"},"application/vnd.cinderella":{"source":"iana","extensions":["cdy"]},"application/vnd.cirpack.isdn-ext":{"source":"iana"},"application/vnd.citationstyles.style+xml":{"source":"iana","compressible":true,"extensions":["csl"]},"application/vnd.claymore":{"source":"iana","extensions":["cla"]},"application/vnd.cloanto.rp9":{"source":"iana","extensions":["rp9"]},"application/vnd.clonk.c4group":{"source":"iana","extensions":["c4g","c4d","c4f","c4p","c4u"]},"application/vnd.cluetrust.cartomobile-config":{"source":"iana","extensions":["c11amc"]},"application/vnd.cluetrust.cartomobile-config-pkg":{"source":"iana","extensions":["c11amz"]},"application/vnd.cncf.helm.chart.content.v1.tar+gzip":{"source":"iana"},"application/vnd.cncf.helm.chart.provenance.v1.prov":{"source":"iana"},"application/vnd.cncf.helm.config.v1+json":{"source":"iana","compressible":true},"application/vnd.coffeescript":{"source":"iana"},"application/vnd.collabio.xodocuments.document":{"source":"iana"},"application/vnd.collabio.xodocuments.document-template":{"source":"iana"},"application/vnd.collabio.xodocuments.presentation":{"source":"iana"},"application/vnd.collabio.xodocuments.presentation-template":{"source":"iana"},"application/vnd.collabio.xodocuments.spreadsheet":{"source":"iana"},"application/vnd.collabio.xodocuments.spreadsheet-template":{"source":"iana"},"application/vnd.collection+json":{"source":"iana","compressible":true},"application/vnd.collection.doc+json":{"source":"iana","compressible":true},"application/vnd.collection.next+json":{"source":"iana","compressible":true},"application/vnd.comicbook+zip":{"source":"iana","compressible":false},"application/vnd.comicbook-rar":{"source":"iana"},"application/vnd.commerce-battelle":{"source":"iana"},"application/vnd.commonspace":{"source":"iana","extensions":["csp"]},"application/vnd.contact.cmsg":{"source":"iana","extensions":["cdbcmsg"]},"application/vnd.coreos.ignition+json":{"source":"iana","compressible":true},"application/vnd.cosmocaller":{"source":"iana","extensions":["cmc"]},"application/vnd.crick.clicker":{"source":"iana","extensions":["clkx"]},"application/vnd.crick.clicker.keyboard":{"source":"iana","extensions":["clkk"]},"application/vnd.crick.clicker.palette":{"source":"iana","extensions":["clkp"]},"application/vnd.crick.clicker.template":{"source":"iana","extensions":["clkt"]},"application/vnd.crick.clicker.wordbank":{"source":"iana","extensions":["clkw"]},"application/vnd.criticaltools.wbs+xml":{"source":"iana","compressible":true,"extensions":["wbs"]},"application/vnd.cryptii.pipe+json":{"source":"iana","compressible":true},"application/vnd.crypto-shade-file":{"source":"iana"},"application/vnd.cryptomator.encrypted":{"source":"iana"},"application/vnd.cryptomator.vault":{"source":"iana"},"application/vnd.ctc-posml":{"source":"iana","extensions":["pml"]},"application/vnd.ctct.ws+xml":{"source":"iana","compressible":true},"application/vnd.cups-pdf":{"source":"iana"},"application/vnd.cups-postscript":{"source":"iana"},"application/vnd.cups-ppd":{"source":"iana","extensions":["ppd"]},"application/vnd.cups-raster":{"source":"iana"},"application/vnd.cups-raw":{"source":"iana"},"application/vnd.curl":{"source":"iana"},"application/vnd.curl.car":{"source":"apache","extensions":["car"]},"application/vnd.curl.pcurl":{"source":"apache","extensions":["pcurl"]},"application/vnd.cyan.dean.root+xml":{"source":"iana","compressible":true},"application/vnd.cybank":{"source":"iana"},"application/vnd.cyclonedx+json":{"source":"iana","compressible":true},"application/vnd.cyclonedx+xml":{"source":"iana","compressible":true},"application/vnd.d2l.coursepackage1p0+zip":{"source":"iana","compressible":false},"application/vnd.d3m-dataset":{"source":"iana"},"application/vnd.d3m-problem":{"source":"iana"},"application/vnd.dart":{"source":"iana","compressible":true,"extensions":["dart"]},"application/vnd.data-vision.rdz":{"source":"iana","extensions":["rdz"]},"application/vnd.datalog":{"source":"iana"},"application/vnd.datapackage+json":{"source":"iana","compressible":true},"application/vnd.dataresource+json":{"source":"iana","compressible":true},"application/vnd.dbf":{"source":"iana","extensions":["dbf"]},"application/vnd.dcmp+xml":{"source":"iana","compressible":true,"extensions":["dcmp"]},"application/vnd.debian.binary-package":{"source":"iana"},"application/vnd.dece.data":{"source":"iana","extensions":["uvf","uvvf","uvd","uvvd"]},"application/vnd.dece.ttml+xml":{"source":"iana","compressible":true,"extensions":["uvt","uvvt"]},"application/vnd.dece.unspecified":{"source":"iana","extensions":["uvx","uvvx"]},"application/vnd.dece.zip":{"source":"iana","extensions":["uvz","uvvz"]},"application/vnd.denovo.fcselayout-link":{"source":"iana","extensions":["fe_launch"]},"application/vnd.desmume.movie":{"source":"iana"},"application/vnd.dir-bi.plate-dl-nosuffix":{"source":"iana"},"application/vnd.dm.delegation+xml":{"source":"iana","compressible":true},"application/vnd.dna":{"source":"iana","extensions":["dna"]},"application/vnd.document+json":{"source":"iana","compressible":true},"application/vnd.dolby.mlp":{"source":"apache","extensions":["mlp"]},"application/vnd.dolby.mobile.1":{"source":"iana"},"application/vnd.dolby.mobile.2":{"source":"iana"},"application/vnd.doremir.scorecloud-binary-document":{"source":"iana"},"application/vnd.dpgraph":{"source":"iana","extensions":["dpg"]},"application/vnd.dreamfactory":{"source":"iana","extensions":["dfac"]},"application/vnd.drive+json":{"source":"iana","compressible":true},"application/vnd.ds-keypoint":{"source":"apache","extensions":["kpxx"]},"application/vnd.dtg.local":{"source":"iana"},"application/vnd.dtg.local.flash":{"source":"iana"},"application/vnd.dtg.local.html":{"source":"iana"},"application/vnd.dvb.ait":{"source":"iana","extensions":["ait"]},"application/vnd.dvb.dvbisl+xml":{"source":"iana","compressible":true},"application/vnd.dvb.dvbj":{"source":"iana"},"application/vnd.dvb.esgcontainer":{"source":"iana"},"application/vnd.dvb.ipdcdftnotifaccess":{"source":"iana"},"application/vnd.dvb.ipdcesgaccess":{"source":"iana"},"application/vnd.dvb.ipdcesgaccess2":{"source":"iana"},"application/vnd.dvb.ipdcesgpdd":{"source":"iana"},"application/vnd.dvb.ipdcroaming":{"source":"iana"},"application/vnd.dvb.iptv.alfec-base":{"source":"iana"},"application/vnd.dvb.iptv.alfec-enhancement":{"source":"iana"},"application/vnd.dvb.notif-aggregate-root+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-container+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-generic+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-msglist+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-registration-request+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-ia-registration-response+xml":{"source":"iana","compressible":true},"application/vnd.dvb.notif-init+xml":{"source":"iana","compressible":true},"application/vnd.dvb.pfr":{"source":"iana"},"application/vnd.dvb.service":{"source":"iana","extensions":["svc"]},"application/vnd.dxr":{"source":"iana"},"application/vnd.dynageo":{"source":"iana","extensions":["geo"]},"application/vnd.dzr":{"source":"iana"},"application/vnd.easykaraoke.cdgdownload":{"source":"iana"},"application/vnd.ecdis-update":{"source":"iana"},"application/vnd.ecip.rlp":{"source":"iana"},"application/vnd.eclipse.ditto+json":{"source":"iana","compressible":true},"application/vnd.ecowin.chart":{"source":"iana","extensions":["mag"]},"application/vnd.ecowin.filerequest":{"source":"iana"},"application/vnd.ecowin.fileupdate":{"source":"iana"},"application/vnd.ecowin.series":{"source":"iana"},"application/vnd.ecowin.seriesrequest":{"source":"iana"},"application/vnd.ecowin.seriesupdate":{"source":"iana"},"application/vnd.efi.img":{"source":"iana"},"application/vnd.efi.iso":{"source":"iana"},"application/vnd.eln+zip":{"source":"iana","compressible":false},"application/vnd.emclient.accessrequest+xml":{"source":"iana","compressible":true},"application/vnd.enliven":{"source":"iana","extensions":["nml"]},"application/vnd.enphase.envoy":{"source":"iana"},"application/vnd.eprints.data+xml":{"source":"iana","compressible":true},"application/vnd.epson.esf":{"source":"iana","extensions":["esf"]},"application/vnd.epson.msf":{"source":"iana","extensions":["msf"]},"application/vnd.epson.quickanime":{"source":"iana","extensions":["qam"]},"application/vnd.epson.salt":{"source":"iana","extensions":["slt"]},"application/vnd.epson.ssf":{"source":"iana","extensions":["ssf"]},"application/vnd.ericsson.quickcall":{"source":"iana"},"application/vnd.erofs":{"source":"iana"},"application/vnd.espass-espass+zip":{"source":"iana","compressible":false},"application/vnd.eszigno3+xml":{"source":"iana","compressible":true,"extensions":["es3","et3"]},"application/vnd.etsi.aoc+xml":{"source":"iana","compressible":true},"application/vnd.etsi.asic-e+zip":{"source":"iana","compressible":false},"application/vnd.etsi.asic-s+zip":{"source":"iana","compressible":false},"application/vnd.etsi.cug+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvcommand+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvdiscovery+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvprofile+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-bc+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-cod+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsad-npvr+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvservice+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvsync+xml":{"source":"iana","compressible":true},"application/vnd.etsi.iptvueprofile+xml":{"source":"iana","compressible":true},"application/vnd.etsi.mcid+xml":{"source":"iana","compressible":true},"application/vnd.etsi.mheg5":{"source":"iana"},"application/vnd.etsi.overload-control-policy-dataset+xml":{"source":"iana","compressible":true},"application/vnd.etsi.pstn+xml":{"source":"iana","compressible":true},"application/vnd.etsi.sci+xml":{"source":"iana","compressible":true},"application/vnd.etsi.simservs+xml":{"source":"iana","compressible":true},"application/vnd.etsi.timestamp-token":{"source":"iana"},"application/vnd.etsi.tsl+xml":{"source":"iana","compressible":true},"application/vnd.etsi.tsl.der":{"source":"iana"},"application/vnd.eu.kasparian.car+json":{"source":"iana","compressible":true},"application/vnd.eudora.data":{"source":"iana"},"application/vnd.evolv.ecig.profile":{"source":"iana"},"application/vnd.evolv.ecig.settings":{"source":"iana"},"application/vnd.evolv.ecig.theme":{"source":"iana"},"application/vnd.exstream-empower+zip":{"source":"iana","compressible":false},"application/vnd.exstream-package":{"source":"iana"},"application/vnd.ezpix-album":{"source":"iana","extensions":["ez2"]},"application/vnd.ezpix-package":{"source":"iana","extensions":["ez3"]},"application/vnd.f-secure.mobile":{"source":"iana"},"application/vnd.familysearch.gedcom+zip":{"source":"iana","compressible":false},"application/vnd.fastcopy-disk-image":{"source":"iana"},"application/vnd.fdf":{"source":"apache","extensions":["fdf"]},"application/vnd.fdsn.mseed":{"source":"iana","extensions":["mseed"]},"application/vnd.fdsn.seed":{"source":"iana","extensions":["seed","dataless"]},"application/vnd.fdsn.stationxml+xml":{"source":"iana","charset":"XML-BASED","compressible":true},"application/vnd.ffsns":{"source":"iana"},"application/vnd.ficlab.flb+zip":{"source":"iana","compressible":false},"application/vnd.filmit.zfc":{"source":"iana"},"application/vnd.fints":{"source":"iana"},"application/vnd.firemonkeys.cloudcell":{"source":"iana"},"application/vnd.flographit":{"source":"iana","extensions":["gph"]},"application/vnd.fluxtime.clip":{"source":"iana","extensions":["ftc"]},"application/vnd.font-fontforge-sfd":{"source":"iana"},"application/vnd.framemaker":{"source":"iana","extensions":["fm","frame","maker","book"]},"application/vnd.freelog.comic":{"source":"iana"},"application/vnd.frogans.fnc":{"source":"apache","extensions":["fnc"]},"application/vnd.frogans.ltf":{"source":"apache","extensions":["ltf"]},"application/vnd.fsc.weblaunch":{"source":"iana","extensions":["fsc"]},"application/vnd.fujifilm.fb.docuworks":{"source":"iana"},"application/vnd.fujifilm.fb.docuworks.binder":{"source":"iana"},"application/vnd.fujifilm.fb.docuworks.container":{"source":"iana"},"application/vnd.fujifilm.fb.jfi+xml":{"source":"iana","compressible":true},"application/vnd.fujitsu.oasys":{"source":"iana","extensions":["oas"]},"application/vnd.fujitsu.oasys2":{"source":"iana","extensions":["oa2"]},"application/vnd.fujitsu.oasys3":{"source":"iana","extensions":["oa3"]},"application/vnd.fujitsu.oasysgp":{"source":"iana","extensions":["fg5"]},"application/vnd.fujitsu.oasysprs":{"source":"iana","extensions":["bh2"]},"application/vnd.fujixerox.art-ex":{"source":"iana"},"application/vnd.fujixerox.art4":{"source":"iana"},"application/vnd.fujixerox.ddd":{"source":"iana","extensions":["ddd"]},"application/vnd.fujixerox.docuworks":{"source":"iana","extensions":["xdw"]},"application/vnd.fujixerox.docuworks.binder":{"source":"iana","extensions":["xbd"]},"application/vnd.fujixerox.docuworks.container":{"source":"iana"},"application/vnd.fujixerox.hbpl":{"source":"iana"},"application/vnd.fut-misnet":{"source":"iana"},"application/vnd.futoin+cbor":{"source":"iana"},"application/vnd.futoin+json":{"source":"iana","compressible":true},"application/vnd.fuzzysheet":{"source":"iana","extensions":["fzs"]},"application/vnd.ga4gh.passport+jwt":{"source":"iana"},"application/vnd.genomatix.tuxedo":{"source":"iana","extensions":["txd"]},"application/vnd.genozip":{"source":"iana"},"application/vnd.gentics.grd+json":{"source":"iana","compressible":true},"application/vnd.gentoo.catmetadata+xml":{"source":"iana","compressible":true},"application/vnd.gentoo.ebuild":{"source":"iana"},"application/vnd.gentoo.eclass":{"source":"iana"},"application/vnd.gentoo.gpkg":{"source":"iana"},"application/vnd.gentoo.manifest":{"source":"iana"},"application/vnd.gentoo.pkgmetadata+xml":{"source":"iana","compressible":true},"application/vnd.gentoo.xpak":{"source":"iana"},"application/vnd.geo+json":{"source":"apache","compressible":true},"application/vnd.geocube+xml":{"source":"apache","compressible":true},"application/vnd.geogebra.file":{"source":"iana","extensions":["ggb"]},"application/vnd.geogebra.pinboard":{"source":"iana"},"application/vnd.geogebra.slides":{"source":"iana","extensions":["ggs"]},"application/vnd.geogebra.tool":{"source":"iana","extensions":["ggt"]},"application/vnd.geometry-explorer":{"source":"iana","extensions":["gex","gre"]},"application/vnd.geonext":{"source":"iana","extensions":["gxt"]},"application/vnd.geoplan":{"source":"iana","extensions":["g2w"]},"application/vnd.geospace":{"source":"iana","extensions":["g3w"]},"application/vnd.gerber":{"source":"iana"},"application/vnd.globalplatform.card-content-mgt":{"source":"iana"},"application/vnd.globalplatform.card-content-mgt-response":{"source":"iana"},"application/vnd.gmx":{"source":"iana","extensions":["gmx"]},"application/vnd.gnu.taler.exchange+json":{"source":"iana","compressible":true},"application/vnd.gnu.taler.merchant+json":{"source":"iana","compressible":true},"application/vnd.google-apps.audio":{},"application/vnd.google-apps.document":{"compressible":false,"extensions":["gdoc"]},"application/vnd.google-apps.drawing":{"compressible":false,"extensions":["gdraw"]},"application/vnd.google-apps.drive-sdk":{"compressible":false},"application/vnd.google-apps.file":{},"application/vnd.google-apps.folder":{"compressible":false},"application/vnd.google-apps.form":{"compressible":false,"extensions":["gform"]},"application/vnd.google-apps.fusiontable":{},"application/vnd.google-apps.jam":{"compressible":false,"extensions":["gjam"]},"application/vnd.google-apps.mail-layout":{},"application/vnd.google-apps.map":{"compressible":false,"extensions":["gmap"]},"application/vnd.google-apps.photo":{},"application/vnd.google-apps.presentation":{"compressible":false,"extensions":["gslides"]},"application/vnd.google-apps.script":{"compressible":false,"extensions":["gscript"]},"application/vnd.google-apps.shortcut":{},"application/vnd.google-apps.site":{"compressible":false,"extensions":["gsite"]},"application/vnd.google-apps.spreadsheet":{"compressible":false,"extensions":["gsheet"]},"application/vnd.google-apps.unknown":{},"application/vnd.google-apps.video":{},"application/vnd.google-earth.kml+xml":{"source":"iana","compressible":true,"extensions":["kml"]},"application/vnd.google-earth.kmz":{"source":"iana","compressible":false,"extensions":["kmz"]},"application/vnd.gov.sk.e-form+xml":{"source":"apache","compressible":true},"application/vnd.gov.sk.e-form+zip":{"source":"iana","compressible":false},"application/vnd.gov.sk.xmldatacontainer+xml":{"source":"iana","compressible":true,"extensions":["xdcf"]},"application/vnd.gpxsee.map+xml":{"source":"iana","compressible":true},"application/vnd.grafeq":{"source":"iana","extensions":["gqf","gqs"]},"application/vnd.gridmp":{"source":"iana"},"application/vnd.groove-account":{"source":"iana","extensions":["gac"]},"application/vnd.groove-help":{"source":"iana","extensions":["ghf"]},"application/vnd.groove-identity-message":{"source":"iana","extensions":["gim"]},"application/vnd.groove-injector":{"source":"iana","extensions":["grv"]},"application/vnd.groove-tool-message":{"source":"iana","extensions":["gtm"]},"application/vnd.groove-tool-template":{"source":"iana","extensions":["tpl"]},"application/vnd.groove-vcard":{"source":"iana","extensions":["vcg"]},"application/vnd.hal+json":{"source":"iana","compressible":true},"application/vnd.hal+xml":{"source":"iana","compressible":true,"extensions":["hal"]},"application/vnd.handheld-entertainment+xml":{"source":"iana","compressible":true,"extensions":["zmm"]},"application/vnd.hbci":{"source":"iana","extensions":["hbci"]},"application/vnd.hc+json":{"source":"iana","compressible":true},"application/vnd.hcl-bireports":{"source":"iana"},"application/vnd.hdt":{"source":"iana"},"application/vnd.heroku+json":{"source":"iana","compressible":true},"application/vnd.hhe.lesson-player":{"source":"iana","extensions":["les"]},"application/vnd.hp-hpgl":{"source":"iana","extensions":["hpgl"]},"application/vnd.hp-hpid":{"source":"iana","extensions":["hpid"]},"application/vnd.hp-hps":{"source":"iana","extensions":["hps"]},"application/vnd.hp-jlyt":{"source":"iana","extensions":["jlt"]},"application/vnd.hp-pcl":{"source":"iana","extensions":["pcl"]},"application/vnd.hp-pclxl":{"source":"iana","extensions":["pclxl"]},"application/vnd.hsl":{"source":"iana"},"application/vnd.httphone":{"source":"iana"},"application/vnd.hydrostatix.sof-data":{"source":"iana","extensions":["sfd-hdstx"]},"application/vnd.hyper+json":{"source":"iana","compressible":true},"application/vnd.hyper-item+json":{"source":"iana","compressible":true},"application/vnd.hyperdrive+json":{"source":"iana","compressible":true},"application/vnd.hzn-3d-crossword":{"source":"iana"},"application/vnd.ibm.afplinedata":{"source":"apache"},"application/vnd.ibm.electronic-media":{"source":"iana"},"application/vnd.ibm.minipay":{"source":"iana","extensions":["mpy"]},"application/vnd.ibm.modcap":{"source":"apache","extensions":["afp","listafp","list3820"]},"application/vnd.ibm.rights-management":{"source":"iana","extensions":["irm"]},"application/vnd.ibm.secure-container":{"source":"iana","extensions":["sc"]},"application/vnd.iccprofile":{"source":"iana","extensions":["icc","icm"]},"application/vnd.ieee.1905":{"source":"iana"},"application/vnd.igloader":{"source":"iana","extensions":["igl"]},"application/vnd.imagemeter.folder+zip":{"source":"iana","compressible":false},"application/vnd.imagemeter.image+zip":{"source":"iana","compressible":false},"application/vnd.immervision-ivp":{"source":"iana","extensions":["ivp"]},"application/vnd.immervision-ivu":{"source":"iana","extensions":["ivu"]},"application/vnd.ims.imsccv1p1":{"source":"iana"},"application/vnd.ims.imsccv1p2":{"source":"iana"},"application/vnd.ims.imsccv1p3":{"source":"iana"},"application/vnd.ims.lis.v2.result+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolconsumerprofile+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolproxy+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolproxy.id+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolsettings+json":{"source":"iana","compressible":true},"application/vnd.ims.lti.v2.toolsettings.simple+json":{"source":"iana","compressible":true},"application/vnd.informedcontrol.rms+xml":{"source":"iana","compressible":true},"application/vnd.informix-visionary":{"source":"apache"},"application/vnd.infotech.project":{"source":"iana"},"application/vnd.infotech.project+xml":{"source":"iana","compressible":true},"application/vnd.innopath.wamp.notification":{"source":"iana"},"application/vnd.insors.igm":{"source":"iana","extensions":["igm"]},"application/vnd.intercon.formnet":{"source":"iana","extensions":["xpw","xpx"]},"application/vnd.intergeo":{"source":"iana","extensions":["i2g"]},"application/vnd.intertrust.digibox":{"source":"iana"},"application/vnd.intertrust.nncp":{"source":"iana"},"application/vnd.intu.qbo":{"source":"iana","extensions":["qbo"]},"application/vnd.intu.qfx":{"source":"iana","extensions":["qfx"]},"application/vnd.ipfs.ipns-record":{"source":"iana"},"application/vnd.ipld.car":{"source":"iana"},"application/vnd.ipld.dag-cbor":{"source":"iana"},"application/vnd.ipld.dag-json":{"source":"iana"},"application/vnd.ipld.raw":{"source":"iana"},"application/vnd.iptc.g2.catalogitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.conceptitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.knowledgeitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.newsitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.newsmessage+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.packageitem+xml":{"source":"iana","compressible":true},"application/vnd.iptc.g2.planningitem+xml":{"source":"iana","compressible":true},"application/vnd.ipunplugged.rcprofile":{"source":"iana","extensions":["rcprofile"]},"application/vnd.irepository.package+xml":{"source":"iana","compressible":true,"extensions":["irp"]},"application/vnd.is-xpr":{"source":"iana","extensions":["xpr"]},"application/vnd.isac.fcs":{"source":"iana","extensions":["fcs"]},"application/vnd.iso11783-10+zip":{"source":"iana","compressible":false},"application/vnd.jam":{"source":"iana","extensions":["jam"]},"application/vnd.japannet-directory-service":{"source":"iana"},"application/vnd.japannet-jpnstore-wakeup":{"source":"iana"},"application/vnd.japannet-payment-wakeup":{"source":"iana"},"application/vnd.japannet-registration":{"source":"iana"},"application/vnd.japannet-registration-wakeup":{"source":"iana"},"application/vnd.japannet-setstore-wakeup":{"source":"iana"},"application/vnd.japannet-verification":{"source":"iana"},"application/vnd.japannet-verification-wakeup":{"source":"iana"},"application/vnd.jcp.javame.midlet-rms":{"source":"iana","extensions":["rms"]},"application/vnd.jisp":{"source":"iana","extensions":["jisp"]},"application/vnd.joost.joda-archive":{"source":"iana","extensions":["joda"]},"application/vnd.jsk.isdn-ngn":{"source":"iana"},"application/vnd.kahootz":{"source":"iana","extensions":["ktz","ktr"]},"application/vnd.kde.karbon":{"source":"iana","extensions":["karbon"]},"application/vnd.kde.kchart":{"source":"iana","extensions":["chrt"]},"application/vnd.kde.kformula":{"source":"iana","extensions":["kfo"]},"application/vnd.kde.kivio":{"source":"iana","extensions":["flw"]},"application/vnd.kde.kontour":{"source":"iana","extensions":["kon"]},"application/vnd.kde.kpresenter":{"source":"iana","extensions":["kpr","kpt"]},"application/vnd.kde.kspread":{"source":"iana","extensions":["ksp"]},"application/vnd.kde.kword":{"source":"iana","extensions":["kwd","kwt"]},"application/vnd.kdl":{"source":"iana"},"application/vnd.kenameaapp":{"source":"iana","extensions":["htke"]},"application/vnd.keyman.kmp+zip":{"source":"iana","compressible":false},"application/vnd.keyman.kmx":{"source":"iana"},"application/vnd.kidspiration":{"source":"iana","extensions":["kia"]},"application/vnd.kinar":{"source":"iana","extensions":["kne","knp"]},"application/vnd.koan":{"source":"iana","extensions":["skp","skd","skt","skm"]},"application/vnd.kodak-descriptor":{"source":"iana","extensions":["sse"]},"application/vnd.las":{"source":"iana"},"application/vnd.las.las+json":{"source":"iana","compressible":true},"application/vnd.las.las+xml":{"source":"iana","compressible":true,"extensions":["lasxml"]},"application/vnd.laszip":{"source":"iana"},"application/vnd.ldev.productlicensing":{"source":"iana"},"application/vnd.leap+json":{"source":"iana","compressible":true},"application/vnd.liberty-request+xml":{"source":"iana","compressible":true},"application/vnd.llamagraphics.life-balance.desktop":{"source":"iana","extensions":["lbd"]},"application/vnd.llamagraphics.life-balance.exchange+xml":{"source":"iana","compressible":true,"extensions":["lbe"]},"application/vnd.logipipe.circuit+zip":{"source":"iana","compressible":false},"application/vnd.loom":{"source":"iana"},"application/vnd.lotus-1-2-3":{"source":"iana","extensions":["123"]},"application/vnd.lotus-approach":{"source":"iana","extensions":["apr"]},"application/vnd.lotus-freelance":{"source":"iana","extensions":["pre"]},"application/vnd.lotus-notes":{"source":"iana","extensions":["nsf"]},"application/vnd.lotus-organizer":{"source":"iana","extensions":["org"]},"application/vnd.lotus-screencam":{"source":"iana","extensions":["scm"]},"application/vnd.lotus-wordpro":{"source":"iana","extensions":["lwp"]},"application/vnd.macports.portpkg":{"source":"iana","extensions":["portpkg"]},"application/vnd.mapbox-vector-tile":{"source":"iana","extensions":["mvt"]},"application/vnd.marlin.drm.actiontoken+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.conftoken+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.license+xml":{"source":"iana","compressible":true},"application/vnd.marlin.drm.mdcf":{"source":"iana"},"application/vnd.mason+json":{"source":"iana","compressible":true},"application/vnd.maxar.archive.3tz+zip":{"source":"iana","compressible":false},"application/vnd.maxmind.maxmind-db":{"source":"iana"},"application/vnd.mcd":{"source":"iana","extensions":["mcd"]},"application/vnd.mdl":{"source":"iana"},"application/vnd.mdl-mbsdf":{"source":"iana"},"application/vnd.medcalcdata":{"source":"iana","extensions":["mc1"]},"application/vnd.mediastation.cdkey":{"source":"iana","extensions":["cdkey"]},"application/vnd.medicalholodeck.recordxr":{"source":"iana"},"application/vnd.meridian-slingshot":{"source":"iana"},"application/vnd.mermaid":{"source":"iana"},"application/vnd.mfer":{"source":"iana","extensions":["mwf"]},"application/vnd.mfmp":{"source":"iana","extensions":["mfm"]},"application/vnd.micro+json":{"source":"iana","compressible":true},"application/vnd.micrografx.flo":{"source":"iana","extensions":["flo"]},"application/vnd.micrografx.igx":{"source":"iana","extensions":["igx"]},"application/vnd.microsoft.portable-executable":{"source":"iana"},"application/vnd.microsoft.windows.thumbnail-cache":{"source":"iana"},"application/vnd.miele+json":{"source":"iana","compressible":true},"application/vnd.mif":{"source":"iana","extensions":["mif"]},"application/vnd.minisoft-hp3000-save":{"source":"iana"},"application/vnd.mitsubishi.misty-guard.trustweb":{"source":"iana"},"application/vnd.mobius.daf":{"source":"iana","extensions":["daf"]},"application/vnd.mobius.dis":{"source":"iana","extensions":["dis"]},"application/vnd.mobius.mbk":{"source":"iana","extensions":["mbk"]},"application/vnd.mobius.mqy":{"source":"iana","extensions":["mqy"]},"application/vnd.mobius.msl":{"source":"iana","extensions":["msl"]},"application/vnd.mobius.plc":{"source":"iana","extensions":["plc"]},"application/vnd.mobius.txf":{"source":"iana","extensions":["txf"]},"application/vnd.modl":{"source":"iana"},"application/vnd.mophun.application":{"source":"iana","extensions":["mpn"]},"application/vnd.mophun.certificate":{"source":"iana","extensions":["mpc"]},"application/vnd.motorola.flexsuite":{"source":"iana"},"application/vnd.motorola.flexsuite.adsi":{"source":"iana"},"application/vnd.motorola.flexsuite.fis":{"source":"iana"},"application/vnd.motorola.flexsuite.gotap":{"source":"iana"},"application/vnd.motorola.flexsuite.kmr":{"source":"iana"},"application/vnd.motorola.flexsuite.ttc":{"source":"iana"},"application/vnd.motorola.flexsuite.wem":{"source":"iana"},"application/vnd.motorola.iprm":{"source":"iana"},"application/vnd.mozilla.xul+xml":{"source":"iana","compressible":true,"extensions":["xul"]},"application/vnd.ms-3mfdocument":{"source":"iana"},"application/vnd.ms-artgalry":{"source":"iana","extensions":["cil"]},"application/vnd.ms-asf":{"source":"iana"},"application/vnd.ms-cab-compressed":{"source":"iana","extensions":["cab"]},"application/vnd.ms-color.iccprofile":{"source":"apache"},"application/vnd.ms-excel":{"source":"iana","compressible":false,"extensions":["xls","xlm","xla","xlc","xlt","xlw"]},"application/vnd.ms-excel.addin.macroenabled.12":{"source":"iana","extensions":["xlam"]},"application/vnd.ms-excel.sheet.binary.macroenabled.12":{"source":"iana","extensions":["xlsb"]},"application/vnd.ms-excel.sheet.macroenabled.12":{"source":"iana","extensions":["xlsm"]},"application/vnd.ms-excel.template.macroenabled.12":{"source":"iana","extensions":["xltm"]},"application/vnd.ms-fontobject":{"source":"iana","compressible":true,"extensions":["eot"]},"application/vnd.ms-htmlhelp":{"source":"iana","extensions":["chm"]},"application/vnd.ms-ims":{"source":"iana","extensions":["ims"]},"application/vnd.ms-lrm":{"source":"iana","extensions":["lrm"]},"application/vnd.ms-office.activex+xml":{"source":"iana","compressible":true},"application/vnd.ms-officetheme":{"source":"iana","extensions":["thmx"]},"application/vnd.ms-opentype":{"source":"apache","compressible":true},"application/vnd.ms-outlook":{"compressible":false,"extensions":["msg"]},"application/vnd.ms-package.obfuscated-opentype":{"source":"apache"},"application/vnd.ms-pki.seccat":{"source":"apache","extensions":["cat"]},"application/vnd.ms-pki.stl":{"source":"apache","extensions":["stl"]},"application/vnd.ms-playready.initiator+xml":{"source":"iana","compressible":true},"application/vnd.ms-powerpoint":{"source":"iana","compressible":false,"extensions":["ppt","pps","pot"]},"application/vnd.ms-powerpoint.addin.macroenabled.12":{"source":"iana","extensions":["ppam"]},"application/vnd.ms-powerpoint.presentation.macroenabled.12":{"source":"iana","extensions":["pptm"]},"application/vnd.ms-powerpoint.slide.macroenabled.12":{"source":"iana","extensions":["sldm"]},"application/vnd.ms-powerpoint.slideshow.macroenabled.12":{"source":"iana","extensions":["ppsm"]},"application/vnd.ms-powerpoint.template.macroenabled.12":{"source":"iana","extensions":["potm"]},"application/vnd.ms-printdevicecapabilities+xml":{"source":"iana","compressible":true},"application/vnd.ms-printing.printticket+xml":{"source":"apache","compressible":true},"application/vnd.ms-printschematicket+xml":{"source":"iana","compressible":true},"application/vnd.ms-project":{"source":"iana","extensions":["mpp","mpt"]},"application/vnd.ms-tnef":{"source":"iana"},"application/vnd.ms-visio.viewer":{"extensions":["vdx"]},"application/vnd.ms-windows.devicepairing":{"source":"iana"},"application/vnd.ms-windows.nwprinting.oob":{"source":"iana"},"application/vnd.ms-windows.printerpairing":{"source":"iana"},"application/vnd.ms-windows.wsd.oob":{"source":"iana"},"application/vnd.ms-wmdrm.lic-chlg-req":{"source":"iana"},"application/vnd.ms-wmdrm.lic-resp":{"source":"iana"},"application/vnd.ms-wmdrm.meter-chlg-req":{"source":"iana"},"application/vnd.ms-wmdrm.meter-resp":{"source":"iana"},"application/vnd.ms-word.document.macroenabled.12":{"source":"iana","extensions":["docm"]},"application/vnd.ms-word.template.macroenabled.12":{"source":"iana","extensions":["dotm"]},"application/vnd.ms-works":{"source":"iana","extensions":["wps","wks","wcm","wdb"]},"application/vnd.ms-wpl":{"source":"iana","extensions":["wpl"]},"application/vnd.ms-xpsdocument":{"source":"iana","compressible":false,"extensions":["xps"]},"application/vnd.msa-disk-image":{"source":"iana"},"application/vnd.mseq":{"source":"iana","extensions":["mseq"]},"application/vnd.msgpack":{"source":"iana"},"application/vnd.msign":{"source":"iana"},"application/vnd.multiad.creator":{"source":"iana"},"application/vnd.multiad.creator.cif":{"source":"iana"},"application/vnd.music-niff":{"source":"iana"},"application/vnd.musician":{"source":"iana","extensions":["mus"]},"application/vnd.muvee.style":{"source":"iana","extensions":["msty"]},"application/vnd.mynfc":{"source":"iana","extensions":["taglet"]},"application/vnd.nacamar.ybrid+json":{"source":"iana","compressible":true},"application/vnd.nato.bindingdataobject+cbor":{"source":"iana"},"application/vnd.nato.bindingdataobject+json":{"source":"iana","compressible":true},"application/vnd.nato.bindingdataobject+xml":{"source":"iana","compressible":true,"extensions":["bdo"]},"application/vnd.nato.openxmlformats-package.iepd+zip":{"source":"iana","compressible":false},"application/vnd.ncd.control":{"source":"iana"},"application/vnd.ncd.reference":{"source":"iana"},"application/vnd.nearst.inv+json":{"source":"iana","compressible":true},"application/vnd.nebumind.line":{"source":"iana"},"application/vnd.nervana":{"source":"iana"},"application/vnd.netfpx":{"source":"iana"},"application/vnd.neurolanguage.nlu":{"source":"iana","extensions":["nlu"]},"application/vnd.nimn":{"source":"iana"},"application/vnd.nintendo.nitro.rom":{"source":"iana"},"application/vnd.nintendo.snes.rom":{"source":"iana"},"application/vnd.nitf":{"source":"iana","extensions":["ntf","nitf"]},"application/vnd.noblenet-directory":{"source":"iana","extensions":["nnd"]},"application/vnd.noblenet-sealer":{"source":"iana","extensions":["nns"]},"application/vnd.noblenet-web":{"source":"iana","extensions":["nnw"]},"application/vnd.nokia.catalogs":{"source":"iana"},"application/vnd.nokia.conml+wbxml":{"source":"iana"},"application/vnd.nokia.conml+xml":{"source":"iana","compressible":true},"application/vnd.nokia.iptv.config+xml":{"source":"iana","compressible":true},"application/vnd.nokia.isds-radio-presets":{"source":"iana"},"application/vnd.nokia.landmark+wbxml":{"source":"iana"},"application/vnd.nokia.landmark+xml":{"source":"iana","compressible":true},"application/vnd.nokia.landmarkcollection+xml":{"source":"iana","compressible":true},"application/vnd.nokia.n-gage.ac+xml":{"source":"iana","compressible":true,"extensions":["ac"]},"application/vnd.nokia.n-gage.data":{"source":"iana","extensions":["ngdat"]},"application/vnd.nokia.n-gage.symbian.install":{"source":"apache","extensions":["n-gage"]},"application/vnd.nokia.ncd":{"source":"iana"},"application/vnd.nokia.pcd+wbxml":{"source":"iana"},"application/vnd.nokia.pcd+xml":{"source":"iana","compressible":true},"application/vnd.nokia.radio-preset":{"source":"iana","extensions":["rpst"]},"application/vnd.nokia.radio-presets":{"source":"iana","extensions":["rpss"]},"application/vnd.novadigm.edm":{"source":"iana","extensions":["edm"]},"application/vnd.novadigm.edx":{"source":"iana","extensions":["edx"]},"application/vnd.novadigm.ext":{"source":"iana","extensions":["ext"]},"application/vnd.ntt-local.content-share":{"source":"iana"},"application/vnd.ntt-local.file-transfer":{"source":"iana"},"application/vnd.ntt-local.ogw_remote-access":{"source":"iana"},"application/vnd.ntt-local.sip-ta_remote":{"source":"iana"},"application/vnd.ntt-local.sip-ta_tcp_stream":{"source":"iana"},"application/vnd.oai.workflows":{"source":"iana"},"application/vnd.oai.workflows+json":{"source":"iana","compressible":true},"application/vnd.oai.workflows+yaml":{"source":"iana"},"application/vnd.oasis.opendocument.base":{"source":"iana"},"application/vnd.oasis.opendocument.chart":{"source":"iana","extensions":["odc"]},"application/vnd.oasis.opendocument.chart-template":{"source":"iana","extensions":["otc"]},"application/vnd.oasis.opendocument.database":{"source":"apache","extensions":["odb"]},"application/vnd.oasis.opendocument.formula":{"source":"iana","extensions":["odf"]},"application/vnd.oasis.opendocument.formula-template":{"source":"iana","extensions":["odft"]},"application/vnd.oasis.opendocument.graphics":{"source":"iana","compressible":false,"extensions":["odg"]},"application/vnd.oasis.opendocument.graphics-template":{"source":"iana","extensions":["otg"]},"application/vnd.oasis.opendocument.image":{"source":"iana","extensions":["odi"]},"application/vnd.oasis.opendocument.image-template":{"source":"iana","extensions":["oti"]},"application/vnd.oasis.opendocument.presentation":{"source":"iana","compressible":false,"extensions":["odp"]},"application/vnd.oasis.opendocument.presentation-template":{"source":"iana","extensions":["otp"]},"application/vnd.oasis.opendocument.spreadsheet":{"source":"iana","compressible":false,"extensions":["ods"]},"application/vnd.oasis.opendocument.spreadsheet-template":{"source":"iana","extensions":["ots"]},"application/vnd.oasis.opendocument.text":{"source":"iana","compressible":false,"extensions":["odt"]},"application/vnd.oasis.opendocument.text-master":{"source":"iana","extensions":["odm"]},"application/vnd.oasis.opendocument.text-master-template":{"source":"iana"},"application/vnd.oasis.opendocument.text-template":{"source":"iana","extensions":["ott"]},"application/vnd.oasis.opendocument.text-web":{"source":"iana","extensions":["oth"]},"application/vnd.obn":{"source":"iana"},"application/vnd.ocf+cbor":{"source":"iana"},"application/vnd.oci.image.manifest.v1+json":{"source":"iana","compressible":true},"application/vnd.oftn.l10n+json":{"source":"iana","compressible":true},"application/vnd.oipf.contentaccessdownload+xml":{"source":"iana","compressible":true},"application/vnd.oipf.contentaccessstreaming+xml":{"source":"iana","compressible":true},"application/vnd.oipf.cspg-hexbinary":{"source":"iana"},"application/vnd.oipf.dae.svg+xml":{"source":"iana","compressible":true},"application/vnd.oipf.dae.xhtml+xml":{"source":"iana","compressible":true},"application/vnd.oipf.mippvcontrolmessage+xml":{"source":"iana","compressible":true},"application/vnd.oipf.pae.gem":{"source":"iana"},"application/vnd.oipf.spdiscovery+xml":{"source":"iana","compressible":true},"application/vnd.oipf.spdlist+xml":{"source":"iana","compressible":true},"application/vnd.oipf.ueprofile+xml":{"source":"iana","compressible":true},"application/vnd.oipf.userprofile+xml":{"source":"iana","compressible":true},"application/vnd.olpc-sugar":{"source":"iana","extensions":["xo"]},"application/vnd.oma-scws-config":{"source":"iana"},"application/vnd.oma-scws-http-request":{"source":"iana"},"application/vnd.oma-scws-http-response":{"source":"iana"},"application/vnd.oma.bcast.associated-procedure-parameter+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.drm-trigger+xml":{"source":"apache","compressible":true},"application/vnd.oma.bcast.imd+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.ltkm":{"source":"iana"},"application/vnd.oma.bcast.notification+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.provisioningtrigger":{"source":"iana"},"application/vnd.oma.bcast.sgboot":{"source":"iana"},"application/vnd.oma.bcast.sgdd+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.sgdu":{"source":"iana"},"application/vnd.oma.bcast.simple-symbol-container":{"source":"iana"},"application/vnd.oma.bcast.smartcard-trigger+xml":{"source":"apache","compressible":true},"application/vnd.oma.bcast.sprov+xml":{"source":"iana","compressible":true},"application/vnd.oma.bcast.stkm":{"source":"iana"},"application/vnd.oma.cab-address-book+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-feature-handler+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-pcc+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-subs-invite+xml":{"source":"iana","compressible":true},"application/vnd.oma.cab-user-prefs+xml":{"source":"iana","compressible":true},"application/vnd.oma.dcd":{"source":"iana"},"application/vnd.oma.dcdc":{"source":"iana"},"application/vnd.oma.dd2+xml":{"source":"iana","compressible":true,"extensions":["dd2"]},"application/vnd.oma.drm.risd+xml":{"source":"iana","compressible":true},"application/vnd.oma.group-usage-list+xml":{"source":"iana","compressible":true},"application/vnd.oma.lwm2m+cbor":{"source":"iana"},"application/vnd.oma.lwm2m+json":{"source":"iana","compressible":true},"application/vnd.oma.lwm2m+tlv":{"source":"iana"},"application/vnd.oma.pal+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.detailed-progress-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.final-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.groups+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.invocation-descriptor+xml":{"source":"iana","compressible":true},"application/vnd.oma.poc.optimized-progress-report+xml":{"source":"iana","compressible":true},"application/vnd.oma.push":{"source":"iana"},"application/vnd.oma.scidm.messages+xml":{"source":"iana","compressible":true},"application/vnd.oma.xcap-directory+xml":{"source":"iana","compressible":true},"application/vnd.omads-email+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omads-file+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omads-folder+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.omaloc-supl-init":{"source":"iana"},"application/vnd.onepager":{"source":"iana"},"application/vnd.onepagertamp":{"source":"iana"},"application/vnd.onepagertamx":{"source":"iana"},"application/vnd.onepagertat":{"source":"iana"},"application/vnd.onepagertatp":{"source":"iana"},"application/vnd.onepagertatx":{"source":"iana"},"application/vnd.onvif.metadata":{"source":"iana"},"application/vnd.openblox.game+xml":{"source":"iana","compressible":true,"extensions":["obgx"]},"application/vnd.openblox.game-binary":{"source":"iana"},"application/vnd.openeye.oeb":{"source":"iana"},"application/vnd.openofficeorg.extension":{"source":"apache","extensions":["oxt"]},"application/vnd.openstreetmap.data+xml":{"source":"iana","compressible":true,"extensions":["osm"]},"application/vnd.opentimestamps.ots":{"source":"iana"},"application/vnd.openvpi.dspx+json":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.custom-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.customxmlproperties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawing+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.chart+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.chartshapes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramcolors+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramdata+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramlayout+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.drawingml.diagramstyle+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.extended-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.commentauthors+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.handoutmaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.notesmaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.notesslide+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.presentation":{"source":"iana","compressible":false,"extensions":["pptx"]},"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.presprops+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slide":{"source":"iana","extensions":["sldx"]},"application/vnd.openxmlformats-officedocument.presentationml.slide+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slidelayout+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slidemaster+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slideshow":{"source":"iana","extensions":["ppsx"]},"application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.slideupdateinfo+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.tablestyles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.tags+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.template":{"source":"iana","extensions":["potx"]},"application/vnd.openxmlformats-officedocument.presentationml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.presentationml.viewprops+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.calcchain+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.chartsheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.connections+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.dialogsheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.externallink+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivotcachedefinition+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivotcacherecords+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.pivottable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.querytable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.revisionheaders+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.revisionlog+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedstrings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":{"source":"iana","compressible":false,"extensions":["xlsx"]},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.sheetmetadata+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.tablesinglecells+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.template":{"source":"iana","extensions":["xltx"]},"application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.usernames+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.volatiledependencies+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.theme+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.themeoverride+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.vmldrawing":{"source":"iana"},"application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.document":{"source":"iana","compressible":false,"extensions":["docx"]},"application/vnd.openxmlformats-officedocument.wordprocessingml.document.glossary+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.endnotes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.fonttable+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.footnotes+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.template":{"source":"iana","extensions":["dotx"]},"application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-officedocument.wordprocessingml.websettings+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.core-properties+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.digital-signature-xmlsignature+xml":{"source":"iana","compressible":true},"application/vnd.openxmlformats-package.relationships+xml":{"source":"iana","compressible":true},"application/vnd.oracle.resource+json":{"source":"iana","compressible":true},"application/vnd.orange.indata":{"source":"iana"},"application/vnd.osa.netdeploy":{"source":"iana"},"application/vnd.osgeo.mapguide.package":{"source":"iana","extensions":["mgp"]},"application/vnd.osgi.bundle":{"source":"iana"},"application/vnd.osgi.dp":{"source":"iana","extensions":["dp"]},"application/vnd.osgi.subsystem":{"source":"iana","extensions":["esa"]},"application/vnd.otps.ct-kip+xml":{"source":"iana","compressible":true},"application/vnd.oxli.countgraph":{"source":"iana"},"application/vnd.pagerduty+json":{"source":"iana","compressible":true},"application/vnd.palm":{"source":"iana","extensions":["pdb","pqa","oprc"]},"application/vnd.panoply":{"source":"iana"},"application/vnd.paos.xml":{"source":"iana"},"application/vnd.patentdive":{"source":"iana"},"application/vnd.patientecommsdoc":{"source":"iana"},"application/vnd.pawaafile":{"source":"iana","extensions":["paw"]},"application/vnd.pcos":{"source":"iana"},"application/vnd.pg.format":{"source":"iana","extensions":["str"]},"application/vnd.pg.osasli":{"source":"iana","extensions":["ei6"]},"application/vnd.piaccess.application-licence":{"source":"iana"},"application/vnd.picsel":{"source":"iana","extensions":["efif"]},"application/vnd.pmi.widget":{"source":"iana","extensions":["wg"]},"application/vnd.poc.group-advertisement+xml":{"source":"iana","compressible":true},"application/vnd.pocketlearn":{"source":"iana","extensions":["plf"]},"application/vnd.powerbuilder6":{"source":"iana","extensions":["pbd"]},"application/vnd.powerbuilder6-s":{"source":"iana"},"application/vnd.powerbuilder7":{"source":"iana"},"application/vnd.powerbuilder7-s":{"source":"iana"},"application/vnd.powerbuilder75":{"source":"iana"},"application/vnd.powerbuilder75-s":{"source":"iana"},"application/vnd.preminet":{"source":"iana"},"application/vnd.previewsystems.box":{"source":"iana","extensions":["box"]},"application/vnd.procrate.brushset":{"extensions":["brushset"]},"application/vnd.procreate.brush":{"extensions":["brush"]},"application/vnd.procreate.dream":{"extensions":["drm"]},"application/vnd.proteus.magazine":{"source":"iana","extensions":["mgz"]},"application/vnd.psfs":{"source":"iana"},"application/vnd.pt.mundusmundi":{"source":"iana"},"application/vnd.publishare-delta-tree":{"source":"iana","extensions":["qps"]},"application/vnd.pvi.ptid1":{"source":"iana","extensions":["ptid"]},"application/vnd.pwg-multiplexed":{"source":"iana"},"application/vnd.pwg-xhtml-print+xml":{"source":"iana","compressible":true,"extensions":["xhtm"]},"application/vnd.qualcomm.brew-app-res":{"source":"iana"},"application/vnd.quarantainenet":{"source":"iana"},"application/vnd.quark.quarkxpress":{"source":"iana","extensions":["qxd","qxt","qwd","qwt","qxl","qxb"]},"application/vnd.quobject-quoxdocument":{"source":"iana"},"application/vnd.radisys.moml+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-conf+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-conn+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-dialog+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-audit-stream+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-conf+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-base+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-fax-detect+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-fax-sendrecv+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-group+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-speech+xml":{"source":"iana","compressible":true},"application/vnd.radisys.msml-dialog-transform+xml":{"source":"iana","compressible":true},"application/vnd.rainstor.data":{"source":"iana"},"application/vnd.rapid":{"source":"iana"},"application/vnd.rar":{"source":"iana","extensions":["rar"]},"application/vnd.realvnc.bed":{"source":"iana","extensions":["bed"]},"application/vnd.recordare.musicxml":{"source":"iana","extensions":["mxl"]},"application/vnd.recordare.musicxml+xml":{"source":"iana","compressible":true,"extensions":["musicxml"]},"application/vnd.relpipe":{"source":"iana"},"application/vnd.renlearn.rlprint":{"source":"iana"},"application/vnd.resilient.logic":{"source":"iana"},"application/vnd.restful+json":{"source":"iana","compressible":true},"application/vnd.rig.cryptonote":{"source":"iana","extensions":["cryptonote"]},"application/vnd.rim.cod":{"source":"apache","extensions":["cod"]},"application/vnd.rn-realmedia":{"source":"apache","extensions":["rm"]},"application/vnd.rn-realmedia-vbr":{"source":"apache","extensions":["rmvb"]},"application/vnd.route66.link66+xml":{"source":"iana","compressible":true,"extensions":["link66"]},"application/vnd.rs-274x":{"source":"iana"},"application/vnd.ruckus.download":{"source":"iana"},"application/vnd.s3sms":{"source":"iana"},"application/vnd.sailingtracker.track":{"source":"iana","extensions":["st"]},"application/vnd.sar":{"source":"iana"},"application/vnd.sbm.cid":{"source":"iana"},"application/vnd.sbm.mid2":{"source":"iana"},"application/vnd.scribus":{"source":"iana"},"application/vnd.sealed.3df":{"source":"iana"},"application/vnd.sealed.csf":{"source":"iana"},"application/vnd.sealed.doc":{"source":"iana"},"application/vnd.sealed.eml":{"source":"iana"},"application/vnd.sealed.mht":{"source":"iana"},"application/vnd.sealed.net":{"source":"iana"},"application/vnd.sealed.ppt":{"source":"iana"},"application/vnd.sealed.tiff":{"source":"iana"},"application/vnd.sealed.xls":{"source":"iana"},"application/vnd.sealedmedia.softseal.html":{"source":"iana"},"application/vnd.sealedmedia.softseal.pdf":{"source":"iana"},"application/vnd.seemail":{"source":"iana","extensions":["see"]},"application/vnd.seis+json":{"source":"iana","compressible":true},"application/vnd.sema":{"source":"iana","extensions":["sema"]},"application/vnd.semd":{"source":"iana","extensions":["semd"]},"application/vnd.semf":{"source":"iana","extensions":["semf"]},"application/vnd.shade-save-file":{"source":"iana"},"application/vnd.shana.informed.formdata":{"source":"iana","extensions":["ifm"]},"application/vnd.shana.informed.formtemplate":{"source":"iana","extensions":["itp"]},"application/vnd.shana.informed.interchange":{"source":"iana","extensions":["iif"]},"application/vnd.shana.informed.package":{"source":"iana","extensions":["ipk"]},"application/vnd.shootproof+json":{"source":"iana","compressible":true},"application/vnd.shopkick+json":{"source":"iana","compressible":true},"application/vnd.shp":{"source":"iana"},"application/vnd.shx":{"source":"iana"},"application/vnd.sigrok.session":{"source":"iana"},"application/vnd.simtech-mindmapper":{"source":"iana","extensions":["twd","twds"]},"application/vnd.siren+json":{"source":"iana","compressible":true},"application/vnd.sketchometry":{"source":"iana"},"application/vnd.smaf":{"source":"iana","extensions":["mmf"]},"application/vnd.smart.notebook":{"source":"iana"},"application/vnd.smart.teacher":{"source":"iana","extensions":["teacher"]},"application/vnd.smintio.portals.archive":{"source":"iana"},"application/vnd.snesdev-page-table":{"source":"iana"},"application/vnd.software602.filler.form+xml":{"source":"iana","compressible":true,"extensions":["fo"]},"application/vnd.software602.filler.form-xml-zip":{"source":"iana"},"application/vnd.solent.sdkm+xml":{"source":"iana","compressible":true,"extensions":["sdkm","sdkd"]},"application/vnd.spotfire.dxp":{"source":"iana","extensions":["dxp"]},"application/vnd.spotfire.sfs":{"source":"iana","extensions":["sfs"]},"application/vnd.sqlite3":{"source":"iana"},"application/vnd.sss-cod":{"source":"iana"},"application/vnd.sss-dtf":{"source":"iana"},"application/vnd.sss-ntf":{"source":"iana"},"application/vnd.stardivision.calc":{"source":"apache","extensions":["sdc"]},"application/vnd.stardivision.draw":{"source":"apache","extensions":["sda"]},"application/vnd.stardivision.impress":{"source":"apache","extensions":["sdd"]},"application/vnd.stardivision.math":{"source":"apache","extensions":["smf"]},"application/vnd.stardivision.writer":{"source":"apache","extensions":["sdw","vor"]},"application/vnd.stardivision.writer-global":{"source":"apache","extensions":["sgl"]},"application/vnd.stepmania.package":{"source":"iana","extensions":["smzip"]},"application/vnd.stepmania.stepchart":{"source":"iana","extensions":["sm"]},"application/vnd.street-stream":{"source":"iana"},"application/vnd.sun.wadl+xml":{"source":"iana","compressible":true,"extensions":["wadl"]},"application/vnd.sun.xml.calc":{"source":"apache","extensions":["sxc"]},"application/vnd.sun.xml.calc.template":{"source":"apache","extensions":["stc"]},"application/vnd.sun.xml.draw":{"source":"apache","extensions":["sxd"]},"application/vnd.sun.xml.draw.template":{"source":"apache","extensions":["std"]},"application/vnd.sun.xml.impress":{"source":"apache","extensions":["sxi"]},"application/vnd.sun.xml.impress.template":{"source":"apache","extensions":["sti"]},"application/vnd.sun.xml.math":{"source":"apache","extensions":["sxm"]},"application/vnd.sun.xml.writer":{"source":"apache","extensions":["sxw"]},"application/vnd.sun.xml.writer.global":{"source":"apache","extensions":["sxg"]},"application/vnd.sun.xml.writer.template":{"source":"apache","extensions":["stw"]},"application/vnd.sus-calendar":{"source":"iana","extensions":["sus","susp"]},"application/vnd.svd":{"source":"iana","extensions":["svd"]},"application/vnd.swiftview-ics":{"source":"iana"},"application/vnd.sybyl.mol2":{"source":"iana"},"application/vnd.sycle+xml":{"source":"iana","compressible":true},"application/vnd.syft+json":{"source":"iana","compressible":true},"application/vnd.symbian.install":{"source":"apache","extensions":["sis","sisx"]},"application/vnd.syncml+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["xsm"]},"application/vnd.syncml.dm+wbxml":{"source":"iana","charset":"UTF-8","extensions":["bdm"]},"application/vnd.syncml.dm+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["xdm"]},"application/vnd.syncml.dm.notification":{"source":"iana"},"application/vnd.syncml.dmddf+wbxml":{"source":"iana"},"application/vnd.syncml.dmddf+xml":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["ddf"]},"application/vnd.syncml.dmtnds+wbxml":{"source":"iana"},"application/vnd.syncml.dmtnds+xml":{"source":"iana","charset":"UTF-8","compressible":true},"application/vnd.syncml.ds.notification":{"source":"iana"},"application/vnd.tableschema+json":{"source":"iana","compressible":true},"application/vnd.tao.intent-module-archive":{"source":"iana","extensions":["tao"]},"application/vnd.tcpdump.pcap":{"source":"iana","extensions":["pcap","cap","dmp"]},"application/vnd.think-cell.ppttc+json":{"source":"iana","compressible":true},"application/vnd.tmd.mediaflex.api+xml":{"source":"iana","compressible":true},"application/vnd.tml":{"source":"iana"},"application/vnd.tmobile-livetv":{"source":"iana","extensions":["tmo"]},"application/vnd.tri.onesource":{"source":"iana"},"application/vnd.trid.tpt":{"source":"iana","extensions":["tpt"]},"application/vnd.triscape.mxs":{"source":"iana","extensions":["mxs"]},"application/vnd.trueapp":{"source":"iana","extensions":["tra"]},"application/vnd.truedoc":{"source":"iana"},"application/vnd.ubisoft.webplayer":{"source":"iana"},"application/vnd.ufdl":{"source":"iana","extensions":["ufd","ufdl"]},"application/vnd.uic.osdm+json":{"source":"iana","compressible":true},"application/vnd.uiq.theme":{"source":"iana","extensions":["utz"]},"application/vnd.umajin":{"source":"iana","extensions":["umj"]},"application/vnd.unity":{"source":"iana","extensions":["unityweb"]},"application/vnd.uoml+xml":{"source":"iana","compressible":true,"extensions":["uoml","uo"]},"application/vnd.uplanet.alert":{"source":"iana"},"application/vnd.uplanet.alert-wbxml":{"source":"iana"},"application/vnd.uplanet.bearer-choice":{"source":"iana"},"application/vnd.uplanet.bearer-choice-wbxml":{"source":"iana"},"application/vnd.uplanet.cacheop":{"source":"iana"},"application/vnd.uplanet.cacheop-wbxml":{"source":"iana"},"application/vnd.uplanet.channel":{"source":"iana"},"application/vnd.uplanet.channel-wbxml":{"source":"iana"},"application/vnd.uplanet.list":{"source":"iana"},"application/vnd.uplanet.list-wbxml":{"source":"iana"},"application/vnd.uplanet.listcmd":{"source":"iana"},"application/vnd.uplanet.listcmd-wbxml":{"source":"iana"},"application/vnd.uplanet.signal":{"source":"iana"},"application/vnd.uri-map":{"source":"iana"},"application/vnd.valve.source.material":{"source":"iana"},"application/vnd.vcx":{"source":"iana","extensions":["vcx"]},"application/vnd.vd-study":{"source":"iana"},"application/vnd.vectorworks":{"source":"iana"},"application/vnd.vel+json":{"source":"iana","compressible":true},"application/vnd.veraison.tsm-report+cbor":{"source":"iana"},"application/vnd.veraison.tsm-report+json":{"source":"iana","compressible":true},"application/vnd.verimatrix.vcas":{"source":"iana"},"application/vnd.veritone.aion+json":{"source":"iana","compressible":true},"application/vnd.veryant.thin":{"source":"iana"},"application/vnd.ves.encrypted":{"source":"iana"},"application/vnd.vidsoft.vidconference":{"source":"iana"},"application/vnd.visio":{"source":"iana","extensions":["vsd","vst","vss","vsw","vsdx","vtx"]},"application/vnd.visionary":{"source":"iana","extensions":["vis"]},"application/vnd.vividence.scriptfile":{"source":"iana"},"application/vnd.vocalshaper.vsp4":{"source":"iana"},"application/vnd.vsf":{"source":"iana","extensions":["vsf"]},"application/vnd.wap.sic":{"source":"iana"},"application/vnd.wap.slc":{"source":"iana"},"application/vnd.wap.wbxml":{"source":"iana","charset":"UTF-8","extensions":["wbxml"]},"application/vnd.wap.wmlc":{"source":"iana","extensions":["wmlc"]},"application/vnd.wap.wmlscriptc":{"source":"iana","extensions":["wmlsc"]},"application/vnd.wasmflow.wafl":{"source":"iana"},"application/vnd.webturbo":{"source":"iana","extensions":["wtb"]},"application/vnd.wfa.dpp":{"source":"iana"},"application/vnd.wfa.p2p":{"source":"iana"},"application/vnd.wfa.wsc":{"source":"iana"},"application/vnd.windows.devicepairing":{"source":"iana"},"application/vnd.wmc":{"source":"iana"},"application/vnd.wmf.bootstrap":{"source":"iana"},"application/vnd.wolfram.mathematica":{"source":"iana"},"application/vnd.wolfram.mathematica.package":{"source":"iana"},"application/vnd.wolfram.player":{"source":"iana","extensions":["nbp"]},"application/vnd.wordlift":{"source":"iana"},"application/vnd.wordperfect":{"source":"iana","extensions":["wpd"]},"application/vnd.wqd":{"source":"iana","extensions":["wqd"]},"application/vnd.wrq-hp3000-labelled":{"source":"iana"},"application/vnd.wt.stf":{"source":"iana","extensions":["stf"]},"application/vnd.wv.csp+wbxml":{"source":"iana"},"application/vnd.wv.csp+xml":{"source":"iana","compressible":true},"application/vnd.wv.ssp+xml":{"source":"iana","compressible":true},"application/vnd.xacml+json":{"source":"iana","compressible":true},"application/vnd.xara":{"source":"iana","extensions":["xar"]},"application/vnd.xarin.cpj":{"source":"iana"},"application/vnd.xecrets-encrypted":{"source":"iana"},"application/vnd.xfdl":{"source":"iana","extensions":["xfdl"]},"application/vnd.xfdl.webform":{"source":"iana"},"application/vnd.xmi+xml":{"source":"iana","compressible":true},"application/vnd.xmpie.cpkg":{"source":"iana"},"application/vnd.xmpie.dpkg":{"source":"iana"},"application/vnd.xmpie.plan":{"source":"iana"},"application/vnd.xmpie.ppkg":{"source":"iana"},"application/vnd.xmpie.xlim":{"source":"iana"},"application/vnd.yamaha.hv-dic":{"source":"iana","extensions":["hvd"]},"application/vnd.yamaha.hv-script":{"source":"iana","extensions":["hvs"]},"application/vnd.yamaha.hv-voice":{"source":"iana","extensions":["hvp"]},"application/vnd.yamaha.openscoreformat":{"source":"iana","extensions":["osf"]},"application/vnd.yamaha.openscoreformat.osfpvg+xml":{"source":"iana","compressible":true,"extensions":["osfpvg"]},"application/vnd.yamaha.remote-setup":{"source":"iana"},"application/vnd.yamaha.smaf-audio":{"source":"iana","extensions":["saf"]},"application/vnd.yamaha.smaf-phrase":{"source":"iana","extensions":["spf"]},"application/vnd.yamaha.through-ngn":{"source":"iana"},"application/vnd.yamaha.tunnel-udpencap":{"source":"iana"},"application/vnd.yaoweme":{"source":"iana"},"application/vnd.yellowriver-custom-menu":{"source":"iana","extensions":["cmp"]},"application/vnd.zul":{"source":"iana","extensions":["zir","zirz"]},"application/vnd.zzazz.deck+xml":{"source":"iana","compressible":true,"extensions":["zaz"]},"application/voicexml+xml":{"source":"iana","compressible":true,"extensions":["vxml"]},"application/voucher-cms+json":{"source":"iana","compressible":true},"application/voucher-jws+json":{"source":"iana","compressible":true},"application/vp":{"source":"iana"},"application/vp+cose":{"source":"iana"},"application/vp+jwt":{"source":"iana"},"application/vq-rtcpxr":{"source":"iana"},"application/wasm":{"source":"iana","compressible":true,"extensions":["wasm"]},"application/watcherinfo+xml":{"source":"iana","compressible":true,"extensions":["wif"]},"application/webpush-options+json":{"source":"iana","compressible":true},"application/whoispp-query":{"source":"iana"},"application/whoispp-response":{"source":"iana"},"application/widget":{"source":"iana","extensions":["wgt"]},"application/winhlp":{"source":"apache","extensions":["hlp"]},"application/wita":{"source":"iana"},"application/wordperfect5.1":{"source":"iana"},"application/wsdl+xml":{"source":"iana","compressible":true,"extensions":["wsdl"]},"application/wspolicy+xml":{"source":"iana","compressible":true,"extensions":["wspolicy"]},"application/x-7z-compressed":{"source":"apache","compressible":false,"extensions":["7z"]},"application/x-abiword":{"source":"apache","extensions":["abw"]},"application/x-ace-compressed":{"source":"apache","extensions":["ace"]},"application/x-amf":{"source":"apache"},"application/x-apple-diskimage":{"source":"apache","extensions":["dmg"]},"application/x-arj":{"compressible":false,"extensions":["arj"]},"application/x-authorware-bin":{"source":"apache","extensions":["aab","x32","u32","vox"]},"application/x-authorware-map":{"source":"apache","extensions":["aam"]},"application/x-authorware-seg":{"source":"apache","extensions":["aas"]},"application/x-bcpio":{"source":"apache","extensions":["bcpio"]},"application/x-bdoc":{"compressible":false,"extensions":["bdoc"]},"application/x-bittorrent":{"source":"apache","extensions":["torrent"]},"application/x-blender":{"extensions":["blend"]},"application/x-blorb":{"source":"apache","extensions":["blb","blorb"]},"application/x-bzip":{"source":"apache","compressible":false,"extensions":["bz"]},"application/x-bzip2":{"source":"apache","compressible":false,"extensions":["bz2","boz"]},"application/x-cbr":{"source":"apache","extensions":["cbr","cba","cbt","cbz","cb7"]},"application/x-cdlink":{"source":"apache","extensions":["vcd"]},"application/x-cfs-compressed":{"source":"apache","extensions":["cfs"]},"application/x-chat":{"source":"apache","extensions":["chat"]},"application/x-chess-pgn":{"source":"apache","extensions":["pgn"]},"application/x-chrome-extension":{"extensions":["crx"]},"application/x-cocoa":{"source":"nginx","extensions":["cco"]},"application/x-compress":{"source":"apache"},"application/x-compressed":{"extensions":["rar"]},"application/x-conference":{"source":"apache","extensions":["nsc"]},"application/x-cpio":{"source":"apache","extensions":["cpio"]},"application/x-csh":{"source":"apache","extensions":["csh"]},"application/x-deb":{"compressible":false},"application/x-debian-package":{"source":"apache","extensions":["deb","udeb"]},"application/x-dgc-compressed":{"source":"apache","extensions":["dgc"]},"application/x-director":{"source":"apache","extensions":["dir","dcr","dxr","cst","cct","cxt","w3d","fgd","swa"]},"application/x-doom":{"source":"apache","extensions":["wad"]},"application/x-dtbncx+xml":{"source":"apache","compressible":true,"extensions":["ncx"]},"application/x-dtbook+xml":{"source":"apache","compressible":true,"extensions":["dtb"]},"application/x-dtbresource+xml":{"source":"apache","compressible":true,"extensions":["res"]},"application/x-dvi":{"source":"apache","compressible":false,"extensions":["dvi"]},"application/x-envoy":{"source":"apache","extensions":["evy"]},"application/x-eva":{"source":"apache","extensions":["eva"]},"application/x-font-bdf":{"source":"apache","extensions":["bdf"]},"application/x-font-dos":{"source":"apache"},"application/x-font-framemaker":{"source":"apache"},"application/x-font-ghostscript":{"source":"apache","extensions":["gsf"]},"application/x-font-libgrx":{"source":"apache"},"application/x-font-linux-psf":{"source":"apache","extensions":["psf"]},"application/x-font-pcf":{"source":"apache","extensions":["pcf"]},"application/x-font-snf":{"source":"apache","extensions":["snf"]},"application/x-font-speedo":{"source":"apache"},"application/x-font-sunos-news":{"source":"apache"},"application/x-font-type1":{"source":"apache","extensions":["pfa","pfb","pfm","afm"]},"application/x-font-vfont":{"source":"apache"},"application/x-freearc":{"source":"apache","extensions":["arc"]},"application/x-futuresplash":{"source":"apache","extensions":["spl"]},"application/x-gca-compressed":{"source":"apache","extensions":["gca"]},"application/x-glulx":{"source":"apache","extensions":["ulx"]},"application/x-gnumeric":{"source":"apache","extensions":["gnumeric"]},"application/x-gramps-xml":{"source":"apache","extensions":["gramps"]},"application/x-gtar":{"source":"apache","extensions":["gtar"]},"application/x-gzip":{"source":"apache"},"application/x-hdf":{"source":"apache","extensions":["hdf"]},"application/x-httpd-php":{"compressible":true,"extensions":["php"]},"application/x-install-instructions":{"source":"apache","extensions":["install"]},"application/x-ipynb+json":{"compressible":true,"extensions":["ipynb"]},"application/x-iso9660-image":{"source":"apache","extensions":["iso"]},"application/x-iwork-keynote-sffkey":{"extensions":["key"]},"application/x-iwork-numbers-sffnumbers":{"extensions":["numbers"]},"application/x-iwork-pages-sffpages":{"extensions":["pages"]},"application/x-java-archive-diff":{"source":"nginx","extensions":["jardiff"]},"application/x-java-jnlp-file":{"source":"apache","compressible":false,"extensions":["jnlp"]},"application/x-javascript":{"compressible":true},"application/x-keepass2":{"extensions":["kdbx"]},"application/x-latex":{"source":"apache","compressible":false,"extensions":["latex"]},"application/x-lua-bytecode":{"extensions":["luac"]},"application/x-lzh-compressed":{"source":"apache","extensions":["lzh","lha"]},"application/x-makeself":{"source":"nginx","extensions":["run"]},"application/x-mie":{"source":"apache","extensions":["mie"]},"application/x-mobipocket-ebook":{"source":"apache","extensions":["prc","mobi"]},"application/x-mpegurl":{"compressible":false},"application/x-ms-application":{"source":"apache","extensions":["application"]},"application/x-ms-shortcut":{"source":"apache","extensions":["lnk"]},"application/x-ms-wmd":{"source":"apache","extensions":["wmd"]},"application/x-ms-wmz":{"source":"apache","extensions":["wmz"]},"application/x-ms-xbap":{"source":"apache","extensions":["xbap"]},"application/x-msaccess":{"source":"apache","extensions":["mdb"]},"application/x-msbinder":{"source":"apache","extensions":["obd"]},"application/x-mscardfile":{"source":"apache","extensions":["crd"]},"application/x-msclip":{"source":"apache","extensions":["clp"]},"application/x-msdos-program":{"extensions":["exe"]},"application/x-msdownload":{"source":"apache","extensions":["exe","dll","com","bat","msi"]},"application/x-msmediaview":{"source":"apache","extensions":["mvb","m13","m14"]},"application/x-msmetafile":{"source":"apache","extensions":["wmf","wmz","emf","emz"]},"application/x-msmoney":{"source":"apache","extensions":["mny"]},"application/x-mspublisher":{"source":"apache","extensions":["pub"]},"application/x-msschedule":{"source":"apache","extensions":["scd"]},"application/x-msterminal":{"source":"apache","extensions":["trm"]},"application/x-mswrite":{"source":"apache","extensions":["wri"]},"application/x-netcdf":{"source":"apache","extensions":["nc","cdf"]},"application/x-ns-proxy-autoconfig":{"compressible":true,"extensions":["pac"]},"application/x-nzb":{"source":"apache","extensions":["nzb"]},"application/x-perl":{"source":"nginx","extensions":["pl","pm"]},"application/x-pilot":{"source":"nginx","extensions":["prc","pdb"]},"application/x-pkcs12":{"source":"apache","compressible":false,"extensions":["p12","pfx"]},"application/x-pkcs7-certificates":{"source":"apache","extensions":["p7b","spc"]},"application/x-pkcs7-certreqresp":{"source":"apache","extensions":["p7r"]},"application/x-pki-message":{"source":"iana"},"application/x-rar-compressed":{"source":"apache","compressible":false,"extensions":["rar"]},"application/x-redhat-package-manager":{"source":"nginx","extensions":["rpm"]},"application/x-research-info-systems":{"source":"apache","extensions":["ris"]},"application/x-sea":{"source":"nginx","extensions":["sea"]},"application/x-sh":{"source":"apache","compressible":true,"extensions":["sh"]},"application/x-shar":{"source":"apache","extensions":["shar"]},"application/x-shockwave-flash":{"source":"apache","compressible":false,"extensions":["swf"]},"application/x-silverlight-app":{"source":"apache","extensions":["xap"]},"application/x-sql":{"source":"apache","extensions":["sql"]},"application/x-stuffit":{"source":"apache","compressible":false,"extensions":["sit"]},"application/x-stuffitx":{"source":"apache","extensions":["sitx"]},"application/x-subrip":{"source":"apache","extensions":["srt"]},"application/x-sv4cpio":{"source":"apache","extensions":["sv4cpio"]},"application/x-sv4crc":{"source":"apache","extensions":["sv4crc"]},"application/x-t3vm-image":{"source":"apache","extensions":["t3"]},"application/x-tads":{"source":"apache","extensions":["gam"]},"application/x-tar":{"source":"apache","compressible":true,"extensions":["tar"]},"application/x-tcl":{"source":"apache","extensions":["tcl","tk"]},"application/x-tex":{"source":"apache","extensions":["tex"]},"application/x-tex-tfm":{"source":"apache","extensions":["tfm"]},"application/x-texinfo":{"source":"apache","extensions":["texinfo","texi"]},"application/x-tgif":{"source":"apache","extensions":["obj"]},"application/x-ustar":{"source":"apache","extensions":["ustar"]},"application/x-virtualbox-hdd":{"compressible":true,"extensions":["hdd"]},"application/x-virtualbox-ova":{"compressible":true,"extensions":["ova"]},"application/x-virtualbox-ovf":{"compressible":true,"extensions":["ovf"]},"application/x-virtualbox-vbox":{"compressible":true,"extensions":["vbox"]},"application/x-virtualbox-vbox-extpack":{"compressible":false,"extensions":["vbox-extpack"]},"application/x-virtualbox-vdi":{"compressible":true,"extensions":["vdi"]},"application/x-virtualbox-vhd":{"compressible":true,"extensions":["vhd"]},"application/x-virtualbox-vmdk":{"compressible":true,"extensions":["vmdk"]},"application/x-wais-source":{"source":"apache","extensions":["src"]},"application/x-web-app-manifest+json":{"compressible":true,"extensions":["webapp"]},"application/x-www-form-urlencoded":{"source":"iana","compressible":true},"application/x-x509-ca-cert":{"source":"iana","extensions":["der","crt","pem"]},"application/x-x509-ca-ra-cert":{"source":"iana"},"application/x-x509-next-ca-cert":{"source":"iana"},"application/x-xfig":{"source":"apache","extensions":["fig"]},"application/x-xliff+xml":{"source":"apache","compressible":true,"extensions":["xlf"]},"application/x-xpinstall":{"source":"apache","compressible":false,"extensions":["xpi"]},"application/x-xz":{"source":"apache","extensions":["xz"]},"application/x-zip-compressed":{"extensions":["zip"]},"application/x-zmachine":{"source":"apache","extensions":["z1","z2","z3","z4","z5","z6","z7","z8"]},"application/x400-bp":{"source":"iana"},"application/xacml+xml":{"source":"iana","compressible":true},"application/xaml+xml":{"source":"apache","compressible":true,"extensions":["xaml"]},"application/xcap-att+xml":{"source":"iana","compressible":true,"extensions":["xav"]},"application/xcap-caps+xml":{"source":"iana","compressible":true,"extensions":["xca"]},"application/xcap-diff+xml":{"source":"iana","compressible":true,"extensions":["xdf"]},"application/xcap-el+xml":{"source":"iana","compressible":true,"extensions":["xel"]},"application/xcap-error+xml":{"source":"iana","compressible":true},"application/xcap-ns+xml":{"source":"iana","compressible":true,"extensions":["xns"]},"application/xcon-conference-info+xml":{"source":"iana","compressible":true},"application/xcon-conference-info-diff+xml":{"source":"iana","compressible":true},"application/xenc+xml":{"source":"iana","compressible":true,"extensions":["xenc"]},"application/xfdf":{"source":"iana","extensions":["xfdf"]},"application/xhtml+xml":{"source":"iana","compressible":true,"extensions":["xhtml","xht"]},"application/xhtml-voice+xml":{"source":"apache","compressible":true},"application/xliff+xml":{"source":"iana","compressible":true,"extensions":["xlf"]},"application/xml":{"source":"iana","compressible":true,"extensions":["xml","xsl","xsd","rng"]},"application/xml-dtd":{"source":"iana","compressible":true,"extensions":["dtd"]},"application/xml-external-parsed-entity":{"source":"iana"},"application/xml-patch+xml":{"source":"iana","compressible":true},"application/xmpp+xml":{"source":"iana","compressible":true},"application/xop+xml":{"source":"iana","compressible":true,"extensions":["xop"]},"application/xproc+xml":{"source":"apache","compressible":true,"extensions":["xpl"]},"application/xslt+xml":{"source":"iana","compressible":true,"extensions":["xsl","xslt"]},"application/xspf+xml":{"source":"apache","compressible":true,"extensions":["xspf"]},"application/xv+xml":{"source":"iana","compressible":true,"extensions":["mxml","xhvml","xvml","xvm"]},"application/yaml":{"source":"iana"},"application/yang":{"source":"iana","extensions":["yang"]},"application/yang-data+cbor":{"source":"iana"},"application/yang-data+json":{"source":"iana","compressible":true},"application/yang-data+xml":{"source":"iana","compressible":true},"application/yang-patch+json":{"source":"iana","compressible":true},"application/yang-patch+xml":{"source":"iana","compressible":true},"application/yang-sid+json":{"source":"iana","compressible":true},"application/yin+xml":{"source":"iana","compressible":true,"extensions":["yin"]},"application/zip":{"source":"iana","compressible":false,"extensions":["zip"]},"application/zip+dotlottie":{"extensions":["lottie"]},"application/zlib":{"source":"iana"},"application/zstd":{"source":"iana"},"audio/1d-interleaved-parityfec":{"source":"iana"},"audio/32kadpcm":{"source":"iana"},"audio/3gpp":{"source":"iana","compressible":false,"extensions":["3gpp"]},"audio/3gpp2":{"source":"iana"},"audio/aac":{"source":"iana","extensions":["adts","aac"]},"audio/ac3":{"source":"iana"},"audio/adpcm":{"source":"apache","extensions":["adp"]},"audio/amr":{"source":"iana","extensions":["amr"]},"audio/amr-wb":{"source":"iana"},"audio/amr-wb+":{"source":"iana"},"audio/aptx":{"source":"iana"},"audio/asc":{"source":"iana"},"audio/atrac-advanced-lossless":{"source":"iana"},"audio/atrac-x":{"source":"iana"},"audio/atrac3":{"source":"iana"},"audio/basic":{"source":"iana","compressible":false,"extensions":["au","snd"]},"audio/bv16":{"source":"iana"},"audio/bv32":{"source":"iana"},"audio/clearmode":{"source":"iana"},"audio/cn":{"source":"iana"},"audio/dat12":{"source":"iana"},"audio/dls":{"source":"iana"},"audio/dsr-es201108":{"source":"iana"},"audio/dsr-es202050":{"source":"iana"},"audio/dsr-es202211":{"source":"iana"},"audio/dsr-es202212":{"source":"iana"},"audio/dv":{"source":"iana"},"audio/dvi4":{"source":"iana"},"audio/eac3":{"source":"iana"},"audio/encaprtp":{"source":"iana"},"audio/evrc":{"source":"iana"},"audio/evrc-qcp":{"source":"iana"},"audio/evrc0":{"source":"iana"},"audio/evrc1":{"source":"iana"},"audio/evrcb":{"source":"iana"},"audio/evrcb0":{"source":"iana"},"audio/evrcb1":{"source":"iana"},"audio/evrcnw":{"source":"iana"},"audio/evrcnw0":{"source":"iana"},"audio/evrcnw1":{"source":"iana"},"audio/evrcwb":{"source":"iana"},"audio/evrcwb0":{"source":"iana"},"audio/evrcwb1":{"source":"iana"},"audio/evs":{"source":"iana"},"audio/flac":{"source":"iana"},"audio/flexfec":{"source":"iana"},"audio/fwdred":{"source":"iana"},"audio/g711-0":{"source":"iana"},"audio/g719":{"source":"iana"},"audio/g722":{"source":"iana"},"audio/g7221":{"source":"iana"},"audio/g723":{"source":"iana"},"audio/g726-16":{"source":"iana"},"audio/g726-24":{"source":"iana"},"audio/g726-32":{"source":"iana"},"audio/g726-40":{"source":"iana"},"audio/g728":{"source":"iana"},"audio/g729":{"source":"iana"},"audio/g7291":{"source":"iana"},"audio/g729d":{"source":"iana"},"audio/g729e":{"source":"iana"},"audio/gsm":{"source":"iana"},"audio/gsm-efr":{"source":"iana"},"audio/gsm-hr-08":{"source":"iana"},"audio/ilbc":{"source":"iana"},"audio/ip-mr_v2.5":{"source":"iana"},"audio/isac":{"source":"apache"},"audio/l16":{"source":"iana"},"audio/l20":{"source":"iana"},"audio/l24":{"source":"iana","compressible":false},"audio/l8":{"source":"iana"},"audio/lpc":{"source":"iana"},"audio/matroska":{"source":"iana"},"audio/melp":{"source":"iana"},"audio/melp1200":{"source":"iana"},"audio/melp2400":{"source":"iana"},"audio/melp600":{"source":"iana"},"audio/mhas":{"source":"iana"},"audio/midi":{"source":"apache","extensions":["mid","midi","kar","rmi"]},"audio/midi-clip":{"source":"iana"},"audio/mobile-xmf":{"source":"iana","extensions":["mxmf"]},"audio/mp3":{"compressible":false,"extensions":["mp3"]},"audio/mp4":{"source":"iana","compressible":false,"extensions":["m4a","mp4a","m4b"]},"audio/mp4a-latm":{"source":"iana"},"audio/mpa":{"source":"iana"},"audio/mpa-robust":{"source":"iana"},"audio/mpeg":{"source":"iana","compressible":false,"extensions":["mpga","mp2","mp2a","mp3","m2a","m3a"]},"audio/mpeg4-generic":{"source":"iana"},"audio/musepack":{"source":"apache"},"audio/ogg":{"source":"iana","compressible":false,"extensions":["oga","ogg","spx","opus"]},"audio/opus":{"source":"iana"},"audio/parityfec":{"source":"iana"},"audio/pcma":{"source":"iana"},"audio/pcma-wb":{"source":"iana"},"audio/pcmu":{"source":"iana"},"audio/pcmu-wb":{"source":"iana"},"audio/prs.sid":{"source":"iana"},"audio/qcelp":{"source":"iana"},"audio/raptorfec":{"source":"iana"},"audio/red":{"source":"iana"},"audio/rtp-enc-aescm128":{"source":"iana"},"audio/rtp-midi":{"source":"iana"},"audio/rtploopback":{"source":"iana"},"audio/rtx":{"source":"iana"},"audio/s3m":{"source":"apache","extensions":["s3m"]},"audio/scip":{"source":"iana"},"audio/silk":{"source":"apache","extensions":["sil"]},"audio/smv":{"source":"iana"},"audio/smv-qcp":{"source":"iana"},"audio/smv0":{"source":"iana"},"audio/sofa":{"source":"iana"},"audio/sp-midi":{"source":"iana"},"audio/speex":{"source":"iana"},"audio/t140c":{"source":"iana"},"audio/t38":{"source":"iana"},"audio/telephone-event":{"source":"iana"},"audio/tetra_acelp":{"source":"iana"},"audio/tetra_acelp_bb":{"source":"iana"},"audio/tone":{"source":"iana"},"audio/tsvcis":{"source":"iana"},"audio/uemclip":{"source":"iana"},"audio/ulpfec":{"source":"iana"},"audio/usac":{"source":"iana"},"audio/vdvi":{"source":"iana"},"audio/vmr-wb":{"source":"iana"},"audio/vnd.3gpp.iufp":{"source":"iana"},"audio/vnd.4sb":{"source":"iana"},"audio/vnd.audiokoz":{"source":"iana"},"audio/vnd.celp":{"source":"iana"},"audio/vnd.cisco.nse":{"source":"iana"},"audio/vnd.cmles.radio-events":{"source":"iana"},"audio/vnd.cns.anp1":{"source":"iana"},"audio/vnd.cns.inf1":{"source":"iana"},"audio/vnd.dece.audio":{"source":"iana","extensions":["uva","uvva"]},"audio/vnd.digital-winds":{"source":"iana","extensions":["eol"]},"audio/vnd.dlna.adts":{"source":"iana"},"audio/vnd.dolby.heaac.1":{"source":"iana"},"audio/vnd.dolby.heaac.2":{"source":"iana"},"audio/vnd.dolby.mlp":{"source":"iana"},"audio/vnd.dolby.mps":{"source":"iana"},"audio/vnd.dolby.pl2":{"source":"iana"},"audio/vnd.dolby.pl2x":{"source":"iana"},"audio/vnd.dolby.pl2z":{"source":"iana"},"audio/vnd.dolby.pulse.1":{"source":"iana"},"audio/vnd.dra":{"source":"iana","extensions":["dra"]},"audio/vnd.dts":{"source":"iana","extensions":["dts"]},"audio/vnd.dts.hd":{"source":"iana","extensions":["dtshd"]},"audio/vnd.dts.uhd":{"source":"iana"},"audio/vnd.dvb.file":{"source":"iana"},"audio/vnd.everad.plj":{"source":"iana"},"audio/vnd.hns.audio":{"source":"iana"},"audio/vnd.lucent.voice":{"source":"iana","extensions":["lvp"]},"audio/vnd.ms-playready.media.pya":{"source":"iana","extensions":["pya"]},"audio/vnd.nokia.mobile-xmf":{"source":"iana"},"audio/vnd.nortel.vbk":{"source":"iana"},"audio/vnd.nuera.ecelp4800":{"source":"iana","extensions":["ecelp4800"]},"audio/vnd.nuera.ecelp7470":{"source":"iana","extensions":["ecelp7470"]},"audio/vnd.nuera.ecelp9600":{"source":"iana","extensions":["ecelp9600"]},"audio/vnd.octel.sbc":{"source":"iana"},"audio/vnd.presonus.multitrack":{"source":"iana"},"audio/vnd.qcelp":{"source":"apache"},"audio/vnd.rhetorex.32kadpcm":{"source":"iana"},"audio/vnd.rip":{"source":"iana","extensions":["rip"]},"audio/vnd.rn-realaudio":{"compressible":false},"audio/vnd.sealedmedia.softseal.mpeg":{"source":"iana"},"audio/vnd.vmx.cvsd":{"source":"iana"},"audio/vnd.wave":{"compressible":false},"audio/vorbis":{"source":"iana","compressible":false},"audio/vorbis-config":{"source":"iana"},"audio/wav":{"compressible":false,"extensions":["wav"]},"audio/wave":{"compressible":false,"extensions":["wav"]},"audio/webm":{"source":"apache","compressible":false,"extensions":["weba"]},"audio/x-aac":{"source":"apache","compressible":false,"extensions":["aac"]},"audio/x-aiff":{"source":"apache","extensions":["aif","aiff","aifc"]},"audio/x-caf":{"source":"apache","compressible":false,"extensions":["caf"]},"audio/x-flac":{"source":"apache","extensions":["flac"]},"audio/x-m4a":{"source":"nginx","extensions":["m4a"]},"audio/x-matroska":{"source":"apache","extensions":["mka"]},"audio/x-mpegurl":{"source":"apache","extensions":["m3u"]},"audio/x-ms-wax":{"source":"apache","extensions":["wax"]},"audio/x-ms-wma":{"source":"apache","extensions":["wma"]},"audio/x-pn-realaudio":{"source":"apache","extensions":["ram","ra"]},"audio/x-pn-realaudio-plugin":{"source":"apache","extensions":["rmp"]},"audio/x-realaudio":{"source":"nginx","extensions":["ra"]},"audio/x-tta":{"source":"apache"},"audio/x-wav":{"source":"apache","extensions":["wav"]},"audio/xm":{"source":"apache","extensions":["xm"]},"chemical/x-cdx":{"source":"apache","extensions":["cdx"]},"chemical/x-cif":{"source":"apache","extensions":["cif"]},"chemical/x-cmdf":{"source":"apache","extensions":["cmdf"]},"chemical/x-cml":{"source":"apache","extensions":["cml"]},"chemical/x-csml":{"source":"apache","extensions":["csml"]},"chemical/x-pdb":{"source":"apache"},"chemical/x-xyz":{"source":"apache","extensions":["xyz"]},"font/collection":{"source":"iana","extensions":["ttc"]},"font/otf":{"source":"iana","compressible":true,"extensions":["otf"]},"font/sfnt":{"source":"iana"},"font/ttf":{"source":"iana","compressible":true,"extensions":["ttf"]},"font/woff":{"source":"iana","extensions":["woff"]},"font/woff2":{"source":"iana","extensions":["woff2"]},"image/aces":{"source":"iana","extensions":["exr"]},"image/apng":{"source":"iana","compressible":false,"extensions":["apng"]},"image/avci":{"source":"iana","extensions":["avci"]},"image/avcs":{"source":"iana","extensions":["avcs"]},"image/avif":{"source":"iana","compressible":false,"extensions":["avif"]},"image/bmp":{"source":"iana","compressible":true,"extensions":["bmp","dib"]},"image/cgm":{"source":"iana","extensions":["cgm"]},"image/dicom-rle":{"source":"iana","extensions":["drle"]},"image/dpx":{"source":"iana","extensions":["dpx"]},"image/emf":{"source":"iana","extensions":["emf"]},"image/fits":{"source":"iana","extensions":["fits"]},"image/g3fax":{"source":"iana","extensions":["g3"]},"image/gif":{"source":"iana","compressible":false,"extensions":["gif"]},"image/heic":{"source":"iana","extensions":["heic"]},"image/heic-sequence":{"source":"iana","extensions":["heics"]},"image/heif":{"source":"iana","extensions":["heif"]},"image/heif-sequence":{"source":"iana","extensions":["heifs"]},"image/hej2k":{"source":"iana","extensions":["hej2"]},"image/ief":{"source":"iana","extensions":["ief"]},"image/j2c":{"source":"iana"},"image/jaii":{"source":"iana","extensions":["jaii"]},"image/jais":{"source":"iana","extensions":["jais"]},"image/jls":{"source":"iana","extensions":["jls"]},"image/jp2":{"source":"iana","compressible":false,"extensions":["jp2","jpg2"]},"image/jpeg":{"source":"iana","compressible":false,"extensions":["jpg","jpeg","jpe"]},"image/jph":{"source":"iana","extensions":["jph"]},"image/jphc":{"source":"iana","extensions":["jhc"]},"image/jpm":{"source":"iana","compressible":false,"extensions":["jpm","jpgm"]},"image/jpx":{"source":"iana","compressible":false,"extensions":["jpx","jpf"]},"image/jxl":{"source":"iana","extensions":["jxl"]},"image/jxr":{"source":"iana","extensions":["jxr"]},"image/jxra":{"source":"iana","extensions":["jxra"]},"image/jxrs":{"source":"iana","extensions":["jxrs"]},"image/jxs":{"source":"iana","extensions":["jxs"]},"image/jxsc":{"source":"iana","extensions":["jxsc"]},"image/jxsi":{"source":"iana","extensions":["jxsi"]},"image/jxss":{"source":"iana","extensions":["jxss"]},"image/ktx":{"source":"iana","extensions":["ktx"]},"image/ktx2":{"source":"iana","extensions":["ktx2"]},"image/naplps":{"source":"iana"},"image/pjpeg":{"compressible":false,"extensions":["jfif"]},"image/png":{"source":"iana","compressible":false,"extensions":["png"]},"image/prs.btif":{"source":"iana","extensions":["btif","btf"]},"image/prs.pti":{"source":"iana","extensions":["pti"]},"image/pwg-raster":{"source":"iana"},"image/sgi":{"source":"apache","extensions":["sgi"]},"image/svg+xml":{"source":"iana","compressible":true,"extensions":["svg","svgz"]},"image/t38":{"source":"iana","extensions":["t38"]},"image/tiff":{"source":"iana","compressible":false,"extensions":["tif","tiff"]},"image/tiff-fx":{"source":"iana","extensions":["tfx"]},"image/vnd.adobe.photoshop":{"source":"iana","compressible":true,"extensions":["psd"]},"image/vnd.airzip.accelerator.azv":{"source":"iana","extensions":["azv"]},"image/vnd.clip":{"source":"iana"},"image/vnd.cns.inf2":{"source":"iana"},"image/vnd.dece.graphic":{"source":"iana","extensions":["uvi","uvvi","uvg","uvvg"]},"image/vnd.djvu":{"source":"iana","extensions":["djvu","djv"]},"image/vnd.dvb.subtitle":{"source":"iana","extensions":["sub"]},"image/vnd.dwg":{"source":"iana","extensions":["dwg"]},"image/vnd.dxf":{"source":"iana","extensions":["dxf"]},"image/vnd.fastbidsheet":{"source":"iana","extensions":["fbs"]},"image/vnd.fpx":{"source":"iana","extensions":["fpx"]},"image/vnd.fst":{"source":"iana","extensions":["fst"]},"image/vnd.fujixerox.edmics-mmr":{"source":"iana","extensions":["mmr"]},"image/vnd.fujixerox.edmics-rlc":{"source":"iana","extensions":["rlc"]},"image/vnd.globalgraphics.pgb":{"source":"iana"},"image/vnd.microsoft.icon":{"source":"iana","compressible":true,"extensions":["ico"]},"image/vnd.mix":{"source":"iana"},"image/vnd.mozilla.apng":{"source":"iana"},"image/vnd.ms-dds":{"compressible":true,"extensions":["dds"]},"image/vnd.ms-modi":{"source":"iana","extensions":["mdi"]},"image/vnd.ms-photo":{"source":"apache","extensions":["wdp"]},"image/vnd.net-fpx":{"source":"iana","extensions":["npx"]},"image/vnd.pco.b16":{"source":"iana","extensions":["b16"]},"image/vnd.radiance":{"source":"iana"},"image/vnd.sealed.png":{"source":"iana"},"image/vnd.sealedmedia.softseal.gif":{"source":"iana"},"image/vnd.sealedmedia.softseal.jpg":{"source":"iana"},"image/vnd.svf":{"source":"iana"},"image/vnd.tencent.tap":{"source":"iana","extensions":["tap"]},"image/vnd.valve.source.texture":{"source":"iana","extensions":["vtf"]},"image/vnd.wap.wbmp":{"source":"iana","extensions":["wbmp"]},"image/vnd.xiff":{"source":"iana","extensions":["xif"]},"image/vnd.zbrush.pcx":{"source":"iana","extensions":["pcx"]},"image/webp":{"source":"iana","extensions":["webp"]},"image/wmf":{"source":"iana","extensions":["wmf"]},"image/x-3ds":{"source":"apache","extensions":["3ds"]},"image/x-adobe-dng":{"extensions":["dng"]},"image/x-cmu-raster":{"source":"apache","extensions":["ras"]},"image/x-cmx":{"source":"apache","extensions":["cmx"]},"image/x-emf":{"source":"iana"},"image/x-freehand":{"source":"apache","extensions":["fh","fhc","fh4","fh5","fh7"]},"image/x-icon":{"source":"apache","compressible":true,"extensions":["ico"]},"image/x-jng":{"source":"nginx","extensions":["jng"]},"image/x-mrsid-image":{"source":"apache","extensions":["sid"]},"image/x-ms-bmp":{"source":"nginx","compressible":true,"extensions":["bmp"]},"image/x-pcx":{"source":"apache","extensions":["pcx"]},"image/x-pict":{"source":"apache","extensions":["pic","pct"]},"image/x-portable-anymap":{"source":"apache","extensions":["pnm"]},"image/x-portable-bitmap":{"source":"apache","extensions":["pbm"]},"image/x-portable-graymap":{"source":"apache","extensions":["pgm"]},"image/x-portable-pixmap":{"source":"apache","extensions":["ppm"]},"image/x-rgb":{"source":"apache","extensions":["rgb"]},"image/x-tga":{"source":"apache","extensions":["tga"]},"image/x-wmf":{"source":"iana"},"image/x-xbitmap":{"source":"apache","extensions":["xbm"]},"image/x-xcf":{"compressible":false},"image/x-xpixmap":{"source":"apache","extensions":["xpm"]},"image/x-xwindowdump":{"source":"apache","extensions":["xwd"]},"message/bhttp":{"source":"iana"},"message/cpim":{"source":"iana"},"message/delivery-status":{"source":"iana"},"message/disposition-notification":{"source":"iana","extensions":["disposition-notification"]},"message/external-body":{"source":"iana"},"message/feedback-report":{"source":"iana"},"message/global":{"source":"iana","extensions":["u8msg"]},"message/global-delivery-status":{"source":"iana","extensions":["u8dsn"]},"message/global-disposition-notification":{"source":"iana","extensions":["u8mdn"]},"message/global-headers":{"source":"iana","extensions":["u8hdr"]},"message/http":{"source":"iana","compressible":false},"message/imdn+xml":{"source":"iana","compressible":true},"message/mls":{"source":"iana"},"message/news":{"source":"apache"},"message/ohttp-req":{"source":"iana"},"message/ohttp-res":{"source":"iana"},"message/partial":{"source":"iana","compressible":false},"message/rfc822":{"source":"iana","compressible":true,"extensions":["eml","mime","mht","mhtml"]},"message/s-http":{"source":"apache"},"message/sip":{"source":"iana"},"message/sipfrag":{"source":"iana"},"message/tracking-status":{"source":"iana"},"message/vnd.si.simp":{"source":"apache"},"message/vnd.wfa.wsc":{"source":"iana","extensions":["wsc"]},"model/3mf":{"source":"iana","extensions":["3mf"]},"model/e57":{"source":"iana"},"model/gltf+json":{"source":"iana","compressible":true,"extensions":["gltf"]},"model/gltf-binary":{"source":"iana","compressible":true,"extensions":["glb"]},"model/iges":{"source":"iana","compressible":false,"extensions":["igs","iges"]},"model/jt":{"source":"iana","extensions":["jt"]},"model/mesh":{"source":"iana","compressible":false,"extensions":["msh","mesh","silo"]},"model/mtl":{"source":"iana","extensions":["mtl"]},"model/obj":{"source":"iana","extensions":["obj"]},"model/prc":{"source":"iana","extensions":["prc"]},"model/step":{"source":"iana","extensions":["step","stp","stpnc","p21","210"]},"model/step+xml":{"source":"iana","compressible":true,"extensions":["stpx"]},"model/step+zip":{"source":"iana","compressible":false,"extensions":["stpz"]},"model/step-xml+zip":{"source":"iana","compressible":false,"extensions":["stpxz"]},"model/stl":{"source":"iana","extensions":["stl"]},"model/u3d":{"source":"iana","extensions":["u3d"]},"model/vnd.bary":{"source":"iana","extensions":["bary"]},"model/vnd.cld":{"source":"iana","extensions":["cld"]},"model/vnd.collada+xml":{"source":"iana","compressible":true,"extensions":["dae"]},"model/vnd.dwf":{"source":"iana","extensions":["dwf"]},"model/vnd.flatland.3dml":{"source":"iana"},"model/vnd.gdl":{"source":"iana","extensions":["gdl"]},"model/vnd.gs-gdl":{"source":"apache"},"model/vnd.gs.gdl":{"source":"iana"},"model/vnd.gtw":{"source":"iana","extensions":["gtw"]},"model/vnd.moml+xml":{"source":"iana","compressible":true},"model/vnd.mts":{"source":"iana","extensions":["mts"]},"model/vnd.opengex":{"source":"iana","extensions":["ogex"]},"model/vnd.parasolid.transmit.binary":{"source":"iana","extensions":["x_b"]},"model/vnd.parasolid.transmit.text":{"source":"iana","extensions":["x_t"]},"model/vnd.pytha.pyox":{"source":"iana","extensions":["pyo","pyox"]},"model/vnd.rosette.annotated-data-model":{"source":"iana"},"model/vnd.sap.vds":{"source":"iana","extensions":["vds"]},"model/vnd.usda":{"source":"iana","extensions":["usda"]},"model/vnd.usdz+zip":{"source":"iana","compressible":false,"extensions":["usdz"]},"model/vnd.valve.source.compiled-map":{"source":"iana","extensions":["bsp"]},"model/vnd.vtu":{"source":"iana","extensions":["vtu"]},"model/vrml":{"source":"iana","compressible":false,"extensions":["wrl","vrml"]},"model/x3d+binary":{"source":"apache","compressible":false,"extensions":["x3db","x3dbz"]},"model/x3d+fastinfoset":{"source":"iana","extensions":["x3db"]},"model/x3d+vrml":{"source":"apache","compressible":false,"extensions":["x3dv","x3dvz"]},"model/x3d+xml":{"source":"iana","compressible":true,"extensions":["x3d","x3dz"]},"model/x3d-vrml":{"source":"iana","extensions":["x3dv"]},"multipart/alternative":{"source":"iana","compressible":false},"multipart/appledouble":{"source":"iana"},"multipart/byteranges":{"source":"iana"},"multipart/digest":{"source":"iana"},"multipart/encrypted":{"source":"iana","compressible":false},"multipart/form-data":{"source":"iana","compressible":false},"multipart/header-set":{"source":"iana"},"multipart/mixed":{"source":"iana"},"multipart/multilingual":{"source":"iana"},"multipart/parallel":{"source":"iana"},"multipart/related":{"source":"iana","compressible":false},"multipart/report":{"source":"iana"},"multipart/signed":{"source":"iana","compressible":false},"multipart/vnd.bint.med-plus":{"source":"iana"},"multipart/voice-message":{"source":"iana"},"multipart/x-mixed-replace":{"source":"iana"},"text/1d-interleaved-parityfec":{"source":"iana"},"text/cache-manifest":{"source":"iana","compressible":true,"extensions":["appcache","manifest"]},"text/calendar":{"source":"iana","extensions":["ics","ifb"]},"text/calender":{"compressible":true},"text/cmd":{"compressible":true},"text/coffeescript":{"extensions":["coffee","litcoffee"]},"text/cql":{"source":"iana"},"text/cql-expression":{"source":"iana"},"text/cql-identifier":{"source":"iana"},"text/css":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["css"]},"text/csv":{"source":"iana","compressible":true,"extensions":["csv"]},"text/csv-schema":{"source":"iana"},"text/directory":{"source":"iana"},"text/dns":{"source":"iana"},"text/ecmascript":{"source":"apache"},"text/encaprtp":{"source":"iana"},"text/enriched":{"source":"iana"},"text/fhirpath":{"source":"iana"},"text/flexfec":{"source":"iana"},"text/fwdred":{"source":"iana"},"text/gff3":{"source":"iana"},"text/grammar-ref-list":{"source":"iana"},"text/hl7v2":{"source":"iana"},"text/html":{"source":"iana","compressible":true,"extensions":["html","htm","shtml"]},"text/jade":{"extensions":["jade"]},"text/javascript":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["js","mjs"]},"text/jcr-cnd":{"source":"iana"},"text/jsx":{"compressible":true,"extensions":["jsx"]},"text/less":{"compressible":true,"extensions":["less"]},"text/markdown":{"source":"iana","compressible":true,"extensions":["md","markdown"]},"text/mathml":{"source":"nginx","extensions":["mml"]},"text/mdx":{"compressible":true,"extensions":["mdx"]},"text/mizar":{"source":"iana"},"text/n3":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["n3"]},"text/parameters":{"source":"iana","charset":"UTF-8"},"text/parityfec":{"source":"iana"},"text/plain":{"source":"iana","compressible":true,"extensions":["txt","text","conf","def","list","log","in","ini"]},"text/provenance-notation":{"source":"iana","charset":"UTF-8"},"text/prs.fallenstein.rst":{"source":"iana"},"text/prs.lines.tag":{"source":"iana","extensions":["dsc"]},"text/prs.prop.logic":{"source":"iana"},"text/prs.texi":{"source":"iana"},"text/raptorfec":{"source":"iana"},"text/red":{"source":"iana"},"text/rfc822-headers":{"source":"iana"},"text/richtext":{"source":"iana","compressible":true,"extensions":["rtx"]},"text/rtf":{"source":"iana","compressible":true,"extensions":["rtf"]},"text/rtp-enc-aescm128":{"source":"iana"},"text/rtploopback":{"source":"iana"},"text/rtx":{"source":"iana"},"text/sgml":{"source":"iana","extensions":["sgml","sgm"]},"text/shaclc":{"source":"iana"},"text/shex":{"source":"iana","extensions":["shex"]},"text/slim":{"extensions":["slim","slm"]},"text/spdx":{"source":"iana","extensions":["spdx"]},"text/strings":{"source":"iana"},"text/stylus":{"extensions":["stylus","styl"]},"text/t140":{"source":"iana"},"text/tab-separated-values":{"source":"iana","compressible":true,"extensions":["tsv"]},"text/troff":{"source":"iana","extensions":["t","tr","roff","man","me","ms"]},"text/turtle":{"source":"iana","charset":"UTF-8","extensions":["ttl"]},"text/ulpfec":{"source":"iana"},"text/uri-list":{"source":"iana","compressible":true,"extensions":["uri","uris","urls"]},"text/vcard":{"source":"iana","compressible":true,"extensions":["vcard"]},"text/vnd.a":{"source":"iana"},"text/vnd.abc":{"source":"iana"},"text/vnd.ascii-art":{"source":"iana"},"text/vnd.curl":{"source":"iana","extensions":["curl"]},"text/vnd.curl.dcurl":{"source":"apache","extensions":["dcurl"]},"text/vnd.curl.mcurl":{"source":"apache","extensions":["mcurl"]},"text/vnd.curl.scurl":{"source":"apache","extensions":["scurl"]},"text/vnd.debian.copyright":{"source":"iana","charset":"UTF-8"},"text/vnd.dmclientscript":{"source":"iana"},"text/vnd.dvb.subtitle":{"source":"iana","extensions":["sub"]},"text/vnd.esmertec.theme-descriptor":{"source":"iana","charset":"UTF-8"},"text/vnd.exchangeable":{"source":"iana"},"text/vnd.familysearch.gedcom":{"source":"iana","extensions":["ged"]},"text/vnd.ficlab.flt":{"source":"iana"},"text/vnd.fly":{"source":"iana","extensions":["fly"]},"text/vnd.fmi.flexstor":{"source":"iana","extensions":["flx"]},"text/vnd.gml":{"source":"iana"},"text/vnd.graphviz":{"source":"iana","extensions":["gv"]},"text/vnd.hans":{"source":"iana"},"text/vnd.hgl":{"source":"iana"},"text/vnd.in3d.3dml":{"source":"iana","extensions":["3dml"]},"text/vnd.in3d.spot":{"source":"iana","extensions":["spot"]},"text/vnd.iptc.newsml":{"source":"iana"},"text/vnd.iptc.nitf":{"source":"iana"},"text/vnd.latex-z":{"source":"iana"},"text/vnd.motorola.reflex":{"source":"iana"},"text/vnd.ms-mediapackage":{"source":"iana"},"text/vnd.net2phone.commcenter.command":{"source":"iana"},"text/vnd.radisys.msml-basic-layout":{"source":"iana"},"text/vnd.senx.warpscript":{"source":"iana"},"text/vnd.si.uricatalogue":{"source":"apache"},"text/vnd.sosi":{"source":"iana"},"text/vnd.sun.j2me.app-descriptor":{"source":"iana","charset":"UTF-8","extensions":["jad"]},"text/vnd.trolltech.linguist":{"source":"iana","charset":"UTF-8"},"text/vnd.vcf":{"source":"iana"},"text/vnd.wap.si":{"source":"iana"},"text/vnd.wap.sl":{"source":"iana"},"text/vnd.wap.wml":{"source":"iana","extensions":["wml"]},"text/vnd.wap.wmlscript":{"source":"iana","extensions":["wmls"]},"text/vnd.zoo.kcl":{"source":"iana"},"text/vtt":{"source":"iana","charset":"UTF-8","compressible":true,"extensions":["vtt"]},"text/wgsl":{"source":"iana","extensions":["wgsl"]},"text/x-asm":{"source":"apache","extensions":["s","asm"]},"text/x-c":{"source":"apache","extensions":["c","cc","cxx","cpp","h","hh","dic"]},"text/x-component":{"source":"nginx","extensions":["htc"]},"text/x-fortran":{"source":"apache","extensions":["f","for","f77","f90"]},"text/x-gwt-rpc":{"compressible":true},"text/x-handlebars-template":{"extensions":["hbs"]},"text/x-java-source":{"source":"apache","extensions":["java"]},"text/x-jquery-tmpl":{"compressible":true},"text/x-lua":{"extensions":["lua"]},"text/x-markdown":{"compressible":true,"extensions":["mkd"]},"text/x-nfo":{"source":"apache","extensions":["nfo"]},"text/x-opml":{"source":"apache","extensions":["opml"]},"text/x-org":{"compressible":true,"extensions":["org"]},"text/x-pascal":{"source":"apache","extensions":["p","pas"]},"text/x-processing":{"compressible":true,"extensions":["pde"]},"text/x-sass":{"extensions":["sass"]},"text/x-scss":{"extensions":["scss"]},"text/x-setext":{"source":"apache","extensions":["etx"]},"text/x-sfv":{"source":"apache","extensions":["sfv"]},"text/x-suse-ymp":{"compressible":true,"extensions":["ymp"]},"text/x-uuencode":{"source":"apache","extensions":["uu"]},"text/x-vcalendar":{"source":"apache","extensions":["vcs"]},"text/x-vcard":{"source":"apache","extensions":["vcf"]},"text/xml":{"source":"iana","compressible":true,"extensions":["xml"]},"text/xml-external-parsed-entity":{"source":"iana"},"text/yaml":{"compressible":true,"extensions":["yaml","yml"]},"video/1d-interleaved-parityfec":{"source":"iana"},"video/3gpp":{"source":"iana","extensions":["3gp","3gpp"]},"video/3gpp-tt":{"source":"iana"},"video/3gpp2":{"source":"iana","extensions":["3g2"]},"video/av1":{"source":"iana"},"video/bmpeg":{"source":"iana"},"video/bt656":{"source":"iana"},"video/celb":{"source":"iana"},"video/dv":{"source":"iana"},"video/encaprtp":{"source":"iana"},"video/evc":{"source":"iana"},"video/ffv1":{"source":"iana"},"video/flexfec":{"source":"iana"},"video/h261":{"source":"iana","extensions":["h261"]},"video/h263":{"source":"iana","extensions":["h263"]},"video/h263-1998":{"source":"iana"},"video/h263-2000":{"source":"iana"},"video/h264":{"source":"iana","extensions":["h264"]},"video/h264-rcdo":{"source":"iana"},"video/h264-svc":{"source":"iana"},"video/h265":{"source":"iana"},"video/h266":{"source":"iana"},"video/iso.segment":{"source":"iana","extensions":["m4s"]},"video/jpeg":{"source":"iana","extensions":["jpgv"]},"video/jpeg2000":{"source":"iana"},"video/jpm":{"source":"apache","extensions":["jpm","jpgm"]},"video/jxsv":{"source":"iana"},"video/lottie+json":{"source":"iana","compressible":true},"video/matroska":{"source":"iana"},"video/matroska-3d":{"source":"iana"},"video/mj2":{"source":"iana","extensions":["mj2","mjp2"]},"video/mp1s":{"source":"iana"},"video/mp2p":{"source":"iana"},"video/mp2t":{"source":"iana","extensions":["ts","m2t","m2ts","mts"]},"video/mp4":{"source":"iana","compressible":false,"extensions":["mp4","mp4v","mpg4"]},"video/mp4v-es":{"source":"iana"},"video/mpeg":{"source":"iana","compressible":false,"extensions":["mpeg","mpg","mpe","m1v","m2v"]},"video/mpeg4-generic":{"source":"iana"},"video/mpv":{"source":"iana"},"video/nv":{"source":"iana"},"video/ogg":{"source":"iana","compressible":false,"extensions":["ogv"]},"video/parityfec":{"source":"iana"},"video/pointer":{"source":"iana"},"video/quicktime":{"source":"iana","compressible":false,"extensions":["qt","mov"]},"video/raptorfec":{"source":"iana"},"video/raw":{"source":"iana"},"video/rtp-enc-aescm128":{"source":"iana"},"video/rtploopback":{"source":"iana"},"video/rtx":{"source":"iana"},"video/scip":{"source":"iana"},"video/smpte291":{"source":"iana"},"video/smpte292m":{"source":"iana"},"video/ulpfec":{"source":"iana"},"video/vc1":{"source":"iana"},"video/vc2":{"source":"iana"},"video/vnd.cctv":{"source":"iana"},"video/vnd.dece.hd":{"source":"iana","extensions":["uvh","uvvh"]},"video/vnd.dece.mobile":{"source":"iana","extensions":["uvm","uvvm"]},"video/vnd.dece.mp4":{"source":"iana"},"video/vnd.dece.pd":{"source":"iana","extensions":["uvp","uvvp"]},"video/vnd.dece.sd":{"source":"iana","extensions":["uvs","uvvs"]},"video/vnd.dece.video":{"source":"iana","extensions":["uvv","uvvv"]},"video/vnd.directv.mpeg":{"source":"iana"},"video/vnd.directv.mpeg-tts":{"source":"iana"},"video/vnd.dlna.mpeg-tts":{"source":"iana"},"video/vnd.dvb.file":{"source":"iana","extensions":["dvb"]},"video/vnd.fvt":{"source":"iana","extensions":["fvt"]},"video/vnd.hns.video":{"source":"iana"},"video/vnd.iptvforum.1dparityfec-1010":{"source":"iana"},"video/vnd.iptvforum.1dparityfec-2005":{"source":"iana"},"video/vnd.iptvforum.2dparityfec-1010":{"source":"iana"},"video/vnd.iptvforum.2dparityfec-2005":{"source":"iana"},"video/vnd.iptvforum.ttsavc":{"source":"iana"},"video/vnd.iptvforum.ttsmpeg2":{"source":"iana"},"video/vnd.motorola.video":{"source":"iana"},"video/vnd.motorola.videop":{"source":"iana"},"video/vnd.mpegurl":{"source":"iana","extensions":["mxu","m4u"]},"video/vnd.ms-playready.media.pyv":{"source":"iana","extensions":["pyv"]},"video/vnd.nokia.interleaved-multimedia":{"source":"iana"},"video/vnd.nokia.mp4vr":{"source":"iana"},"video/vnd.nokia.videovoip":{"source":"iana"},"video/vnd.objectvideo":{"source":"iana"},"video/vnd.planar":{"source":"iana"},"video/vnd.radgamettools.bink":{"source":"iana"},"video/vnd.radgamettools.smacker":{"source":"apache"},"video/vnd.sealed.mpeg1":{"source":"iana"},"video/vnd.sealed.mpeg4":{"source":"iana"},"video/vnd.sealed.swf":{"source":"iana"},"video/vnd.sealedmedia.softseal.mov":{"source":"iana"},"video/vnd.uvvu.mp4":{"source":"iana","extensions":["uvu","uvvu"]},"video/vnd.vivo":{"source":"iana","extensions":["viv"]},"video/vnd.youtube.yt":{"source":"iana"},"video/vp8":{"source":"iana"},"video/vp9":{"source":"iana"},"video/webm":{"source":"apache","compressible":false,"extensions":["webm"]},"video/x-f4v":{"source":"apache","extensions":["f4v"]},"video/x-fli":{"source":"apache","extensions":["fli"]},"video/x-flv":{"source":"apache","compressible":false,"extensions":["flv"]},"video/x-m4v":{"source":"apache","extensions":["m4v"]},"video/x-matroska":{"source":"apache","compressible":false,"extensions":["mkv","mk3d","mks"]},"video/x-mng":{"source":"apache","extensions":["mng"]},"video/x-ms-asf":{"source":"apache","extensions":["asf","asx"]},"video/x-ms-vob":{"source":"apache","extensions":["vob"]},"video/x-ms-wm":{"source":"apache","extensions":["wm"]},"video/x-ms-wmv":{"source":"apache","compressible":false,"extensions":["wmv"]},"video/x-ms-wmx":{"source":"apache","extensions":["wmx"]},"video/x-ms-wvx":{"source":"apache","extensions":["wvx"]},"video/x-msvideo":{"source":"apache","extensions":["avi"]},"video/x-sgi-movie":{"source":"apache","extensions":["movie"]},"video/x-smv":{"source":"apache","extensions":["smv"]},"x-conference/x-cooltalk":{"source":"apache","extensions":["ice"]},"x-shader/x-fragment":{"compressible":true},"x-shader/x-vertex":{"compressible":true}}');
 
 /***/ }),
 
@@ -62766,9 +58856,6 @@ const external_console_namespaceObject = require("console");
 // EXTERNAL MODULE: ./node_modules/express/index.js
 var express = __nccwpck_require__(5152);
 var express_default = /*#__PURE__*/__nccwpck_require__.n(express);
-// EXTERNAL MODULE: ./node_modules/express-async-handler/index.js
-var express_async_handler = __nccwpck_require__(9912);
-var express_async_handler_default = /*#__PURE__*/__nccwpck_require__.n(express_async_handler);
 // EXTERNAL MODULE: ./node_modules/fs-extra/lib/index.js
 var lib = __nccwpck_require__(2136);
 var lib_default = /*#__PURE__*/__nccwpck_require__.n(lib);
@@ -68844,7 +64931,6 @@ async function downloadArtifact(artifact, destFolder) {
 
 
 
-
 async function startServer() {
     const port = process.env.PORT || DEFAULT_PORT;
     lib_default().ensureDirSync(cacheDir);
@@ -68855,7 +64941,7 @@ async function startServer() {
             trimWhitespace: true,
         });
     const cacheMap = new Map();
-    app.all('*', (req, res, next) => {
+    app.all('/{*path}', (req, res, next) => {
         external_console_namespaceObject.info(`Got a ${req.method} request`, req.path);
         const { authorization = '' } = req.headers;
         const [type = '', token = ''] = authorization.split(' ');
@@ -68869,7 +64955,7 @@ async function startServer() {
             status: 'enabled',
         });
     });
-    app.get('/v8/artifacts/:artifactId', express_async_handler_default()(async (req, res) => {
+    app.get('/v8/artifacts/:artifactId', async (req, res) => {
         const { artifactId } = req.params;
         const filepath = external_path_default().join(cacheDir, `${artifactId}.gz`);
         if (lib_default().pathExistsSync(filepath)) {
@@ -68915,7 +65001,7 @@ async function startServer() {
             external_console_namespaceObject.error(error);
             res.end(error);
         });
-    }));
+    });
     app.put('/v8/artifacts/:artifactId', (req, res) => {
         const artifactId = req.params.artifactId;
         const filename = `${artifactId}.gz`;
