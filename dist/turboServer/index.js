@@ -68864,6 +68864,11 @@ async function startServer() {
         }
         next();
     });
+    app.get('/v8/artifacts/status', (req, res) => {
+        res.status(200).json({
+            status: 'enabled',
+        });
+    });
     app.get('/v8/artifacts/:artifactId', express_async_handler_default()(async (req, res) => {
         const { artifactId } = req.params;
         const filepath = external_path_default().join(cacheDir, `${artifactId}.gz`);

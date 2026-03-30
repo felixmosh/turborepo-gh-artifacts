@@ -40,6 +40,12 @@ async function startServer() {
     next();
   });
 
+  app.get('/v8/artifacts/status', (req, res) => {
+    res.status(200).json({
+      status: 'enabled',
+    });
+  })
+
   app.get(
     '/v8/artifacts/:artifactId',
     asyncHandler(async (req: any, res: any) => {
