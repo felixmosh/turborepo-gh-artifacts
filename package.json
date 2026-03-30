@@ -6,18 +6,18 @@
   "author": "felixmosh",
   "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build src/turboServer.ts -o dist/turboServer && ncc build src/starter.ts -o dist/starter && ncc build src/post.ts -o dist/post && git add -f dist/",
+    "build": "rslib build && git add -f dist/",
     "release": "release-it --only-version",
     "update:major-tag": "TAG=$(git describe --tags `git rev-list --tags --max-count=1` | cut -b 1-2) && git tag -d $TAG && git push --delete origin $TAG && git tag $TAG && git push origin --tags"
   },
   "devDependencies": {
     "@actions/artifact": "^6.2.1",
     "@actions/core": "^3.0.0",
+    "@rslib/core": "^0.20.2",
     "@tsconfig/node24": "^24.0.4",
+    "@types/express": "^5.0.6",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.12.0",
-    "@types/express": "^5.0.6",
-    "@vercel/ncc": "^0.38.4",
     "axios": "^1.13.6",
     "express": "^5.0.0",
     "fs-extra": "^11.3.4",
